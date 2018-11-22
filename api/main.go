@@ -70,7 +70,8 @@ func makeHandlerMarshalErrorJSON(ctx context.Context) []byte {
 
 var handlerMarshalErrorJSON = makeHandlerMarshalErrorJSON(inslogger.ContextWithTrace(context.Background(), "handlerMarshalErrorJSON"))
 
-func processQueryType(ctx context.Context, rh *RequestHandler, qTypeStr string) map[string]interface{} {
+func processQueryType(ctx context.Context, rh *RequestHandler, params *Params) map[string]interface{} {
+	qTypeStr := params.QueryType
 	qtype := QTypeFromString(qTypeStr)
 	var answer map[string]interface{}
 
@@ -152,7 +153,7 @@ func wrapAPIV1Handler(runner *Runner, rootDomainReference core.RecordRef) func(w
 		}
 		rh := NewRequestHandler(params, runner.MessageBus, runner.NetworkCoordinator, rootDomainReference, runner.seedmanager)
 
-		answer = processQueryType(ctx, rh, params.QueryType)
+		answer = processQueryType(ctx, rh, params)
 	}
 }
 
@@ -214,6 +215,7 @@ func (ar *Runner) Start(ctx context.Context) error {
 
 	fw := wrapAPIV1Handler(ar, *rootDomainReference)
 	http.HandleFunc(ar.cfg.Location, fw)
+	http.HandleFunc(ar.cfg.Exporter, ar.exporterHandler())
 	http.HandleFunc(ar.cfg.Info, ar.infoHandler())
 	http.HandleFunc(ar.cfg.Call, ar.callHandler())
 	http.Handle(ar.cfg.RPC, ar.rpcServer)

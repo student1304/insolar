@@ -147,5 +147,5 @@ then
     run_insgorund
 else
     run_insgorund &
-    $INSOLARD --config scripts/insolard/insolar.yaml
+    $INSOLARD --config scripts/insolard/insolar.yaml --genesis functest/genesis.yaml
 fi

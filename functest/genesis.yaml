@@ -1,4 +1,4 @@
-root_keys_file: "../testdata/functional/root_member_keys.json"
+root_keys_file: "./scripts/insolard/configs/root_member_keys.json"
 root_balance: 10000
 majority_rule: 4
 min_roles:
@@ -11,20 +11,21 @@ discovery_nodes:
   -
     host: "HOST1"
     role: ""
-    keys_file: "../testdata/functional/discovery_node_1.json"
-  -
-    host: "HOST2"
-    role: ""
-    keys_file: "../testdata/functional/discovery_node_2.json"
-  -
-    host: "HOST3"
-    role: ""
-    keys_file: "../testdata/functional/discovery_node_3.json"
-  -
-    host: "HOST4"
-    role: ""
-    keys_file: "../testdata/functional/discovery_node_4.json"
-  -
-    host: "HOST5"
-    role: ""
-    keys_file: "../testdata/functional/discovery_node_5.json"
+    keys_file: "./testdata/functional/discovery_node.json"
+
+#  -
+#    host: "HOST2"
+#    role: ""
+#    keys_file: "../testdata/functional/discovery_node_2.json"
+#  -
+#    host: "HOST3"
+#    role: ""
+#    keys_file: "../testdata/functional/discovery_node_3.json"
+#  -
+#    host: "HOST4"
+#    role: ""
+#    keys_file: "../testdata/functional/discovery_node_4.json"
+#  -
+#    host: "HOST5"
+#    role: ""
+#    keys_file: "../testdata/functional/discovery_node_5.json"

@@ -18,9 +18,12 @@ package api
 
 import (
 	"context"
-	"net/http"
-
+	"encoding/json"
 	"github.com/insolar/insolar/core"
+	"github.com/insolar/insolar/core/utils"
+	"github.com/insolar/insolar/instrumentation/inslogger"
+	"github.com/pkg/errors"
+	"net/http"
 )
 
 // StorageExporterArgs is arguments that StorageExporter service accepts.
@@ -90,4 +93,69 @@ func (s *StorageExporterService) Export(r *http.Request, args *StorageExporterAr
 	reply.NextFrom = result.NextFrom
 
 	return nil
+}
+
+func (ar *Runner) exporterHandler() func(http.ResponseWriter, *http.Request) {
+	return func(response http.ResponseWriter, req *http.Request) {
+		params := request{}
+		reply := StorageExporterReply{}
+		resp := answer{}
+
+		traceid := utils.RandTraceID()
+		_, inslog := inslogger.WithTraceField(context.Background(), traceid)
+		resp.TraceID = traceid
+
+		defer func() {
+			res, err := json.MarshalIndent(resp, "", "    ")
+			if err != nil {
+				res = []byte(`{"error": "can't marshal answer to json'"}`)
+			}
+			response.Header().Add("Content-Type", "application/json")
+			_, err = response.Write(res)
+			if err != nil {
+				inslog.Errorf("Can't write response\n")
+			}
+		}()
+
+		_, err := unmarshalRequest(req, params)
+		if err != nil {
+			resp.Error = err.Error()
+			inslog.Error(errors.Wrap(err, "[ ExporterHandler ] Can't unmarshal request"))
+			return
+		}
+
+		var data []interface{}
+		err = json.Unmarshal(params.Params, &data)
+		if err != nil {
+			resp.Error = err.Error()
+			inslog.Error(errors.Wrap(err, "[ ExporterHandler ] Can't parse request params"))
+			return
+		}
+		pulseNum := data[0].(uint32)
+		size := data[1].(int)
+
+		// err = ar.verifySignature(ctx, params)
+		// if err != nil {
+		// 	resp.Error = err.Error()
+		// 	inslog.Error(errors.Wrap(err, "[ ExporterHandler ] Can't verify signature"))
+		// 	return
+		// }
+		//
+		// seed := seedmanager.SeedFromBytes(params.Seed)
+		// if seed == nil {
+		// 	resp.Error = "[ ExporterHandler ] Bad seed param"
+		// 	inslog.Error(resp.Error)
+		// 	return
+		// }
+		//
+		// if !ar.seedmanager.Exists(*seed) {
+		// 	resp.Error = "[ ExporterHandler ] Incorrect seed"
+		// 	inslog.Error(resp.Error)
+		// 	return
+		// }
+
+		storage := NewStorageExporterService(ar)
+		storage.Export(req, &StorageExporterArgs{uint32(pulseNum), size}, &reply)
+		resp.Result = reply.Data
+	}
 }
