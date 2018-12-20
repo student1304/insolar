@@ -33,11 +33,12 @@ import (
 )
 
 type CaseRequest struct {
-	Message    core.Message
-	Request    core.RecordRef
-	MessageBus core.MessageBus
-	Reply      core.Reply
-	Error      error
+	Message       core.Message
+	Request       core.RecordRef
+	MessageBus    core.MessageBus
+	Reply         core.Reply
+	RequesterNode *Ref
+	Error         error
 }
 
 // CaseBinder is a whole result of executor efforts on every object it seen on this pulse
@@ -59,11 +60,12 @@ func NewCaseBindFromValidateMessage(ctx context.Context, mb core.MessageBus, msg
 			panic("couldn't read tape: " + err.Error())
 		}
 		res.Requests[i] = CaseRequest{
-			Message:    req.Message,
-			Request:    req.Request,
-			MessageBus: mb,
-			Reply:      req.Reply,
-			Error:      req.Error,
+			Message:       req.Message,
+			Request:       req.Request,
+			MessageBus:    mb,
+			Reply:         req.Reply,
+			Error:         req.Error,
+			RequesterNode: req.RequesterNode,
 		}
 	}
 	return res
@@ -91,6 +93,7 @@ func (cb *CaseBind) getCaseBindForMessage(ctx context.Context) []message.CaseBin
 			Request:        req.Request,
 			MessageBusTape: tape.Bytes(),
 			Reply:          req.Reply,
+			RequesterNode:  req.RequesterNode,
 			Error:          req.Error,
 		}
 	}
@@ -118,11 +121,12 @@ func (cb *CaseBind) ToExecutorResultsMessage(ctx context.Context, ref Ref, pendi
 	return res
 }
 
-func (cb *CaseBind) NewRequest(msg core.Message, request Ref, mb core.MessageBus) *CaseRequest {
+func (cb *CaseBind) NewRequest(msg core.Message, request Ref, mb core.MessageBus, requesterNode *Ref) *CaseRequest {
 	res := CaseRequest{
-		Message:    msg,
-		Request:    request,
-		MessageBus: mb,
+		Message:       msg,
+		Request:       request,
+		MessageBus:    mb,
+		RequesterNode: requesterNode,
 	}
 	cb.Requests = append(cb.Requests, res)
 	return &cb.Requests[len(cb.Requests)-1]
@@ -193,8 +197,9 @@ func (lr *LogicRunner) Validate(ctx context.Context, ref Ref, p core.Pulse, cb C
 		ctx = core.ContextWithMessageBus(ctx, request.MessageBus)
 
 		vs.Current = &CurrentExecution{
-			Context: ctx,
-			Request: &request.Request,
+			Context:       ctx,
+			Request:       &request.Request,
+			RequesterNode: request.RequesterNode,
 		}
 
 		reply, err := lr.executeOrValidate(ctx, vs, parcel)
@@ -297,8 +302,8 @@ func (vb *ValidationSaver) Mode() string {
 	return "execution"
 }
 
-func (vb *ValidationSaver) NewRequest(msg core.Message, request Ref, mb core.MessageBus) {
-	vb.current = vb.caseBind.NewRequest(msg, request, mb)
+func (vb *ValidationSaver) NewRequest(msg core.Message, request Ref, mb core.MessageBus, requesterNode *Ref) {
+	vb.current = vb.caseBind.NewRequest(msg, request, mb, requesterNode)
 }
 
 func (vb *ValidationSaver) Result(reply core.Reply, err error) error {

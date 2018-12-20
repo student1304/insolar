@@ -388,9 +388,7 @@ func (lr *LogicRunner) Execute(ctx context.Context, parcel core.Parcel) (core.Re
 
 func (lr *LogicRunner) CheckExecutionLoop(
 	ctx context.Context, es *ExecutionState, parcel core.Parcel,
-) (
-	bool,
-) {
+) bool {
 	if es.Current == nil {
 		return false
 	}
@@ -487,6 +485,7 @@ func (lr *LogicRunner) StartQueueProcessorIfNeeded(
 func (lr *LogicRunner) ProcessExecutionQueue(ctx context.Context, es *ExecutionState) {
 	for {
 		es.Lock()
+
 		q := es.Queue
 		if len(q) == 0 {
 			inslogger.FromContext(ctx).Debug("Quiting queue processing, empty")
@@ -504,7 +503,7 @@ func (lr *LogicRunner) ProcessExecutionQueue(ctx context.Context, es *ExecutionS
 			RequesterNode: &sender,
 			ReturnMode:    qe.returnMode,
 		}
-		es.Unlock()
+		// TODO DELETE: es.Unlock()
 
 		res := ExecutionQueueResult{}
 
@@ -517,14 +516,16 @@ func (lr *LogicRunner) ProcessExecutionQueue(ctx context.Context, es *ExecutionS
 		if err != nil {
 			res.err = err
 			finish()
+			es.Unlock()
 			continue
 		}
 
+		// TODO FIXME we are not holding a lock here!!!1 BUG BUG BUG
 		es.Current.Context = core.ContextWithMessageBus(qe.ctx, recordingBus)
 
 		inslogger.FromContext(qe.ctx).Debug("Registering request within execution behaviour")
 		es.Behaviour.(*ValidationSaver).NewRequest(
-			qe.parcel.Message(), *qe.request, recordingBus,
+			qe.parcel.Message(), *qe.request, recordingBus, &sender,
 		)
 
 		res.reply, res.err = lr.executeOrValidate(es.Current.Context, es, qe.parcel)
@@ -536,6 +537,7 @@ func (lr *LogicRunner) ProcessExecutionQueue(ctx context.Context, es *ExecutionS
 		}
 
 		finish()
+		es.Unlock()
 
 		lr.finishPendingIfNeeded(ctx, es, *qe.parcel.Message().DefaultTarget())
 	}

@@ -257,6 +257,7 @@ type CaseBindRequest struct {
 	Request        core.RecordRef
 	MessageBusTape []byte
 	Reply          core.Reply
+	RequesterNode  *core.RecordRef
 	Error          error
 }
 
