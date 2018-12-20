@@ -90,12 +90,10 @@ type ExecutionQueueResult struct {
 }
 
 type ExecutionQueueElement struct {
-	ctx        context.Context
-	parcel     core.Parcel
-	request    *Ref
-	pulse      core.PulseNumber
-	result     chan ExecutionQueueResult
-	returnMode message.MethodReturnMode
+	ctx     context.Context
+	parcel  core.Parcel
+	request *Ref
+	pulse   core.PulseNumber
 }
 
 type Error struct {
@@ -186,11 +184,6 @@ func (es *ExecutionState) CheckPendingRequests(ctx context.Context, inMsg core.M
 func (es *ExecutionState) releaseQueue() []ExecutionQueueElement {
 	q := es.Queue
 	es.Queue = make([]ExecutionQueueElement, 0)
-
-	for _, qe := range q {
-		qe.result <- ExecutionQueueResult{somebodyElse: true}
-		close(qe.result)
-	}
 
 	return q
 }
@@ -367,10 +360,6 @@ func (lr *LogicRunner) Execute(ctx context.Context, parcel core.Parcel) (core.Re
 		parcel:  parcel,
 		request: request,
 		pulse:   lr.pulse(ctx).PulseNumber,
-		result:  make(chan ExecutionQueueResult, 1),
-	}
-	if msg, ok := parcel.Message().(*message.CallMethod); ok && msg.ReturnMode == message.ReturnNoWait {
-		qElement.returnMode = msg.ReturnMode
 	}
 
 	es.Queue = append(es.Queue, qElement)
@@ -485,7 +474,6 @@ func (lr *LogicRunner) StartQueueProcessorIfNeeded(
 func (lr *LogicRunner) ProcessExecutionQueue(ctx context.Context, es *ExecutionState) {
 	for {
 		es.Lock()
-
 		q := es.Queue
 		if len(q) == 0 {
 			inslogger.FromContext(ctx).Debug("Quiting queue processing, empty")
@@ -501,22 +489,19 @@ func (lr *LogicRunner) ProcessExecutionQueue(ctx context.Context, es *ExecutionS
 		es.Current = &CurrentExecution{
 			Request:       qe.request,
 			RequesterNode: &sender,
-			ReturnMode:    qe.returnMode,
 		}
-		// TODO DELETE: es.Unlock()
+
+		if msg, ok := qe.parcel.Message().(*message.CallMethod); ok && msg.ReturnMode == message.ReturnNoWait {
+			es.Current.ReturnMode = msg.ReturnMode
+		}
+
+		es.Unlock()
 
 		res := ExecutionQueueResult{}
-
-		finish := func() {
-			qe.result <- res
-			close(qe.result)
-		}
 
 		recordingBus, err := lr.MessageBus.NewRecorder(qe.ctx, *lr.pulse(qe.ctx))
 		if err != nil {
 			res.err = err
-			finish()
-			es.Unlock()
 			continue
 		}
 
@@ -535,9 +520,6 @@ func (lr *LogicRunner) ProcessExecutionQueue(ctx context.Context, es *ExecutionS
 		if err != nil {
 			res.err = err
 		}
-
-		finish()
-		es.Unlock()
 
 		lr.finishPendingIfNeeded(ctx, es, *qe.parcel.Message().DefaultTarget())
 	}
@@ -607,7 +589,8 @@ func (lr *LogicRunner) executeOrValidate(
 	}
 	if es.Current.ReturnMode == message.ReturnResult {
 		inslogger.FromContext(ctx).Debugf("Sending Method Results for ", es.Current.Request)
-		_, err = lr.MessageBus.Send(ctx, &message.ReturnResults{
+
+		_, err = core.MessageBusFromContext(ctx, nil).Send(ctx, &message.ReturnResults{
 			Caller:  lr.NodeNetwork.GetOrigin().ID(),
 			Target:  *es.Current.RequesterNode,
 			Request: *es.Current.Request,
@@ -671,12 +654,10 @@ func (lr *LogicRunner) prepareObjectState(ctx context.Context, msg *message.Exec
 			queueFromMessage = append(
 				queueFromMessage,
 				ExecutionQueueElement{
-					ctx:        qe.Ctx,
-					parcel:     qe.Parcel,
-					request:    qe.Request,
-					pulse:      qe.Pulse,
-					result:     make(chan ExecutionQueueResult, 1),
-					returnMode: qe.ReturnMode,
+					ctx:     qe.Ctx,
+					parcel:  qe.Parcel,
+					request: qe.Request,
+					pulse:   qe.Pulse,
 				})
 		}
 		state.ExecutionState.Queue = append(queueFromMessage, state.ExecutionState.Queue...)
@@ -919,11 +900,10 @@ func convertQueueToMessageQueue(queue []ExecutionQueueElement) []message.Executi
 	mq := make([]message.ExecutionQueueElement, 0)
 	for _, elem := range queue {
 		mq = append(mq, message.ExecutionQueueElement{
-			Ctx:        elem.ctx,
-			Parcel:     elem.parcel,
-			Request:    elem.request,
-			Pulse:      elem.pulse,
-			ReturnMode: elem.returnMode,
+			Ctx:     elem.ctx,
+			Parcel:  elem.parcel,
+			Request: elem.request,
+			Pulse:   elem.pulse,
 		})
 	}
 
