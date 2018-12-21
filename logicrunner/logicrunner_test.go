@@ -314,7 +314,7 @@ func (c *One) Dec() (int, error) {
 	assert.NoError(t, err, "contract call")
 	assert.Equal(t, uint64(0), firstMethodRes(t, resp))
 
-	// ValidateAllResults(t, ctx, lr) // TODO FIX DEADLOCK uncomment
+	// ValidateAllResults(t, ctx, lr)
 }
 
 func TestContractCallingContract(t *testing.T) {
@@ -425,7 +425,7 @@ func (r *Two) Hello(s string) (string, error) {
 		assert.Equal(t, fmt.Sprintf("Hello you too, Insolar. %d times!", i), firstMethodRes(t, resp))
 	}
 
-	// ValidateAllResults(t, ctx, lr) // TODO Fix deadlock, UNCOMMNENT.
+	ValidateAllResults(t, ctx, lr)
 }
 
 func TestInjectingDelegate(t *testing.T) {
@@ -824,7 +824,7 @@ func (c *Contract) Rand() (int, error) {
 		assert.NoError(t, err, "contract call")
 	}
 
-	// ValidateAllResults(t, ctx, lr, *obj) // TODO FIX deadlock uncomment
+	ValidateAllResults(t, ctx, lr, *obj)
 }
 
 func TestErrorInterface(t *testing.T) {

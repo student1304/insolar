@@ -560,6 +560,7 @@ func (lr *LogicRunner) finishPendingIfNeeded(ctx context.Context, es *ExecutionS
 	}()
 }
 
+// WARNING! Executor have to call es.Lock() before calling this method
 func (lr *LogicRunner) executeOrValidate(
 	ctx context.Context, es *ExecutionState, parcel core.Parcel,
 ) (
@@ -596,8 +597,8 @@ func (lr *LogicRunner) executeOrValidate(
 		errstr = err.Error()
 	}
 
-	es.Lock()
-	defer es.Unlock()
+	//	es.Lock()
+	//	defer es.Unlock()
 
 	es.Current.SentResult = true
 	if es.Current.ReturnMode != message.ReturnResult {

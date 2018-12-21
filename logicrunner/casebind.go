@@ -171,7 +171,6 @@ func (lr *LogicRunner) Validate(ctx context.Context, ref Ref, p core.Pulse, cb C
 	vs.ArtifactManager = lr.ArtifactManager
 
 	vs.Lock()
-	defer vs.Unlock()
 
 	checker := &ValidationChecker{
 		lr: lr,
@@ -188,6 +187,7 @@ func (lr *LogicRunner) Validate(ctx context.Context, ref Ref, p core.Pulse, cb C
 		msg := request.Message
 		parcel, err := lr.ParcelFactory.Create(ctx, msg, ref, nil, *core.GenesisPulse)
 		if err != nil {
+			vs.Unlock()
 			return 0, errors.New("failed to create a parcel")
 		}
 
@@ -202,13 +202,19 @@ func (lr *LogicRunner) Validate(ctx context.Context, ref Ref, p core.Pulse, cb C
 			RequesterNode: request.RequesterNode,
 		}
 
+		// we have to unlock `vs` since executeOrValidate will try to lock it
+		//vs.Unlock()
 		reply, err := lr.executeOrValidate(ctx, vs, parcel)
+		//vs.Lock()
 
 		err = vs.Behaviour.Result(reply, err)
 		if err != nil {
+			vs.Unlock()
 			return 0, errors.Wrap(err, "validation step failed")
 		}
 	}
+
+	vs.Unlock()
 	return 1, nil
 }
 
