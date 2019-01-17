@@ -16,7 +16,7 @@ type promtailAdapter struct {
 
 func newPromtailAdapter(agentUrl string) *promtailAdapter {
 	conf := promtail.ClientConfig{
-		PushURL:            "agentUrl",
+		PushURL:            agentUrl,
 		Labels:             "{job=\"insolard\"}",
 		BatchWait:          5 * time.Second,
 		BatchEntriesNumber: 10000,
