@@ -11,17 +11,31 @@ import (
 )
 
 type promtailAdapter struct {
-	impl promtail.Client
+	impl  promtail.Client
+	level string
 }
 
-func newPromtailAdapter(agentUrl string) *promtailAdapter {
+func newPromtailAdapter(agentUrl string, levelStr string) *promtailAdapter {
+	level := promtail.DEBUG
+	switch levelStr {
+	case "Info":
+		level = promtail.INFO
+	case "Warn":
+		level = promtail.WARN
+	case "Error":
+		level = promtail.ERROR
+	default:
+		levelStr = "Debug"
+		log.Printf("Unknown log level '%s' - ignored\n", levelStr)
+	}
+
 	conf := promtail.ClientConfig{
 		PushURL:            agentUrl,
 		Labels:             "{job=\"insolard\"}",
 		BatchWait:          5 * time.Second,
 		BatchEntriesNumber: 10000,
-		SendLevel:          promtail.DEBUG,
-		PrintLevel:         promtail.DEBUG,
+		SendLevel:          level,
+		PrintLevel:         level,
 	}
 
 	impl, err := promtail.NewClientProto(conf)
@@ -29,17 +43,16 @@ func newPromtailAdapter(agentUrl string) *promtailAdapter {
 		log.Panicf("promtail.NewClientProto: %s", err)
 	}
 
-	return &promtailAdapter{impl: impl}
+	return &promtailAdapter{impl: impl, level: levelStr}
 }
 
-func (pa *promtailAdapter) SetLevel(string) error {
-	// TODO FIXME
+func (pa *promtailAdapter) SetLevel(level string) error {
+	// level is set in newPromtailAdapter
 	return nil
 }
 
 func (pa *promtailAdapter) GetLevel() string {
-	// TODO FIXME
-	return "Debug"
+	return pa.level
 }
 
 func (pa *promtailAdapter) Debug(args ...interface{}) {

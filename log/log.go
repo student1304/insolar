@@ -34,7 +34,7 @@ func NewLog(cfg configuration.Log) (core.Logger, error) {
 	case "logrus":
 		logger = newLogrusAdapter()
 	case "promtail":
-		logger = newPromtailAdapter(cfg.Agent)
+		logger = newPromtailAdapter(cfg.Agent, cfg.Level)
 	default:
 		return nil, errors.New("invalid logger config")
 	}
