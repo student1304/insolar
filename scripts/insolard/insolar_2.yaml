@@ -6,6 +6,8 @@ ledger:
     datadirectory: scripts/insolard/nodes/2/data
 log:
   level: Debug
+  adapter: promtail
+  agent: http://localhost:3100/api/prom/push
 logicrunner:
   rpclisten: 127.0.0.1:28182
   goplugin:

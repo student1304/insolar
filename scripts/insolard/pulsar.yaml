@@ -23,4 +23,5 @@ pulsar:
 keyspath: "scripts/insolard/configs/bootstrap_keys.json"
 log:
   level: Debug
-  adapter: logrus
+  adapter: promtail
+  agent: http://localhost:3100/api/prom/push

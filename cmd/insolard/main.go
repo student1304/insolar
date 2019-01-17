@@ -95,6 +95,7 @@ func main() {
 	cfg.Metrics.Namespace = "insolard"
 
 	traceID := utils.RandTraceID()
+	log.Infof("Calling initLogger, cfg.Log = %v\n", cfg.Log)
 	ctx, inslog := initLogger(context.Background(), cfg.Log, traceID)
 	log.SetGlobalLogger(inslog)
 
