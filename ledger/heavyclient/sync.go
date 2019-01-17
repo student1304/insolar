@@ -18,6 +18,7 @@ package heavyclient
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/insolar/insolar/core"
 	"github.com/insolar/insolar/core/message"
@@ -50,7 +51,7 @@ func (c *JetClient) HeavySync(
 ) error {
 	inslog := inslogger.FromContext(ctx)
 	jetID := c.jetID
-	inslog = inslog.WithField("jetID", jetID).WithField("pulseNum", pn)
+	inslog = inslog.WithField("jetID", fmt.Sprintf("%v", jetID)).WithField("pulseNum", fmt.Sprintf("%v", pn))
 
 	inslog.Debug("JetClient.HeavySync")
 	if retry {

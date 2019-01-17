@@ -32,8 +32,8 @@ import (
 func (h *MessageHandler) handleHeavyPayload(ctx context.Context, genericMsg core.Parcel) (core.Reply, error) {
 	msg := genericMsg.Message().(*message.HeavyPayload)
 
-	inslog := inslogger.FromContext(ctx).WithField("pulseNum", msg.PulseNum)
-	inslog = inslog.WithField("jetID", msg.JetID)
+	inslog := inslogger.FromContext(ctx).WithField("pulseNum", fmt.Sprintf("%v", msg.PulseNum))
+	inslog = inslog.WithField("jetID", fmt.Sprintf("%v", msg.JetID))
 	inslog.Debugf("Heavy sync: get payload message with %v records", len(msg.Records))
 
 	if err := h.HeavySync.Store(ctx, msg.JetID, msg.PulseNum, msg.Records); err != nil {
@@ -47,7 +47,7 @@ func (h *MessageHandler) handleHeavyPayload(ctx context.Context, genericMsg core
 func (h *MessageHandler) handleHeavyStartStop(ctx context.Context, genericMsg core.Parcel) (core.Reply, error) {
 	msg := genericMsg.Message().(*message.HeavyStartStop)
 
-	inslog := inslogger.FromContext(ctx).WithField("pulseNum", msg.PulseNum)
+	inslog := inslogger.FromContext(ctx).WithField("pulseNum", fmt.Sprintf("%v", msg.PulseNum))
 	inslog = inslog.WithField("jetID", fmt.Sprintf("%+v", msg.JetID))
 
 	// stop
@@ -69,7 +69,7 @@ func (h *MessageHandler) handleHeavyStartStop(ctx context.Context, genericMsg co
 func (h *MessageHandler) handleHeavyReset(ctx context.Context, genericMsg core.Parcel) (core.Reply, error) {
 	msg := genericMsg.Message().(*message.HeavyReset)
 
-	inslog := inslogger.FromContext(ctx).WithField("pulseNum", msg.PulseNum)
+	inslog := inslogger.FromContext(ctx).WithField("pulseNum", fmt.Sprintf("%v", msg.PulseNum))
 	inslog = inslog.WithField("jetID", fmt.Sprintf("%+v", msg.JetID))
 
 	inslog.Debug("Heavy sync: get reset message")

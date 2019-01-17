@@ -117,13 +117,6 @@ func TestLog_AddFields(t *testing.T) {
 		fieldfn func(la logrusAdapter) core.Logger
 	}{
 		{
-			name: "WithFields",
-			fieldfn: func(la logrusAdapter) core.Logger {
-				fields := map[string]interface{}{fieldname: fieldvalue}
-				return la.WithFields(fields)
-			},
-		},
-		{
 			name: "WithField",
 			fieldfn: func(la logrusAdapter) core.Logger {
 				return la.WithField(fieldname, fieldvalue)

@@ -44,15 +44,8 @@ func (l logrusAdapter) sourced() *logrus.Entry {
 	})
 }
 
-// WithFields return copy of adapter with predefined fields.
-func (l logrusAdapter) WithFields(fields map[string]interface{}) core.Logger {
-	lcopy := l
-	lcopy.entry = l.entry.WithFields(logrus.Fields(fields))
-	return lcopy
-}
-
 // WithField return copy of adapter with predefined single field.
-func (l logrusAdapter) WithField(key string, value interface{}) core.Logger {
+func (l logrusAdapter) WithField(key string, value string) core.Logger {
 	lcopy := l
 	lcopy.entry = l.entry.WithField(key, value)
 	return lcopy

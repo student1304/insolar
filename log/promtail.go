@@ -124,12 +124,7 @@ func (pa *promtailAdapter) SetOutput(w io.Writer) {
 	// SetOutput make little sense for the Promtail adapter
 }
 
-func (pa *promtailAdapter) WithFields(map[string]interface{}) core.Logger {
-	return pa
-	//panic("implement me")
-}
-
-func (pa *promtailAdapter) WithField(string, interface{}) core.Logger {
+func (pa *promtailAdapter) WithField(string, string) core.Logger {
 	return pa
 	//panic("implement me")
 }
