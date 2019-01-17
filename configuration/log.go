@@ -20,6 +20,7 @@ package configuration
 type Log struct {
 	Level   string
 	Adapter string
+	Agent   string
 }
 
 // NewLog creates new default configuration for logging
