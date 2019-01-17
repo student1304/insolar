@@ -31,17 +31,6 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:db6b1f0762d80ab12d68847761c6fa86c4b7954129949afa683788accde10336"
-  name = "github.com/afiskon/promtail-client"
-  packages = [
-    "logproto",
-    "promtail",
-  ]
-  pruneopts = "UT"
-  revision = "52dbc34e2393c36edca4d798f9213c2073e1f628"
-
-[[projects]]
-  branch = "master"
   digest = "1:d6afaeed1502aa28e80a4ed0981d570ad91b2579193404256ce672ed0a609e0d"
   name = "github.com/beorn7/perks"
   packages = ["quantile"]
