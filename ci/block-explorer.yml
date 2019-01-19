@@ -11,6 +11,12 @@ groups:
 - name: explorer
   jobs:
     - build-explorer
+- name: insolar-blockchain
+  jobs:
+    - insolard
+- name: cassandra
+  jobs:
+    - cassandra
 
 resource_types:
 - name: maven-resource
@@ -33,7 +39,7 @@ resources:
     branch: master
     private_key: ((meta.github.adm_key))
 
-- name: deploy
+- name: k8s
   type: kubernetes
   source:
     server: https://kube.insolar.io:6443
@@ -87,6 +93,15 @@ resources:
     branch: master
     private_key: ((meta.github.loader_key))
 
+- name: git-cassandra-init
+  type: git
+  source:
+    uri: git@github.com:insolar/block-explorer-db-loader.git
+    branch: master
+    paths:
+      - src/main/resources/create_data.sql
+    private_key: ((meta.github.loader_key))
+
 - name: git-explorer
   type: git
   source:
@@ -96,6 +111,12 @@ resources:
     private_key: ((meta.github.block-explorer-frontend))
     #username: ((meta.gitlab.websecret.username))
     #password: ((meta.gitlab.websecret.password))
+    #
+- name: git-insolar
+  type: git
+  source:
+    uri: https://github.com/insolar/insolar.git
+    branch: release/v0.7.0-alpha
 
 - name: registry-explorer
   type: docker-image
@@ -115,6 +136,13 @@ resources:
   type: docker-image
   source:
     repository: registry.insolar.io/loader
+    username: ((meta.registry.username))
+    password: ((meta.registry.password))
+
+- name: registry-insolard
+  type: docker-image
+  source:
+    repository: registry.insolar.io/insolard
     username: ((meta.registry.username))
     password: ((meta.registry.password))
 
@@ -399,7 +427,7 @@ jobs:
     params:
       build: artifacts
       tag_file: artifacts/docker-tag
-  - put: deploy
+  - put: k8s
     params:
       namespace: block-explorer
       kubectl: apply -f artifacts/db-unloader.yaml
@@ -448,7 +476,7 @@ jobs:
     params:
       build: artifacts
       tag_file: artifacts/docker-tag
-  - put: deploy
+  - put: k8s
     params:
       namespace: block-explorer
       kubectl: apply -f artifacts/db-loader.yaml
@@ -507,10 +535,108 @@ jobs:
         target: site
         tag_file: artifacts/docker-tag
         tag_as_latest: true
-    - put: deploy
+    - put: k8s
       params:
         namespace: block-explorer
         kubectl: apply -f artifacts/explorer.yaml
+
+- name: insolard
+  public: true
+  plan:
+  - get: git-insolar
+    trigger: true
+  - get: adm
+    trigger: false
+  - put: registry-insolard
+    params:
+      build: git-insolar
+      dockerfile: git-insolar/docker/Dockerfile.insolard
+      tag_file: git-insolar/.git/short_ref
+      tag_as_latest: true
+  - try:
+      put: k8s
+      params:
+        namespace: block-explorer
+        wait_until_ready: 0
+        kubectl: delete -f adm/manifests/block-explorer/bootstrap-ss.yaml
+  - try:
+      put: k8s
+      params:
+        namespace: block-explorer
+        wait_until_ready: 0
+        kubectl: delete -f adm/manifests/block-explorer/pulsar.yaml
+  - task: set-tag
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source: {repository: alpine}
+      inputs:
+        - name: git-insolar
+        - name: adm
+      outputs:
+        - name: deploy
+      run:
+        path: sh
+        args:
+          - -exc
+          - |
+            cp git-insolar/.git/short_ref deploy/tag
+            cp adm/manifests/block-explorer/bootstrap-ss.yaml deploy/bootstrap.yaml
+            cp adm/manifests/block-explorer/pulsar.yaml deploy/pulsar.yaml
+            ls -alh
+            sed -i "s/registry.insolar.io\/insolard/registry.insolar.io\/insolard:$(cat deploy/tag)/g" deploy/bootstrap.yaml
+            sed -i "s/registry.insolar.io\/insolard/registry.insolar.io\/insolard:$(cat deploy/tag)/g" deploy/pulsar.yaml
+            cat deploy/bootstrap.yaml
+  - put: k8s
+    params:
+      namespace: block-explorer
+      wait_until_ready_selector: app=bootstrap
+      wait_until_ready: 300
+      kubectl: apply -f deploy/bootstrap.yaml
+  - put: k8s
+    params:
+      namespace: block-explorer
+      wait_until_ready_selector: app=pulsar
+      wait_until_ready: 300
+      kubectl: apply -f deploy/pulsar.yaml
+
+- name: cassandra
+  public: true
+  plan:
+  - get: adm
+    trigger: false
+  - get: git-cassandra-init
+    trigger: true
+  - try:
+      put: k8s
+      params:
+        namespace: block-explorer
+        wait_until_ready: 0
+        kubectl: delete -f adm/manifests/block-explorer/cassandra-statefulset.yaml
+  - put: k8s
+    params:
+      namespace: block-explorer
+      wait_until_ready: 300
+      wait_until_ready_selector: app=cassandra
+      kubectl: apply -f adm/manifests/block-explorer/cassandra-statefulset.yaml
+  - task: init-cassandra
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source: {repository: cassandra }
+      inputs:
+        - name: git-cassandra-init
+      run:
+        path: sh
+        args:
+          - -exc
+          - |
+              cqlsh cassandra.block-explorer.svc.cluster.local -f git-cassandra-init/src/main/resources/create_data.sql
+
+
+
 
 
 
