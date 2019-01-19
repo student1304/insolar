@@ -32,7 +32,7 @@ resources:
     branch: master
     private_key: ((meta.github.adm_key))
 
-- name: deploy
+- name: k8s
   type: kubernetes
   source:
     server: https://kube.insolar.io:6443
@@ -53,6 +53,16 @@ jobs:
       dockerfile: master/docker/Dockerfile.insolard
       tag_file: master/.git/short_ref
       tag_as_latest: true
+  - put: k8s
+    params:
+      namespace: block-explorer
+      wait_until_ready: 0
+      kubectl: delete -f adm/manifests/block-explorer/bootstrap-ss.yaml
+  - put: k8s
+    params:
+      namespace: block-explorer
+      wait_until_ready: 0
+      kubectl: delete -f adm/manifests/block-explorer/pulsar.yaml
   - task: set-tag
     config:
       platform: linux
@@ -73,12 +83,20 @@ jobs:
             cp adm/manifests/block-explorer/bootstrap-ss.yaml deploy/bootstrap.yaml
             ls -alh
             sed -i "s/registry.insolar.io\/insolard/registry.insolar.io\/insolard:$(cat deploy/tag)/g" deploy/bootstrap.yaml
+            sed -i "s/registry.insolar.io\/insolard/registry.insolar.io\/insolard:$(cat deploy/tag)/g" deploy/pulsar.yaml
             cat deploy/bootstrap.yaml
-  - put: deploy
+  - put: k8s
     params:
       namespace: block-explorer
-      wait_until_ready: 120
+      wait_until_ready_selector: app=bootstrap
+      wait_until_ready: 300
       kubectl: apply -f deploy/bootstrap.yaml
+  - put: k8s
+    params:
+      namespace: block-explorer
+      wait_until_ready_selector: app=pulsar
+      wait_until_ready: 300
+      kubectl: apply -f deploy/pulsar.yaml
 
 
 
