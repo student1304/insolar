@@ -43,7 +43,7 @@ resources:
   type: kubernetes
   source:
     server: https://kube.insolar.io:6443
-    token: ((meta.kubernetes.block-explorer-token))
+    token: ((meta.kubernetes.block-explorer.token))
     certificate_authority: ((meta.kubernetes.ca))
 
 - name: nexus
@@ -429,7 +429,7 @@ jobs:
       tag_file: artifacts/docker-tag
   - put: k8s
     params:
-      namespace: block-explorer
+      namespace: ((meta.kubernetes.block-explorer.namespace))
       kubectl: apply -f artifacts/db-unloader.yaml
 
 - name: pack-loader
@@ -478,7 +478,7 @@ jobs:
       tag_file: artifacts/docker-tag
   - put: k8s
     params:
-      namespace: block-explorer
+      namespace: ((meta.kubernetes.block-explorer.namespace))
       kubectl: apply -f artifacts/db-loader.yaml
 
 - name: build-explorer
@@ -537,7 +537,7 @@ jobs:
         tag_as_latest: true
     - put: k8s
       params:
-        namespace: block-explorer
+        namespace: ((meta.kubernetes.block-explorer.namespace))
         kubectl: apply -f artifacts/explorer.yaml
 
 - name: insolard
@@ -556,13 +556,13 @@ jobs:
   - try:
       put: k8s
       params:
-        namespace: block-explorer
+        namespace: ((meta.kubernetes.block-explorer.namespace))
         wait_until_ready: 0
         kubectl: delete -f adm/manifests/block-explorer/bootstrap-ss.yaml
   - try:
       put: k8s
       params:
-        namespace: block-explorer
+        namespace: ((meta.kubernetes.block-explorer.namespace))
         wait_until_ready: 0
         kubectl: delete -f adm/manifests/block-explorer/pulsar.yaml
   - task: set-tag
@@ -590,13 +590,13 @@ jobs:
             cat deploy/bootstrap.yaml
   - put: k8s
     params:
-      namespace: block-explorer
+      namespace: ((meta.kubernetes.block-explorer.namespace))
       wait_until_ready_selector: app=bootstrap
       wait_until_ready: 300
       kubectl: apply -f deploy/bootstrap.yaml
   - put: k8s
     params:
-      namespace: block-explorer
+      namespace: ((meta.kubernetes.block-explorer.namespace))
       wait_until_ready_selector: app=pulsar
       wait_until_ready: 300
       kubectl: apply -f deploy/pulsar.yaml
@@ -611,12 +611,12 @@ jobs:
   - try:
       put: k8s
       params:
-        namespace: block-explorer
+        namespace: ((meta.kubernetes.block-explorer.namespace))
         wait_until_ready: 0
         kubectl: delete -f adm/manifests/block-explorer/cassandra-statefulset.yaml
   - put: k8s
     params:
-      namespace: block-explorer
+      namespace: ((meta.kubernetes.block-explorer.namespace))
       wait_until_ready: 300
       wait_until_ready_selector: app=cassandra
       kubectl: apply -f adm/manifests/block-explorer/cassandra-statefulset.yaml
@@ -633,7 +633,8 @@ jobs:
         args:
           - -exc
           - |
-              cqlsh cassandra.block-explorer.svc.cluster.local -f git-cassandra-init/src/main/resources/create_data.sql
+              sleep 120
+              cqlsh cassandra.((kubernetes.block-explorer.namespace)).svc.cluster.local 9042 -f git-cassandra-init/src/main/resources/create_data.sql
 
 
 
