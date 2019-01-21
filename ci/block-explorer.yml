@@ -107,7 +107,7 @@ resources:
   source:
     #uri: https://git.websecret.by/developers/insolar
     uri: git@github.com:insolar/block-explorer-frontend.git
-    branch: master
+    branch: develop
     private_key: ((meta.github.block-explorer-frontend))
     #username: ((meta.gitlab.websecret.username))
     #password: ((meta.gitlab.websecret.password))
@@ -634,7 +634,7 @@ jobs:
           - -exc
           - |
               sleep 120
-              cqlsh cassandra.((kubernetes.block-explorer.namespace)).svc.cluster.local 9042 -f git-cassandra-init/src/main/resources/create_data.sql
+              cqlsh cassandra.((meta.kubernetes.block-explorer.namespace)).svc.cluster.local 9042 -f git-cassandra-init/src/main/resources/create_data.sql
 
 
 
