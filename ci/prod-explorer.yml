@@ -46,7 +46,7 @@ jobs:
 - name: build-explorer
   plan:
     - get: git-explorer
-      trigger: true
+      trigger: false
     - get: adm
       trigger: false
     - task: build-explorer
@@ -99,6 +99,8 @@ jobs:
     - put: k8s
       params:
         namespace: ((meta.kubernetes.explorer.namespace))
+        wait_until_ready: 30
+        wait_until_ready_selector: app=explorer
         kubectl: apply -f artifacts/explorer.yaml
 
 
