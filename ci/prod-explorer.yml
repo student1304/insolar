@@ -4,6 +4,11 @@ groups:
     - build-explorer
 
 resource_types:
+- name: kubernetes
+  type: docker-image
+  source:
+    repository: zlabjp/kubernetes-resource
+    tag: "1.11"
 
 resources:
 - name: adm
@@ -30,6 +35,12 @@ resources:
     username: ((meta.registry.username))
     password: ((meta.registry.password))
 
+- name: k8s
+  type: kubernetes
+  source:
+    server: https://kube.insolar.io:6443
+    token: ((meta.kubernetes.explorer.token))
+    certificate_authority: ((meta.kubernetes.ca))
 
 jobs:
 - name: build-explorer
@@ -56,8 +67,7 @@ jobs:
             - |
                cp git-explorer/.git/short_ref artifacts/docker-tag
                cp git-explorer/nginx.conf artifacts/nginx.conf
-               echo change image tag
-               cp adm/manifests/block-explorer/explorer.yaml artifacts/explorer.yaml
+               cp adm/manifests/explorer/explorer.yaml artifacts/explorer.yaml
                sed -i "s/registry.insolar.io\/explorer/registry.insolar.io\/explorer:$(cat artifacts/docker-tag)/g" artifacts/explorer.yaml
 
                echo create Dockerfile
@@ -86,6 +96,10 @@ jobs:
         target: site
         tag_file: artifacts/docker-tag
         tag_as_latest: true
+    - put: k8s
+      params:
+        namespace: ((meta.kubernetes.explorer.namespace))
+        kubectl: apply -f artifacts/explorer.yaml
 
 
 
