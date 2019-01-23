@@ -278,8 +278,8 @@ type ExecutorResultsEntry struct {
 
 // TODO rename to executorObjectResult (results?)
 type ExecutorResults struct {
-	T *core.RecordRef                         // sample object for routing purposes
-	D map[core.RecordRef]ExecutorResultsEntry // by contract recordref
+	T *core.RecordRef                          // sample object for routing purposes
+	D map[core.RecordRef]*ExecutorResultsEntry // by contract recordref
 }
 
 type ExecutionQueueElement struct {

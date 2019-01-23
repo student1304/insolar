@@ -111,7 +111,6 @@ func TestPendingFinished(t *testing.T) {
 	mc := minimock.NewController(t)
 	defer mc.Finish()
 
-
 	jc := testutils.NewJetCoordinatorMock(mc)
 	mb := testutils.NewMessageBusMock(mc)
 	ps := testutils.NewPulseStorageMock(mc)
@@ -248,41 +247,42 @@ func TestPrepareState(t *testing.T) {
 	lr, _ := NewLogicRunner(&configuration.LogicRunner{})
 
 	object := testutils.RandomRef()
-	msg := &message.ExecutorResults{
-		Caller:    testutils.RandomRef(),
-		RecordRef: object,
-	}
+	//ref := testutils.RandomRef()
+	msg := &message.ExecutorResults{}
+
+	entry := message.ExecutorResultsEntry{}
+	msg.D[object] = &entry
 
 	// not pending
 	// it's a first call, it's also initialize lr.state[object].ExecutionState
 	// also check for empty Queue
-	msg.Pending = message.NotPending
+	entry.Pending = message.NotPending
 	_ = lr.prepareObjectState(ctx, msg)
 	require.Equal(t, message.NotPending, lr.state[object].ExecutionState.pending)
 	require.Equal(t, 0, len(lr.state[object].ExecutionState.Queue))
 
 	// pending without queue
 	lr.state[object].ExecutionState.pending = message.PendingUnknown
-	msg.Pending = message.InPending
+	entry.Pending = message.InPending
 	_ = lr.prepareObjectState(ctx, msg)
 	require.Equal(t, message.InPending, lr.state[object].ExecutionState.pending)
 
 	// do not change pending status if it isn't unknown
 	lr.state[object].ExecutionState.pending = message.NotPending
-	msg.Pending = message.InPending
+	entry.Pending = message.InPending
 	_ = lr.prepareObjectState(ctx, msg)
 	require.Equal(t, message.NotPending, lr.state[object].ExecutionState.pending)
 
 	// do not change pending status if it isn't unknown
 	lr.state[object].ExecutionState.pending = message.InPending
-	msg.Pending = message.InPending
+	entry.Pending = message.InPending
 	_ = lr.prepareObjectState(ctx, msg)
 	require.Equal(t, message.InPending, lr.state[object].ExecutionState.pending)
 
 	parcel := testutils.NewParcelMock(t)
 	parcel.ContextMock.Expect(context.Background()).Return(context.Background())
 	// brand new queue from message
-	msg.Queue = []message.ExecutionQueueElement{
+	entry.Queue = []message.ExecutionQueueElement{
 		message.ExecutionQueueElement{Parcel: parcel},
 	}
 	_ = lr.prepareObjectState(ctx, msg)
@@ -294,12 +294,11 @@ func TestPrepareState(t *testing.T) {
 	parcel.MessageMock.Return(&testMsg) // mock message that returns NoWait
 
 	queueElementRequest := testutils.RandomRef()
-	msg.Queue = []message.ExecutionQueueElement{message.ExecutionQueueElement{Request: &queueElementRequest, Parcel: parcel}}
+	entry.Queue = []message.ExecutionQueueElement{message.ExecutionQueueElement{Request: &queueElementRequest, Parcel: parcel}}
 	_ = lr.prepareObjectState(ctx, msg)
 	require.Equal(t, 2, len(lr.state[object].ExecutionState.Queue))
 	require.Equal(t, &queueElementRequest, lr.state[object].ExecutionState.Queue[0].request)
 	require.Equal(t, &testMsg, lr.state[object].ExecutionState.Queue[0].parcel.Message())
-
 }
 
 func TestHandlePendingFinishedMessage(
@@ -458,7 +457,7 @@ func TestLogicRunner_OnPulse_StillExecuting(t *testing.T) {
 	lr.state[objectRef] = &ObjectState{
 		ExecutionState: &ExecutionState{
 			Behaviour: &ValidationSaver{},
-			Current: &CurrentExecution{},
+			Current:   &CurrentExecution{},
 		},
 	}
 	mb.SendMock.Return(&reply.OK{}, nil)
