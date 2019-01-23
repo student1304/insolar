@@ -676,7 +676,17 @@ func init() {
 }
 
 func (lr *LogicRunner) prepareObjectState(ctx context.Context, msg *message.ExecutorResults) error {
-	state := lr.UpsertObjectState(msg.GetReference())
+	for k, v := range msg.D {
+		err := lr.prepareObjectStateInternal(ctx, k, v)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (lr *LogicRunner) prepareObjectStateInternal(ctx context.Context, ref core.RecordRef, msg *message.ExecutorResultsEntry) error {
+	state := lr.UpsertObjectState(ref)
 	state.Lock()
 	if state.ExecutionState == nil {
 		state.ExecutionState = &ExecutionState{
@@ -907,7 +917,7 @@ func (lr *LogicRunner) OnPulse(ctx context.Context, pulse core.Pulse) error {
 	defer span.End()
 
 	messages := make([]core.Message, 0)
-	executorResult := make(map[Ref]message.ExecutorResults) // map by target node
+	executorResults := make(map[Ref]message.ExecutorResults) // map by target node
 
 	ctx, spanStates := instracer.StartSpan(ctx, "pulse.logicrunner processing of states")
 	for ref, state := range lr.state {
@@ -956,31 +966,30 @@ func (lr *LogicRunner) OnPulse(ctx context.Context, pulse core.Pulse) error {
 					// TODO: now validation is disabled
 					caseBind := es.Behaviour.(*ValidationSaver).caseBind
 					requests := caseBind.getCaseBindForMessage(ctx)
-					messages = append(
-						messages,
-						//&message.ValidateCaseBind{
-						//	RecordRef: ref,
-						//	Requests:  requests,
-						//	Pulse:     pulse,
-						//},
-					)
+					//messages = append(
+					//messages,
+					//&message.ValidateCaseBind{
+					//	RecordRef: ref,
+					//	Requests:  requests,
+					//	Pulse:     pulse,
+					//},
+					//)
 					nodes, err := lr.JetCoordinator.QueryRole(ctx, core.DynamicRoleVirtualExecutor,
 						*ref.Record(), pulse.PulseNumber)
 					if err != nil {
-						panic("Can't route ")
+						panic("Can't route ") // TODO FIXME - return err
 					}
 					targetNode := nodes[0]
-					er, ok := executorResult[targetNode]
+					er, ok := executorResults[targetNode]
 					if !ok {
-						executorResult[targetNode] = message.ExecutorResults{T: &ref}
-						er = executorResult[targetNode]
+						executorResults[targetNode] = message.ExecutorResults{T: &ref}
+						er = executorResults[targetNode]
 					}
-					er.D[ref] = message.ExecutorResultsEntry{
+					er.D[ref] = &message.ExecutorResultsEntry{
 						Pending:  es.pending,
 						Requests: requests,
 						Queue:    convertQueueToMessageQueue(queue),
 					}
-
 				}
 			} else {
 				if es.Current != nil {
@@ -1022,6 +1031,10 @@ func (lr *LogicRunner) OnPulse(ctx context.Context, pulse core.Pulse) error {
 	spanStates.End()
 
 	lr.stateMutex.Unlock()
+
+	for _, msg := range executorResults {
+		messages = append(messages, &msg)
+	}
 
 	var errorCounter int
 	var sendWg sync.WaitGroup
