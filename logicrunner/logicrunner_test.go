@@ -87,7 +87,7 @@ func MessageBusTrivialBehavior(mb *testmessagebus.TestMessageBus, lr core.LogicR
 	mb.ReRegister(core.TypeCallConstructor, lr.Execute)
 	mb.ReRegister(core.TypeValidateCaseBind, lr.HandleValidateCaseBindMessage)
 	mb.ReRegister(core.TypeValidationResults, lr.HandleValidationResultsMessage)
-	mb.ReRegister(core.TypeExecutorResults, lr.HandleExecutorResultsMessageBatch)
+	mb.ReRegister(core.TypeExecutorResultsBatch, lr.HandleExecutorResultsMessageBatch)
 }
 
 func PrepareLrAmCbPm(t *testing.T) (core.LogicRunner, core.ArtifactManager, *goplugintestutils.ContractsBuilder, core.PulseManager, func()) {
@@ -1755,7 +1755,7 @@ func getLogicRunnerWithoutValidation(lr core.LogicRunner) *LogicRunner {
 	}
 
 	newmb.ReRegister(core.TypeValidationResults, emptyFunc)
-	newmb.ReRegister(core.TypeExecutorResults, emptyFunc)
+	newmb.ReRegister(core.TypeExecutorResultsBatch, emptyFunc)
 
 	rlr.MessageBus = newmb
 

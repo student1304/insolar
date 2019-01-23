@@ -235,7 +235,7 @@ func (lr *LogicRunner) HandleValidationResultsMessage(ctx context.Context, inmsg
 func (lr *LogicRunner) HandleExecutorResultsMessageBatch(ctx context.Context, inmsg core.Parcel) (core.Reply, error) {
 	msg, ok := inmsg.Message().(*message.ExecutorResultsBatch)
 	if !ok {
-		return nil, errors.Errorf("HandleValidationResultsMessage got argument typed %t", inmsg)
+		return nil, errors.Errorf("HandleValidationResultsMessageBatch got argument typed %t", inmsg)
 	}
 
 	for _, m := range msg.GetResults() {
