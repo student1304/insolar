@@ -255,7 +255,7 @@ func (lr *LogicRunner) Start(ctx context.Context) error {
 func (lr *LogicRunner) RegisterHandlers() {
 	lr.MessageBus.MustRegister(core.TypeCallMethod, lr.Execute)
 	lr.MessageBus.MustRegister(core.TypeCallConstructor, lr.Execute)
-	lr.MessageBus.MustRegister(core.TypeExecutorResults, lr.HandleExecutorResultsMessage)
+	lr.MessageBus.MustRegister(core.TypeExecutorResults, lr.HandleExecutorResultsMessageBatch)
 	lr.MessageBus.MustRegister(core.TypeValidateCaseBind, lr.HandleValidateCaseBindMessage)
 	lr.MessageBus.MustRegister(core.TypeValidationResults, lr.HandleValidationResultsMessage)
 	lr.MessageBus.MustRegister(core.TypePendingFinished, lr.HandlePendingFinishedMessage)
@@ -874,12 +874,12 @@ func (lr *LogicRunner) executeConstructorCall(
 
 	executor, err := lr.GetExecutor(codeDesc.MachineType())
 	if err != nil {
-		return nil, es.WrapError(err, "no executer registered")
+		return nil, es.WrapError(err, "no executor registered")
 	}
 
 	newData, err := executor.CallConstructor(ctx, current.LogicContext, *codeDesc.Ref(), m.Name, m.Arguments)
 	if err != nil {
-		return nil, es.WrapError(err, "executer error")
+		return nil, es.WrapError(err, "executor error")
 	}
 
 	switch m.SaveAs {
@@ -949,6 +949,16 @@ func (lr *LogicRunner) OnPulse(ctx context.Context, pulse core.Pulse) error {
 					// TODO: now validation is disabled
 					caseBind := es.Behaviour.(*ValidationSaver).caseBind
 					requests := caseBind.getCaseBindForMessage(ctx)
+
+					// TODO refactor!
+					batch := message.ExecutorResultsBatch{}
+					batch.AddResult(&message.ExecutorResults{
+						RecordRef: ref,
+						Pending:   es.pending,
+						Requests:  requests,
+						Queue:     convertQueueToMessageQueue(queue),
+					})
+
 					messages = append(
 						messages,
 						//&message.ValidateCaseBind{
@@ -956,12 +966,7 @@ func (lr *LogicRunner) OnPulse(ctx context.Context, pulse core.Pulse) error {
 						//	Requests:  requests,
 						//	Pulse:     pulse,
 						//},
-						&message.ExecutorResults{
-							RecordRef: ref,
-							Pending:   es.pending,
-							Requests:  requests,
-							Queue:     convertQueueToMessageQueue(queue),
-						},
+						&batch,
 					)
 				}
 			} else {

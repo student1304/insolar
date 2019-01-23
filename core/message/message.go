@@ -194,7 +194,7 @@ func init() {
 	gob.Register(&CallConstructor{})
 	gob.Register(&CallMethod{})
 	gob.Register(&ReturnResults{})
-	gob.Register(&ExecutorResults{})
+	gob.Register(&ExecutorResultsBatch{})
 	gob.Register(&ValidateCaseBind{})
 	gob.Register(&ValidationResults{})
 	gob.Register(&PendingFinished{})

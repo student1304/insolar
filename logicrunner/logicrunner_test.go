@@ -87,7 +87,7 @@ func MessageBusTrivialBehavior(mb *testmessagebus.TestMessageBus, lr core.LogicR
 	mb.ReRegister(core.TypeCallConstructor, lr.Execute)
 	mb.ReRegister(core.TypeValidateCaseBind, lr.HandleValidateCaseBindMessage)
 	mb.ReRegister(core.TypeValidationResults, lr.HandleValidationResultsMessage)
-	mb.ReRegister(core.TypeExecutorResults, lr.HandleExecutorResultsMessage)
+	mb.ReRegister(core.TypeExecutorResults, lr.HandleExecutorResultsMessageBatch)
 }
 
 func PrepareLrAmCbPm(t *testing.T) (core.LogicRunner, core.ArtifactManager, *goplugintestutils.ContractsBuilder, core.PulseManager, func()) {
@@ -1311,7 +1311,7 @@ func New(n int) (*Child, error) {
 		return nil, nil
 	})
 	toExecute := make([]core.Parcel, 0)
-	mb.ReRegister(core.TypeExecutorResults, func(ctx context.Context, m core.Parcel) (core.Reply, error) {
+	mb.ReRegister(core.TypeExecutorResultsBatch, func(ctx context.Context, m core.Parcel) (core.Reply, error) {
 		toExecute = append(toExecute, m)
 		return nil, nil
 	})
@@ -1332,7 +1332,7 @@ func New(n int) (*Child, error) {
 	}
 
 	for _, m := range toExecute {
-		lr.HandleExecutorResultsMessage(ctx, m)
+		lr.HandleExecutorResultsMessageBatch(ctx, m)
 	}
 
 	for _, m := range toCheckValidate {

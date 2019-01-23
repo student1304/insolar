@@ -25,10 +25,10 @@ type LogicRunnerMock struct {
 	ExecutePreCounter uint64
 	ExecuteMock       mLogicRunnerMockExecute
 
-	HandleExecutorResultsMessageFunc       func(p context.Context, p1 core.Parcel) (r core.Reply, r1 error)
-	HandleExecutorResultsMessageCounter    uint64
-	HandleExecutorResultsMessagePreCounter uint64
-	HandleExecutorResultsMessageMock       mLogicRunnerMockHandleExecutorResultsMessage
+	HandleExecutorResultsMessageBatchFunc       func(p context.Context, p1 core.Parcel) (r core.Reply, r1 error)
+	HandleExecutorResultsMessageBatchCounter    uint64
+	HandleExecutorResultsMessageBatchPreCounter uint64
+	HandleExecutorResultsMessageBatchMock       mLogicRunnerMockHandleExecutorResultsMessageBatch
 
 	HandleValidateCaseBindMessageFunc       func(p context.Context, p1 core.Parcel) (r core.Reply, r1 error)
 	HandleValidateCaseBindMessageCounter    uint64
@@ -55,7 +55,7 @@ func NewLogicRunnerMock(t minimock.Tester) *LogicRunnerMock {
 	}
 
 	m.ExecuteMock = mLogicRunnerMockExecute{mock: m}
-	m.HandleExecutorResultsMessageMock = mLogicRunnerMockHandleExecutorResultsMessage{mock: m}
+	m.HandleExecutorResultsMessageBatchMock = mLogicRunnerMockHandleExecutorResultsMessageBatch{mock: m}
 	m.HandleValidateCaseBindMessageMock = mLogicRunnerMockHandleValidateCaseBindMessage{mock: m}
 	m.HandleValidationResultsMessageMock = mLogicRunnerMockHandleValidationResultsMessage{mock: m}
 	m.OnPulseMock = mLogicRunnerMockOnPulse{mock: m}
@@ -214,92 +214,92 @@ func (m *LogicRunnerMock) ExecuteFinished() bool {
 	return true
 }
 
-type mLogicRunnerMockHandleExecutorResultsMessage struct {
+type mLogicRunnerMockHandleExecutorResultsMessageBatch struct {
 	mock              *LogicRunnerMock
-	mainExpectation   *LogicRunnerMockHandleExecutorResultsMessageExpectation
-	expectationSeries []*LogicRunnerMockHandleExecutorResultsMessageExpectation
+	mainExpectation   *LogicRunnerMockHandleExecutorResultsMessageBatchExpectation
+	expectationSeries []*LogicRunnerMockHandleExecutorResultsMessageBatchExpectation
 }
 
-type LogicRunnerMockHandleExecutorResultsMessageExpectation struct {
-	input  *LogicRunnerMockHandleExecutorResultsMessageInput
-	result *LogicRunnerMockHandleExecutorResultsMessageResult
+type LogicRunnerMockHandleExecutorResultsMessageBatchExpectation struct {
+	input  *LogicRunnerMockHandleExecutorResultsMessageBatchInput
+	result *LogicRunnerMockHandleExecutorResultsMessageBatchResult
 }
 
-type LogicRunnerMockHandleExecutorResultsMessageInput struct {
+type LogicRunnerMockHandleExecutorResultsMessageBatchInput struct {
 	p  context.Context
 	p1 core.Parcel
 }
 
-type LogicRunnerMockHandleExecutorResultsMessageResult struct {
+type LogicRunnerMockHandleExecutorResultsMessageBatchResult struct {
 	r  core.Reply
 	r1 error
 }
 
-//Expect specifies that invocation of LogicRunner.HandleExecutorResultsMessage is expected from 1 to Infinity times
-func (m *mLogicRunnerMockHandleExecutorResultsMessage) Expect(p context.Context, p1 core.Parcel) *mLogicRunnerMockHandleExecutorResultsMessage {
-	m.mock.HandleExecutorResultsMessageFunc = nil
+//Expect specifies that invocation of LogicRunner.HandleExecutorResultsMessageBatch is expected from 1 to Infinity times
+func (m *mLogicRunnerMockHandleExecutorResultsMessageBatch) Expect(p context.Context, p1 core.Parcel) *mLogicRunnerMockHandleExecutorResultsMessageBatch {
+	m.mock.HandleExecutorResultsMessageBatchFunc = nil
 	m.expectationSeries = nil
 
 	if m.mainExpectation == nil {
-		m.mainExpectation = &LogicRunnerMockHandleExecutorResultsMessageExpectation{}
+		m.mainExpectation = &LogicRunnerMockHandleExecutorResultsMessageBatchExpectation{}
 	}
-	m.mainExpectation.input = &LogicRunnerMockHandleExecutorResultsMessageInput{p, p1}
+	m.mainExpectation.input = &LogicRunnerMockHandleExecutorResultsMessageBatchInput{p, p1}
 	return m
 }
 
-//Return specifies results of invocation of LogicRunner.HandleExecutorResultsMessage
-func (m *mLogicRunnerMockHandleExecutorResultsMessage) Return(r core.Reply, r1 error) *LogicRunnerMock {
-	m.mock.HandleExecutorResultsMessageFunc = nil
+//Return specifies results of invocation of LogicRunner.HandleExecutorResultsMessageBatch
+func (m *mLogicRunnerMockHandleExecutorResultsMessageBatch) Return(r core.Reply, r1 error) *LogicRunnerMock {
+	m.mock.HandleExecutorResultsMessageBatchFunc = nil
 	m.expectationSeries = nil
 
 	if m.mainExpectation == nil {
-		m.mainExpectation = &LogicRunnerMockHandleExecutorResultsMessageExpectation{}
+		m.mainExpectation = &LogicRunnerMockHandleExecutorResultsMessageBatchExpectation{}
 	}
-	m.mainExpectation.result = &LogicRunnerMockHandleExecutorResultsMessageResult{r, r1}
+	m.mainExpectation.result = &LogicRunnerMockHandleExecutorResultsMessageBatchResult{r, r1}
 	return m.mock
 }
 
-//ExpectOnce specifies that invocation of LogicRunner.HandleExecutorResultsMessage is expected once
-func (m *mLogicRunnerMockHandleExecutorResultsMessage) ExpectOnce(p context.Context, p1 core.Parcel) *LogicRunnerMockHandleExecutorResultsMessageExpectation {
-	m.mock.HandleExecutorResultsMessageFunc = nil
+//ExpectOnce specifies that invocation of LogicRunner.HandleExecutorResultsMessageBatch is expected once
+func (m *mLogicRunnerMockHandleExecutorResultsMessageBatch) ExpectOnce(p context.Context, p1 core.Parcel) *LogicRunnerMockHandleExecutorResultsMessageBatchExpectation {
+	m.mock.HandleExecutorResultsMessageBatchFunc = nil
 	m.mainExpectation = nil
 
-	expectation := &LogicRunnerMockHandleExecutorResultsMessageExpectation{}
-	expectation.input = &LogicRunnerMockHandleExecutorResultsMessageInput{p, p1}
+	expectation := &LogicRunnerMockHandleExecutorResultsMessageBatchExpectation{}
+	expectation.input = &LogicRunnerMockHandleExecutorResultsMessageBatchInput{p, p1}
 	m.expectationSeries = append(m.expectationSeries, expectation)
 	return expectation
 }
 
-func (e *LogicRunnerMockHandleExecutorResultsMessageExpectation) Return(r core.Reply, r1 error) {
-	e.result = &LogicRunnerMockHandleExecutorResultsMessageResult{r, r1}
+func (e *LogicRunnerMockHandleExecutorResultsMessageBatchExpectation) Return(r core.Reply, r1 error) {
+	e.result = &LogicRunnerMockHandleExecutorResultsMessageBatchResult{r, r1}
 }
 
-//Set uses given function f as a mock of LogicRunner.HandleExecutorResultsMessage method
-func (m *mLogicRunnerMockHandleExecutorResultsMessage) Set(f func(p context.Context, p1 core.Parcel) (r core.Reply, r1 error)) *LogicRunnerMock {
+//Set uses given function f as a mock of LogicRunner.HandleExecutorResultsMessageBatch method
+func (m *mLogicRunnerMockHandleExecutorResultsMessageBatch) Set(f func(p context.Context, p1 core.Parcel) (r core.Reply, r1 error)) *LogicRunnerMock {
 	m.mainExpectation = nil
 	m.expectationSeries = nil
 
-	m.mock.HandleExecutorResultsMessageFunc = f
+	m.mock.HandleExecutorResultsMessageBatchFunc = f
 	return m.mock
 }
 
-//HandleExecutorResultsMessage implements github.com/insolar/insolar/core.LogicRunner interface
-func (m *LogicRunnerMock) HandleExecutorResultsMessage(p context.Context, p1 core.Parcel) (r core.Reply, r1 error) {
-	counter := atomic.AddUint64(&m.HandleExecutorResultsMessagePreCounter, 1)
-	defer atomic.AddUint64(&m.HandleExecutorResultsMessageCounter, 1)
+//HandleExecutorResultsMessageBatch implements github.com/insolar/insolar/core.LogicRunner interface
+func (m *LogicRunnerMock) HandleExecutorResultsMessageBatch(p context.Context, p1 core.Parcel) (r core.Reply, r1 error) {
+	counter := atomic.AddUint64(&m.HandleExecutorResultsMessageBatchPreCounter, 1)
+	defer atomic.AddUint64(&m.HandleExecutorResultsMessageBatchCounter, 1)
 
-	if len(m.HandleExecutorResultsMessageMock.expectationSeries) > 0 {
-		if counter > uint64(len(m.HandleExecutorResultsMessageMock.expectationSeries)) {
-			m.t.Fatalf("Unexpected call to LogicRunnerMock.HandleExecutorResultsMessage. %v %v", p, p1)
+	if len(m.HandleExecutorResultsMessageBatchMock.expectationSeries) > 0 {
+		if counter > uint64(len(m.HandleExecutorResultsMessageBatchMock.expectationSeries)) {
+			m.t.Fatalf("Unexpected call to LogicRunnerMock.HandleExecutorResultsMessageBatch. %v %v", p, p1)
 			return
 		}
 
-		input := m.HandleExecutorResultsMessageMock.expectationSeries[counter-1].input
-		testify_assert.Equal(m.t, *input, LogicRunnerMockHandleExecutorResultsMessageInput{p, p1}, "LogicRunner.HandleExecutorResultsMessage got unexpected parameters")
+		input := m.HandleExecutorResultsMessageBatchMock.expectationSeries[counter-1].input
+		testify_assert.Equal(m.t, *input, LogicRunnerMockHandleExecutorResultsMessageBatchInput{p, p1}, "LogicRunner.HandleExecutorResultsMessageBatch got unexpected parameters")
 
-		result := m.HandleExecutorResultsMessageMock.expectationSeries[counter-1].result
+		result := m.HandleExecutorResultsMessageBatchMock.expectationSeries[counter-1].result
 		if result == nil {
-			m.t.Fatal("No results are set for the LogicRunnerMock.HandleExecutorResultsMessage")
+			m.t.Fatal("No results are set for the LogicRunnerMock.HandleExecutorResultsMessageBatch")
 			return
 		}
 
@@ -309,16 +309,16 @@ func (m *LogicRunnerMock) HandleExecutorResultsMessage(p context.Context, p1 cor
 		return
 	}
 
-	if m.HandleExecutorResultsMessageMock.mainExpectation != nil {
+	if m.HandleExecutorResultsMessageBatchMock.mainExpectation != nil {
 
-		input := m.HandleExecutorResultsMessageMock.mainExpectation.input
+		input := m.HandleExecutorResultsMessageBatchMock.mainExpectation.input
 		if input != nil {
-			testify_assert.Equal(m.t, *input, LogicRunnerMockHandleExecutorResultsMessageInput{p, p1}, "LogicRunner.HandleExecutorResultsMessage got unexpected parameters")
+			testify_assert.Equal(m.t, *input, LogicRunnerMockHandleExecutorResultsMessageBatchInput{p, p1}, "LogicRunner.HandleExecutorResultsMessageBatch got unexpected parameters")
 		}
 
-		result := m.HandleExecutorResultsMessageMock.mainExpectation.result
+		result := m.HandleExecutorResultsMessageBatchMock.mainExpectation.result
 		if result == nil {
-			m.t.Fatal("No results are set for the LogicRunnerMock.HandleExecutorResultsMessage")
+			m.t.Fatal("No results are set for the LogicRunnerMock.HandleExecutorResultsMessageBatch")
 		}
 
 		r = result.r
@@ -327,39 +327,39 @@ func (m *LogicRunnerMock) HandleExecutorResultsMessage(p context.Context, p1 cor
 		return
 	}
 
-	if m.HandleExecutorResultsMessageFunc == nil {
-		m.t.Fatalf("Unexpected call to LogicRunnerMock.HandleExecutorResultsMessage. %v %v", p, p1)
+	if m.HandleExecutorResultsMessageBatchFunc == nil {
+		m.t.Fatalf("Unexpected call to LogicRunnerMock.HandleExecutorResultsMessageBatch. %v %v", p, p1)
 		return
 	}
 
-	return m.HandleExecutorResultsMessageFunc(p, p1)
+	return m.HandleExecutorResultsMessageBatchFunc(p, p1)
 }
 
-//HandleExecutorResultsMessageMinimockCounter returns a count of LogicRunnerMock.HandleExecutorResultsMessageFunc invocations
-func (m *LogicRunnerMock) HandleExecutorResultsMessageMinimockCounter() uint64 {
-	return atomic.LoadUint64(&m.HandleExecutorResultsMessageCounter)
+//HandleExecutorResultsMessageBatchMinimockCounter returns a count of LogicRunnerMock.HandleExecutorResultsMessageBatchFunc invocations
+func (m *LogicRunnerMock) HandleExecutorResultsMessageBatchMinimockCounter() uint64 {
+	return atomic.LoadUint64(&m.HandleExecutorResultsMessageBatchCounter)
 }
 
-//HandleExecutorResultsMessageMinimockPreCounter returns the value of LogicRunnerMock.HandleExecutorResultsMessage invocations
-func (m *LogicRunnerMock) HandleExecutorResultsMessageMinimockPreCounter() uint64 {
-	return atomic.LoadUint64(&m.HandleExecutorResultsMessagePreCounter)
+//HandleExecutorResultsMessageBatchMinimockPreCounter returns the value of LogicRunnerMock.HandleExecutorResultsMessageBatch invocations
+func (m *LogicRunnerMock) HandleExecutorResultsMessageBatchMinimockPreCounter() uint64 {
+	return atomic.LoadUint64(&m.HandleExecutorResultsMessageBatchPreCounter)
 }
 
-//HandleExecutorResultsMessageFinished returns true if mock invocations count is ok
-func (m *LogicRunnerMock) HandleExecutorResultsMessageFinished() bool {
+//HandleExecutorResultsMessageBatchFinished returns true if mock invocations count is ok
+func (m *LogicRunnerMock) HandleExecutorResultsMessageBatchFinished() bool {
 	// if expectation series were set then invocations count should be equal to expectations count
-	if len(m.HandleExecutorResultsMessageMock.expectationSeries) > 0 {
-		return atomic.LoadUint64(&m.HandleExecutorResultsMessageCounter) == uint64(len(m.HandleExecutorResultsMessageMock.expectationSeries))
+	if len(m.HandleExecutorResultsMessageBatchMock.expectationSeries) > 0 {
+		return atomic.LoadUint64(&m.HandleExecutorResultsMessageBatchCounter) == uint64(len(m.HandleExecutorResultsMessageBatchMock.expectationSeries))
 	}
 
 	// if main expectation was set then invocations count should be greater than zero
-	if m.HandleExecutorResultsMessageMock.mainExpectation != nil {
-		return atomic.LoadUint64(&m.HandleExecutorResultsMessageCounter) > 0
+	if m.HandleExecutorResultsMessageBatchMock.mainExpectation != nil {
+		return atomic.LoadUint64(&m.HandleExecutorResultsMessageBatchCounter) > 0
 	}
 
 	// if func was set then invocations count should be greater than zero
-	if m.HandleExecutorResultsMessageFunc != nil {
-		return atomic.LoadUint64(&m.HandleExecutorResultsMessageCounter) > 0
+	if m.HandleExecutorResultsMessageBatchFunc != nil {
+		return atomic.LoadUint64(&m.HandleExecutorResultsMessageBatchCounter) > 0
 	}
 
 	return true
@@ -823,8 +823,8 @@ func (m *LogicRunnerMock) ValidateCallCounters() {
 		m.t.Fatal("Expected call to LogicRunnerMock.Execute")
 	}
 
-	if !m.HandleExecutorResultsMessageFinished() {
-		m.t.Fatal("Expected call to LogicRunnerMock.HandleExecutorResultsMessage")
+	if !m.HandleExecutorResultsMessageBatchFinished() {
+		m.t.Fatal("Expected call to LogicRunnerMock.HandleExecutorResultsMessageBatch")
 	}
 
 	if !m.HandleValidateCaseBindMessageFinished() {
@@ -860,8 +860,8 @@ func (m *LogicRunnerMock) MinimockFinish() {
 		m.t.Fatal("Expected call to LogicRunnerMock.Execute")
 	}
 
-	if !m.HandleExecutorResultsMessageFinished() {
-		m.t.Fatal("Expected call to LogicRunnerMock.HandleExecutorResultsMessage")
+	if !m.HandleExecutorResultsMessageBatchFinished() {
+		m.t.Fatal("Expected call to LogicRunnerMock.HandleExecutorResultsMessageBatch")
 	}
 
 	if !m.HandleValidateCaseBindMessageFinished() {
@@ -891,7 +891,7 @@ func (m *LogicRunnerMock) MinimockWait(timeout time.Duration) {
 	for {
 		ok := true
 		ok = ok && m.ExecuteFinished()
-		ok = ok && m.HandleExecutorResultsMessageFinished()
+		ok = ok && m.HandleExecutorResultsMessageBatchFinished()
 		ok = ok && m.HandleValidateCaseBindMessageFinished()
 		ok = ok && m.HandleValidationResultsMessageFinished()
 		ok = ok && m.OnPulseFinished()
@@ -907,8 +907,8 @@ func (m *LogicRunnerMock) MinimockWait(timeout time.Duration) {
 				m.t.Error("Expected call to LogicRunnerMock.Execute")
 			}
 
-			if !m.HandleExecutorResultsMessageFinished() {
-				m.t.Error("Expected call to LogicRunnerMock.HandleExecutorResultsMessage")
+			if !m.HandleExecutorResultsMessageBatchFinished() {
+				m.t.Error("Expected call to LogicRunnerMock.HandleExecutorResultsMessageBatch")
 			}
 
 			if !m.HandleValidateCaseBindMessageFinished() {
@@ -939,7 +939,7 @@ func (m *LogicRunnerMock) AllMocksCalled() bool {
 		return false
 	}
 
-	if !m.HandleExecutorResultsMessageFinished() {
+	if !m.HandleExecutorResultsMessageBatchFinished() {
 		return false
 	}
 

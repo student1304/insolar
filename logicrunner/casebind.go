@@ -232,12 +232,23 @@ func (lr *LogicRunner) HandleValidationResultsMessage(ctx context.Context, inmsg
 	return &reply.OK{}, nil
 }
 
-func (lr *LogicRunner) HandleExecutorResultsMessage(ctx context.Context, inmsg core.Parcel) (core.Reply, error) {
-	msg, ok := inmsg.Message().(*message.ExecutorResults)
+func (lr *LogicRunner) HandleExecutorResultsMessageBatch(ctx context.Context, inmsg core.Parcel) (core.Reply, error) {
+	msg, ok := inmsg.Message().(*message.ExecutorResultsBatch)
 	if !ok {
 		return nil, errors.Errorf("HandleValidationResultsMessage got argument typed %t", inmsg)
 	}
 
+	for _, m := range msg.GetResults() {
+		rep, err := lr.HandleExecutorResultsMessage(ctx, m)
+		if err != nil {
+			return rep, err
+		}
+	}
+
+	return &reply.OK{}, nil
+}
+
+func (lr *LogicRunner) HandleExecutorResultsMessage(ctx context.Context, msg *message.ExecutorResults) (core.Reply, error) {
 	// now we have 2 different types of data in message.HandleExecutorResultsMessage
 	// one part of it is about consensus
 	// another one is about prepare state on new executor after pulse
