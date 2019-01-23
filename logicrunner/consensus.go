@@ -77,6 +77,7 @@ func (c *Consensus) AddValidated(ctx context.Context, sm core.Parcel, msg *messa
 	return nil
 }
 
+// TODO TODO FIXME FIXME - ExecutorResults changed!!!
 func (c *Consensus) AddExecutor(ctx context.Context, sm core.Parcel, msg *message.ExecutorResults) {
 	c.Lock()
 	defer c.Unlock()
@@ -112,6 +113,7 @@ func (c *Consensus) CheckReady(ctx context.Context) {
 	}
 }
 
+// TODO FIXME
 func (c *Consensus) GetReference() Ref {
 	return c.Message.Message().(*message.ExecutorResults).RecordRef
 }
