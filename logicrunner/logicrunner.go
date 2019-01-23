@@ -899,6 +899,7 @@ func (lr *LogicRunner) executeConstructorCall(
 	}
 }
 
+// OnPulse called once per pulse for whole logicrunner
 func (lr *LogicRunner) OnPulse(ctx context.Context, pulse core.Pulse) error {
 	lr.stateMutex.Lock()
 
@@ -906,6 +907,7 @@ func (lr *LogicRunner) OnPulse(ctx context.Context, pulse core.Pulse) error {
 	defer span.End()
 
 	messages := make([]core.Message, 0)
+	executorResult := make(map[Ref]message.ExecutorResults) // map by target node
 
 	ctx, spanStates := instracer.StartSpan(ctx, "pulse.logicrunner processing of states")
 	for ref, state := range lr.state {
@@ -961,13 +963,24 @@ func (lr *LogicRunner) OnPulse(ctx context.Context, pulse core.Pulse) error {
 						//	Requests:  requests,
 						//	Pulse:     pulse,
 						//},
-						&message.ExecutorResults{
-							RecordRef: ref,
-							Pending:   es.pending,
-							Requests:  requests,
-							Queue:     convertQueueToMessageQueue(queue),
-						},
 					)
+					nodes, err := lr.JetCoordinator.QueryRole(ctx, core.DynamicRoleVirtualExecutor,
+						*ref.Record(), pulse.PulseNumber)
+					if err != nil {
+						panic("Can't route ")
+					}
+					targetNode := nodes[0]
+					er, ok := executorResult[targetNode]
+					if !ok {
+						executorResult[targetNode] = message.ExecutorResults{T: &ref}
+						er = executorResult[targetNode]
+					}
+					er.D[ref] = message.ExecutorResultsEntry{
+						Pending:  es.pending,
+						Requests: requests,
+						Queue:    convertQueueToMessageQueue(queue),
+					}
+
 				}
 			} else {
 				if es.Current != nil {

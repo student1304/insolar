@@ -266,13 +266,20 @@ func (cc *CallConstructor) Type() core.MessageType {
 	return core.TypeCallConstructor
 }
 
+// The executor results will be sent when node finishes it's pulse
+//
+//
+
+type ExecutorResultsEntry struct {
+	Requests []CaseBindRequest
+	Queue    []ExecutionQueueElement
+	Pending  PendingState
+}
+
 // TODO rename to executorObjectResult (results?)
 type ExecutorResults struct {
-	Caller    core.RecordRef
-	RecordRef core.RecordRef
-	Requests  []CaseBindRequest
-	Queue     []ExecutionQueueElement
-	Pending   PendingState
+	T *core.RecordRef                         // sample object for routing purposes
+	D map[core.RecordRef]ExecutorResultsEntry // by contract recordref
 }
 
 type ExecutionQueueElement struct {
@@ -294,7 +301,7 @@ func (er *ExecutorResults) DefaultRole() core.DynamicRole {
 
 // DefaultTarget returns of target of this event.
 func (er *ExecutorResults) DefaultTarget() *core.RecordRef {
-	return &er.RecordRef
+	return er.T
 }
 
 func (er *ExecutorResults) Type() core.MessageType {
@@ -303,11 +310,13 @@ func (er *ExecutorResults) Type() core.MessageType {
 
 // TODO change after changing pulsar
 func (er *ExecutorResults) GetCaller() *core.RecordRef {
-	return &er.Caller
+	return nil
 }
 
 func (er *ExecutorResults) GetReference() core.RecordRef {
-	return er.RecordRef
+	//return er.RecordRef
+	panic("wtf1")
+	return core.RecordRef{}
 }
 
 type ValidateCaseBind struct {
