@@ -196,6 +196,7 @@ func init() {
 	gob.Register(&CallConstructor{})
 	gob.Register(&CallMethod{})
 	gob.Register(&ReturnResults{})
+	gob.Register(&ExecutorResults{}) // TODO delete this?
 	gob.Register(&ExecutorResultsBatch{})
 	gob.Register(&ValidateCaseBind{})
 	gob.Register(&ValidationResults{})
