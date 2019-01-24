@@ -87,6 +87,7 @@ func MessageBusTrivialBehavior(mb *testmessagebus.TestMessageBus, lr core.LogicR
 	mb.ReRegister(core.TypeCallConstructor, lr.Execute)
 	mb.ReRegister(core.TypeValidateCaseBind, lr.HandleValidateCaseBindMessage)
 	mb.ReRegister(core.TypeValidationResults, lr.HandleValidationResultsMessage)
+	// TODO FIXME
 	mb.ReRegister(core.TypeExecutorResults, lr.HandleExecutorResultsMessage)
 }
 
@@ -1311,6 +1312,7 @@ func New(n int) (*Child, error) {
 		return nil, nil
 	})
 	toExecute := make([]core.Parcel, 0)
+	// TODO FIXME
 	mb.ReRegister(core.TypeExecutorResults, func(ctx context.Context, m core.Parcel) (core.Reply, error) {
 		toExecute = append(toExecute, m)
 		return nil, nil
@@ -1756,6 +1758,7 @@ func getLogicRunnerWithoutValidation(lr core.LogicRunner) *LogicRunner {
 
 	newmb.ReRegister(core.TypeValidationResults, emptyFunc)
 	newmb.ReRegister(core.TypeExecutorResults, emptyFunc)
+	newmb.ReRegister(core.TypeExecutorResultsBatch, emptyFunc)
 
 	rlr.MessageBus = newmb
 

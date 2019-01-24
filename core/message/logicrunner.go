@@ -266,6 +266,32 @@ func (cc *CallConstructor) Type() core.MessageType {
 	return core.TypeCallConstructor
 }
 
+type ExecutorResultsBatch struct {
+	Caller    core.RecordRef
+	RecordRef core.RecordRef
+	results   []*ExecutorResults
+}
+
+func (*ExecutorResultsBatch) Type() core.MessageType {
+	return core.TypeExecutorResultsBatch
+}
+
+func (erb *ExecutorResultsBatch) GetCaller() *core.RecordRef {
+	return &erb.Caller
+}
+
+func (erb *ExecutorResultsBatch) DefaultTarget() *core.RecordRef {
+	return &erb.RecordRef
+}
+
+func (*ExecutorResultsBatch) DefaultRole() core.DynamicRole {
+	return core.DynamicRoleVirtualExecutor
+}
+
+func (*ExecutorResultsBatch) AllowedSenderObjectAndRole() (*core.RecordRef, core.DynamicRole) {
+	return nil, 0
+}
+
 // TODO rename to executorObjectResult (results?)
 type ExecutorResults struct {
 	Caller    core.RecordRef

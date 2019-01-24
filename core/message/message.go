@@ -43,6 +43,8 @@ func getEmptyMessage(mt core.MessageType) (core.Message, error) {
 		return &ReturnResults{}, nil
 	case core.TypeExecutorResults:
 		return &ExecutorResults{}, nil
+	case core.TypeExecutorResultsBatch:
+		return &ExecutorResultsBatch{}, nil
 	case core.TypeValidateCaseBind:
 		return &ValidateCaseBind{}, nil
 	case core.TypeValidationResults:
@@ -195,6 +197,7 @@ func init() {
 	gob.Register(&CallMethod{})
 	gob.Register(&ReturnResults{})
 	gob.Register(&ExecutorResults{})
+	gob.Register(&ExecutorResultsBatch{})
 	gob.Register(&ValidateCaseBind{})
 	gob.Register(&ValidationResults{})
 	gob.Register(&PendingFinished{})

@@ -213,6 +213,8 @@ const (
 	TypeReturnResults
 	// TypeExecutorResults message that goes to new Executor to validate previous Executor actions through CaseBind
 	TypeExecutorResults
+	// Same as TypeExecutorResults but multiple messages are joined in one batch
+	TypeExecutorResultsBatch
 	// TypeValidateCaseBind sends CaseBind form Executor to Validators for redo all actions
 	TypeValidateCaseBind
 	// TypeValidationResults sends from Validator to new Executor with results of validation actions of previous Executor
