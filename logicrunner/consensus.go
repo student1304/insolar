@@ -113,7 +113,8 @@ func (c *Consensus) CheckReady(ctx context.Context) {
 }
 
 func (c *Consensus) GetReference() Ref {
-	return c.Message.Message().(*message.ExecutorResults).RecordRef
+	//	return c.Message.Message().(*message.ExecutorResults).RecordRef
+	return Ref{}
 }
 
 //

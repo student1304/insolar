@@ -238,22 +238,28 @@ func (lr *LogicRunner) HandleExecutorResultsMessage(ctx context.Context, inmsg c
 		return nil, errors.Errorf("HandleValidationResultsMessage got argument typed %t", inmsg)
 	}
 
-	// now we have 2 different types of data in message.HandleExecutorResultsMessage
-	// one part of it is about consensus
-	// another one is about prepare state on new executor after pulse
-	// TODO make it in different goroutines
+	var retErr error
+	for ref, data := range msg.D {
+		// now we have 2 different types of data in message.HandleExecutorResultsMessage
+		// one part of it is about consensus
+		// another one is about prepare state on new executor after pulse
+		// TODO make it in different goroutines
 
-	// prepare state after previous executor
-	err := lr.prepareObjectState(ctx, msg)
-	if err != nil {
-		return &reply.Error{}, err
+		// prepare state after previous executor
+		err := lr.prepareObjectState(ctx, &ref, data)
+		if err != nil {
+			retErr = errors.Wrap(retErr, err.Error())
+		}
+
+		// validation things
+		// c := lr.GetConsensus(ctx, msg.RecordRef)
+		// c.AddExecutor(ctx, inmsg, msg)
+	}
+	if retErr == nil {
+		return &reply.OK{}, nil
 	}
 
-	// validation things
-	// c := lr.GetConsensus(ctx, msg.RecordRef)
-	// c.AddExecutor(ctx, inmsg, msg)
-
-	return &reply.OK{}, nil
+	return &reply.Error{}, retErr
 }
 
 // ValidationBehaviour is a special object that responsible for validation behavior of other methods.

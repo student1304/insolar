@@ -162,13 +162,12 @@ func (es *ExecutionState) WrapError(err error, message string) error {
 	return res
 }
 
-func (es *ExecutionState) CheckPendingRequests(ctx context.Context, inMsg core.Message) (message.PendingState, error) {
-	msg, ok := inMsg.(*message.CallMethod)
-	if !ok {
+func (es *ExecutionState) CheckPendingRequests(ctx context.Context, ref *Ref) (message.PendingState, error) {
+	if ref != nil {
 		return message.NotPending, nil
 	}
 
-	has, err := es.ArtifactManager.HasPendingRequests(ctx, msg.ObjectRef)
+	has, err := es.ArtifactManager.HasPendingRequests(ctx, *ref)
 	if err != nil {
 		return message.NotPending, err
 	}
@@ -387,7 +386,7 @@ func (lr *LogicRunner) executeActual(ctx context.Context, parcel core.Parcel, ms
 	es.Queue = append(es.Queue, qElement)
 	es.Unlock()
 
-	err = lr.StartQueueProcessorIfNeeded(ctx, es, msg)
+	err = lr.StartQueueProcessorIfNeeded(ctx, es, &ref)
 	if err != nil {
 		return nil, err
 	}
@@ -457,7 +456,7 @@ func (lr *LogicRunner) HandlePendingFinishedMessage(
 	}
 	es.Unlock()
 
-	err := lr.StartQueueProcessorIfNeeded(ctx, es, parcel.Message())
+	err := lr.StartQueueProcessorIfNeeded(ctx, es, ref)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't start queue processor")
 	}
@@ -466,7 +465,7 @@ func (lr *LogicRunner) HandlePendingFinishedMessage(
 }
 
 func (lr *LogicRunner) StartQueueProcessorIfNeeded(
-	ctx context.Context, es *ExecutionState, msg core.Message,
+	ctx context.Context, es *ExecutionState, ref *Ref,
 ) error {
 	es.Lock()
 	defer es.Unlock()
@@ -482,7 +481,7 @@ func (lr *LogicRunner) StartQueueProcessorIfNeeded(
 	}
 
 	if es.pending == message.PendingUnknown {
-		pending, err := es.CheckPendingRequests(ctx, msg)
+		pending, err := es.CheckPendingRequests(ctx, ref)
 		if err != nil {
 			return errors.Wrap(err, "couldn't check for pending requests")
 		}
@@ -675,18 +674,8 @@ func init() {
 	gob.Register(&ObjectBody{})
 }
 
-func (lr *LogicRunner) prepareObjectState(ctx context.Context, msg *message.ExecutorResults) error {
-	for k, v := range msg.D {
-		err := lr.prepareObjectStateInternal(ctx, k, v)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (lr *LogicRunner) prepareObjectStateInternal(ctx context.Context, ref core.RecordRef, msg *message.ExecutorResultsEntry) error {
-	state := lr.UpsertObjectState(ref)
+func (lr *LogicRunner) prepareObjectState(ctx context.Context, ref *Ref, data *message.ExecutorResultsEntry) error {
+	state := lr.UpsertObjectState(*ref)
 	state.Lock()
 	if state.ExecutionState == nil {
 		state.ExecutionState = &ExecutionState{
@@ -706,7 +695,7 @@ func (lr *LogicRunner) prepareObjectStateInternal(ctx context.Context, ref core.
 		)
 		es.pending = message.NotPending
 		es.PendingConfirmed = false
-	} else if es.pending == message.InPending && msg.Pending == message.NotPending {
+	} else if es.pending == message.InPending && data.Pending == message.NotPending {
 		inslogger.FromContext(ctx).Debug(
 			"executor we came to thinks that execution pending, but previous said to continue",
 		)
@@ -721,13 +710,13 @@ func (lr *LogicRunner) prepareObjectStateInternal(ctx context.Context, ref core.
 			)
 		}
 	} else if es.pending == message.PendingUnknown {
-		es.pending = msg.Pending
+		es.pending = data.Pending
 	}
 
 	//prepare Queue
-	if msg.Queue != nil {
+	if data.Queue != nil {
 		queueFromMessage := make([]ExecutionQueueElement, 0)
-		for _, qe := range msg.Queue {
+		for _, qe := range data.Queue {
 			queueFromMessage = append(
 				queueFromMessage,
 				ExecutionQueueElement{
@@ -742,7 +731,7 @@ func (lr *LogicRunner) prepareObjectStateInternal(ctx context.Context, ref core.
 
 	es.Unlock()
 
-	err := lr.StartQueueProcessorIfNeeded(ctx, es, msg)
+	err := lr.StartQueueProcessorIfNeeded(ctx, es, ref)
 	if err != nil {
 		return errors.Wrap(err, "can't start Queue Processor from prepareObjectState")
 	}
@@ -982,7 +971,9 @@ func (lr *LogicRunner) OnPulse(ctx context.Context, pulse core.Pulse) error {
 					targetNode := nodes[0]
 					er, ok := executorResults[targetNode]
 					if !ok {
-						executorResults[targetNode] = message.ExecutorResults{T: &ref}
+						executorResults[targetNode] = message.ExecutorResults{
+							T: &ref,
+							D: make(map[Ref]*message.ExecutorResultsEntry)} // example, only for routing
 						er = executorResults[targetNode]
 					}
 					er.D[ref] = &message.ExecutorResultsEntry{
