@@ -1,3 +1,4 @@
 {
-	local_launch: false
+  local_launch: false,
+  trace: false,
 }
