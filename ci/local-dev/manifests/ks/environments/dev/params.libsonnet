@@ -4,15 +4,15 @@ local envParams = params {
   components+: {
     'insolar.insolar'+: {
       image+: {
-        image: 'registry.insolar.io/insolard',
-        tag: 'f830c86',
+        image: 'registry.insolar.io/insolar-all',
+        tag: '200.26610d7',
         image_pull_policy: 'IfNotPresent',
       },
     },
     'pulsar.insolar'+: {
       image+: {
-        image: 'registry.insolar.io/insolard',
-        tag: 'f830c86',
+        image: 'registry.insolar.io/insolar-all',
+        tag: '200.26610d7',
         image_pull_policy: 'IfNotPresent',
       },
     },
