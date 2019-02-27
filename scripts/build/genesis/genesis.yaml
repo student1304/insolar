@@ -109,8 +109,8 @@ nodes:
   -
     host: "127.0.0.1:63836"
     role: "virtual"
-    keys_file: "scripts/insolard/nodes/1/keys.json"
-    cert_name: "node_cert_1.json"
+    keys_file: "keys/node_00.json"
+    cert_name: "node_cert_0.json"
 #  - # Attention! You must wait `lightChainLimit` pulses after LM joined to run benchmark w/o errors.
 #    host: "127.0.0.1:63936"
 #    role: "light_material"
