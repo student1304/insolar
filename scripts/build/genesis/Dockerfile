@@ -39,3 +39,12 @@ ENTRYPOINT /insgorund               \
             --metrics=localhost:8002
 
 CMD []
+
+
+FROM scratch AS genesis
+MAINTAINER ivan.serezhkin@insolar.io
+COPY --from=genesis-builder /work/data /
+
+FROM scratch AS keys
+MAINTAINER ivan.serezhkin@insolar.io
+COPY --from=genesis-builder /work/keys /
