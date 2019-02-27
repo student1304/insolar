@@ -181,5 +181,10 @@ docker-pulsar:
 docker-insgorund:
 	docker build --tag insolar/insgorund -f ./docker/Dockerfile.insgorund .
 
+# TODO: move it into all dockers when all scripts will be ready
+PHONY: docker-genesis
+docker-genesis:
+	time docker build -f scripts/build/genesis/Dockerfile .
+
 .PHONY: docker
 docker: docker-insolard docker-pulsar docker-insgorund
