@@ -82,6 +82,8 @@ func (m *Member) Call(rootDomain core.RecordRef, method string, params []byte, s
 	switch method {
 	case "CreateMember":
 		return m.createMemberCall(rootDomain, params)
+	case "CreateFabric":
+		return m.createFabricCall(rootDomain, params)
 	}
 
 	if err := m.verifySig(method, params, seed, sign); err != nil {
@@ -115,6 +117,12 @@ func (m *Member) createMemberCall(ref core.RecordRef, params []byte) (interface{
 		return nil, fmt.Errorf("[ createMemberCall ]: %s", err.Error())
 	}
 	return rootDomain.CreateMember(name, key)
+}
+
+func (m *Member) createFabricCall(ref core.RecordRef, params []byte) (interface{}, error) {
+	rootDomain := rootdomain.GetObject(ref)
+
+	return rootDomain.CreateFabric()
 }
 
 func (m *Member) getMyBalanceCall() (interface{}, error) {

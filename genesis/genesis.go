@@ -48,10 +48,11 @@ const (
 	walletContract    = "wallet"
 	memberContract    = "member"
 	allowanceContract = "allowance"
+	fabricContract    = "fabric"
 	nodeAmount        = 32
 )
 
-var contractNames = []string{walletContract, memberContract, allowanceContract, rootDomain, nodeDomain, nodeRecord}
+var contractNames = []string{walletContract, memberContract, allowanceContract, rootDomain, nodeDomain, nodeRecord, fabricContract}
 
 type messageBusLocker interface {
 	Lock(ctx context.Context)

@@ -19,11 +19,13 @@ package rootdomain
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/insolar/insolar/application/proxy/fabric"
+	"github.com/insolar/insolar/logicrunner/goplugin/foundation"
 
+	"github.com/insolar/docflow-hlf-cc/src/docflow/platform/sc"
 	"github.com/insolar/insolar/application/proxy/member"
 	"github.com/insolar/insolar/application/proxy/wallet"
 	"github.com/insolar/insolar/core"
-	"github.com/insolar/insolar/logicrunner/goplugin/foundation"
 )
 
 // RootDomain is smart contract representing entrance point to system
@@ -50,6 +52,17 @@ func (rd *RootDomain) CreateMember(name string, key string) (string, error) {
 	}
 
 	return m.GetReference().String(), nil
+}
+
+// CreateFabric processes create fabric request
+func (rd *RootDomain) CreateFabric() (string, error) {
+	fabricHolder := fabric.New("insFabric", new(sc.SmartContract))
+	f, err := fabricHolder.AsChild(rd.GetReference())
+	if err != nil {
+		return "", fmt.Errorf("[ CreateFabric ] Can't save as child: %s", err.Error())
+	}
+
+	return f.GetReference().String(), nil
 }
 
 // GetRootMemberRef returns root member's reference
