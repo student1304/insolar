@@ -280,6 +280,7 @@ type StorageExportResult struct {
 type StorageExporter interface {
 	// Export returns data view from storage.
 	Export(ctx context.Context, fromPulse PulseNumber, size int) (*StorageExportResult, error)
+	GetCurrentPulse(ctx context.Context) (*Pulse, error)
 }
 
 var (

@@ -394,6 +394,14 @@
   revision = "b2ce2384e17bbe0c6d34077efa39dbab3e09123b"
 
 [[projects]]
+  digest = "1:c6502cd848a89b1d62ed82ba5f20546444d3028879f4af40368e489fa962ba9f"
+  name = "github.com/segmentio/kafka-go"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "0b3aacc527812d4040e51211146a43545e82d670"
+  version = "v0.2.2"
+
+[[projects]]
   digest = "1:69b1cc331fca23d702bd72f860c6a647afd0aa9fcbc1d0659b1365e26546dd70"
   name = "github.com/sirupsen/logrus"
   packages = ["."]
@@ -638,6 +646,7 @@
     "github.com/prometheus/client_golang/prometheus/promhttp",
     "github.com/rs/zerolog",
     "github.com/satori/go.uuid",
+    "github.com/segmentio/kafka-go",
     "github.com/sirupsen/logrus",
     "github.com/spf13/cobra",
     "github.com/spf13/jwalterweatherman",

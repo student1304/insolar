@@ -19,18 +19,17 @@ package exporter
 import (
 	"bytes"
 	"context"
-	"math"
-	"strconv"
-
 	"github.com/insolar/insolar/configuration"
 	"github.com/insolar/insolar/core"
 	"github.com/insolar/insolar/core/message"
 	"github.com/insolar/insolar/instrumentation/inslogger"
 	"github.com/insolar/insolar/ledger/storage"
 	"github.com/insolar/insolar/ledger/storage/record"
-	base58 "github.com/jbenet/go-base58"
+	"github.com/jbenet/go-base58"
 	"github.com/pkg/errors"
 	"github.com/ugorji/go/codec"
+	"math"
+	"strconv"
 )
 
 // Exporter provides methods for fetching data view from storage.
@@ -72,6 +71,10 @@ type pulseData struct {
 	Records recordsData
 	Pulse   core.Pulse
 	JetID   core.RecordID
+}
+
+func (e *Exporter) GetCurrentPulse(ctx context.Context) (*core.Pulse, error) {
+	return e.PulseStorage.Current(ctx)
 }
 
 // Export returns data view from storage.
