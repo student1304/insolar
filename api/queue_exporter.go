@@ -18,6 +18,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"github.com/insolar/insolar/core"
 	"strings"
 	"time"
@@ -51,8 +52,13 @@ func send(result *core.StorageExportResult) error {
 	return err
 }
 
-func (s *StorageExporterService) QueueExporter() error {
-	exp := s.runner.StorageExporter
+type StorageWrapper struct {
+	StorageExporter core.StorageExporter `inject:""`
+}
+
+func QueueExporter() error {
+	expWrapper := StorageWrapper{}
+	exp := expWrapper.StorageExporter
 	ctx := context.TODO()
 
 	currentPulse, err := exp.GetCurrentPulse(ctx)
@@ -90,6 +96,19 @@ func (s *StorageExporterService) QueueExporter() error {
 			time.Sleep(1000)
 		}
 	}
+
+	return nil
+}
+
+// Start runs api server
+func (sw *StorageWrapper) Start(ctx context.Context) error {
+	fmt.Println("StorageWrapper started")
+	return nil
+}
+
+// Stop stops api server
+func (sw *StorageWrapper) Stop(ctx context.Context) error {
+	fmt.Println("StorageWrapper stopped")
 
 	return nil
 }
