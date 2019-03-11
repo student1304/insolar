@@ -38,6 +38,8 @@ import (
 	"github.com/insolar/insolar/platformpolicy"
 )
 
+var QueueExporter *StorageQueueExporterService
+
 // Runner implements Component for API
 type Runner struct {
 	CertificateManager  core.CertificateManager  `inject:""`
@@ -81,6 +83,12 @@ func (ar *Runner) registerServices(rpcServer *rpc.Server) error {
 	err := rpcServer.RegisterService(NewStorageExporterService(ar), "exporter")
 	if err != nil {
 		return errors.New("[ registerServices ] Can't RegisterService: exporter")
+	}
+
+	QueueExporter = NewStorageQueueExporterService(ar, []string{"localhost:9092"}, "test")
+	err = rpcServer.RegisterService(QueueExporter, "queue_exporter")
+	if err != nil {
+		return errors.New("[ registerServices ] Can't RegisterService: queue_exporter. Error: " + err.Error())
 	}
 
 	err = rpcServer.RegisterService(NewSeedService(ar), "seed")
@@ -154,6 +162,9 @@ func (ar *Runner) Start(ctx context.Context) error {
 			inslog.Error("Httpserver: ListenAndServe() error: ", err)
 		}
 	}()
+
+	go QueueExporter.QueueExporter()
+
 	return nil
 }
 

@@ -18,8 +18,10 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"github.com/insolar/insolar/core"
+	"github.com/insolar/insolar/instrumentation/inslogger"
+	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -28,14 +30,27 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-func send(result *core.StorageExportResult) error {
+// StorageExporterService is a service that provides API for exporting storage data.
+type StorageQueueExporterService struct {
+	runner  *Runner
+	brokers []string
+	topic   string
+	writer  *kafka.Writer
+}
+
+// NewStorageExporterService creates new StorageExporter service instance.
+func NewStorageQueueExporterService(runner *Runner, brokers []string, topic string) *StorageQueueExporterService {
 	// make a writer that produces to topic-A, using the least-bytes distribution
 	w := kafka.NewWriter(kafka.WriterConfig{
-		Brokers:  []string{"localhost:9092"},
-		Topic:    "topic-A",
+		Brokers:  brokers,
+		Topic:    topic,
 		Balancer: &kafka.LeastBytes{},
 	})
 
+	return &StorageQueueExporterService{runner: runner, brokers: brokers, topic: topic, writer: w}
+}
+
+func (s *StorageQueueExporterService) send(result *core.StorageExportResult) error {
 	msgs := []kafka.Message{}
 	for k, v := range result.Data {
 		msgs = append(msgs,
@@ -45,21 +60,22 @@ func send(result *core.StorageExportResult) error {
 			})
 	}
 
-	err := w.WriteMessages(context.Background(), msgs...)
-
-	w.Close()
+	err := s.writer.WriteMessages(context.Background(), msgs...)
 
 	return err
 }
 
-type StorageWrapper struct {
-	StorageExporter core.StorageExporter `inject:""`
+func (s *StorageQueueExporterService) Exporter(r *http.Request, args *StorageExporterArgs, reply *StorageExporterReply) error {
+	s.QueueExporter()
+	return nil
 }
 
-func QueueExporter() error {
-	expWrapper := StorageWrapper{}
-	exp := expWrapper.StorageExporter
+func (s *StorageQueueExporterService) QueueExporter() error {
+	defer s.writer.Close()
+
+	exp := s.runner.StorageExporter
 	ctx := context.TODO()
+	inslog := inslogger.FromContext(ctx)
 
 	currentPulse, err := exp.GetCurrentPulse(ctx)
 	if err != nil {
@@ -69,6 +85,7 @@ func QueueExporter() error {
 
 	for true {
 		currentPulse, err := exp.GetCurrentPulse(ctx)
+		inslog.Info("currentPulse  ..." + strconv.Itoa(int(currentPulse.PulseNumber)))
 		if err != nil {
 			return errors.Wrap(err, "failed to get current pulse data")
 		}
@@ -86,29 +103,17 @@ func QueueExporter() error {
 				}
 				return errors.Wrap(err, "[ Export ]")
 			} else {
-				err := send(result)
+				err := s.send(result)
 				if err != nil {
-					return err
+					return errors.Wrap(err, "failed to send current pulse data")
 				}
 			}
 			previousPulse = currentPulse
 		} else {
-			time.Sleep(1000)
+			inslog.Info("QueueExporter sleep   ")
+			time.Sleep(10000)
 		}
 	}
-
-	return nil
-}
-
-// Start runs api server
-func (sw *StorageWrapper) Start(ctx context.Context) error {
-	fmt.Println("StorageWrapper started")
-	return nil
-}
-
-// Stop stops api server
-func (sw *StorageWrapper) Stop(ctx context.Context) error {
-	fmt.Println("StorageWrapper stopped")
 
 	return nil
 }
