@@ -17,7 +17,6 @@
 package fabric
 
 import (
-	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/insolar/insolar/core"
 	"github.com/insolar/insolar/logicrunner/goplugin/foundation"
 	"github.com/insolar/insolar/logicrunner/goplugin/proxyctx"
@@ -25,7 +24,7 @@ import (
 
 // PrototypeReference to prototype of this contract
 // error checking hides in generator
-var PrototypeReference, _ = core.NewRefFromBase58("1111283fyHBPzyundeQwE6DiWS4c6RhwuZcqpJ3iyLe.11111111111111111111111111111111")
+var PrototypeReference, _ = core.NewRefFromBase58("11113HdqzM8wfJA5XhgrNM6TLQ6fQz93nTocuYb4bP1.11111111111111111111111111111111")
 
 // Fabric holds proxy type
 type Fabric struct {
@@ -78,10 +77,8 @@ func GetImplementationFrom(object core.RecordRef) (*Fabric, error) {
 }
 
 // New is constructor
-func New(name string, cc shim.Chaincode) *ContractConstructorHolder {
-	var args [2]interface{}
-	args[0] = name
-	args[1] = cc
+func New() *ContractConstructorHolder {
+	var args [0]interface{}
 
 	var argsSerialized []byte
 	err := proxyctx.Current.Serialize(args, &argsSerialized)

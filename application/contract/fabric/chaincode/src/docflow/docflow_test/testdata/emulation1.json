@@ -1,0 +1,654 @@
+{
+  "methods": [
+    {
+      "name": "createParticipant",
+      "transactionID": "1",
+      "callType": "invoke",
+      "in": {
+        "personName": "Nick Adams",
+        "organizationName": "Insolar",
+        "position": "Director",
+        "mspId": "Org1MSP",
+        "publicKey": "ASJHDJLLNBFIBOIFWQPMFasdKNKLASDANFHANKLDMALSMDNFOSA",
+        "email": "nick.adams@insolar.io"
+      },
+      "out": {
+        "reference": "AFBBUlRJQ0lQQU5UADEA"
+      }
+    },
+    {
+      "name": "createParticipant",
+      "transactionID": "2",
+      "callType": "invoke",
+      "in": {
+        "personName": "July June",
+        "organizationName": "Google",
+        "position": "HR",
+        "mspId": "Org1MSP",
+        "publicKey": "JKHIUGGfBHUIBHAKNKLASDANFHANASDKLDNHOIGHTGBNMJUYGF",
+        "email": "july.june@google.com"
+      },
+      "out": {
+        "reference": "AFBBUlRJQ0lQQU5UADIA"
+      }
+    },
+    {
+      "name": "createParticipant",
+      "transactionID": "3",
+      "callType": "invoke",
+      "in": {
+        "personName": "John Rain",
+        "organizationName": "IBM",
+        "position": "Developerss",
+        "mspId": "Org2MSP",
+        "publicKey": "JIBAHSBFIJASNFNLKPJIPJPSDLASDJNFHANKLDMALSMDNFOSA",
+        "email": "john.rain@ibm.com"
+      },
+      "out": {
+        "reference": "AFBBUlRJQ0lQQU5UADMA"
+      }
+    },
+    {
+      "name": "editParticipant",
+      "transactionID": "3",
+      "callType": "invoke",
+      "in": {
+        "id": "AFBBUlRJQ0lQQU5UADMA",
+        "personName": "John Rain",
+        "organizationName": "IBM",
+        "position": "Developer",
+        "mspId": "Org2MSP",
+        "publicKey": "JIBAHSBFIJASNFNLKPJIPJPSDLASDJNFHANKLDMALSMDNFOSA",
+        "email": "john.rain@ibm.com"
+      },
+      "out": {
+        "reference": "AFBBUlRJQ0lQQU5UADMA"
+      }
+    },
+    {
+      "name": "getMyParticipants",
+      "transactionID": "4",
+      "callType": "query",
+      "in": {
+      },
+      "out": [
+        {
+          "data": {
+            "email": "nick.adams@insolar.io",
+            "mspId": "Org1MSP",
+            "organizationName": "Insolar",
+            "personName": "NickAdams",
+            "position": "Director",
+            "publicKey": "ASJHDJLLNBFIBOIFWQPMFasdKNKLASDANFHANKLDMALSMDNFOSA"
+          },
+          "parentReference": "",
+          "reference": "AFBBUlRJQ0lQQU5UADEA"
+        },
+        {
+          "data": {
+            "email": "july.june@google.com",
+            "mspId": "Org1MSP",
+            "organizationName": "Google",
+            "personName": "JulyJune",
+            "position": "HR",
+            "publicKey": "JKHIUGGfBHUIBHAKNKLASDANFHANASDKLDNHOIGHTGBNMJUYGF"
+          },
+          "parentReference": "",
+          "reference": "AFBBUlRJQ0lQQU5UADIA"
+        }
+      ]
+    },
+    {
+      "name": "getAllParticipants",
+      "transactionID": "5",
+      "callType": "query",
+      "in": {
+      },
+      "out": [
+        {
+          "data": {
+            "email": "nick.adams@insolar.io",
+            "mspId": "Org1MSP",
+            "organizationName": "Insolar",
+            "personName": "NickAdams",
+            "position": "Director",
+            "publicKey": "ASJHDJLLNBFIBOIFWQPMFasdKNKLASDANFHANKLDMALSMDNFOSA"
+          },
+          "parentReference": "",
+          "reference": "AFBBUlRJQ0lQQU5UADEA"
+        },
+        {
+          "data": {
+            "email": "july.june@google.com",
+            "mspId": "Org1MSP",
+            "organizationName": "Google",
+            "personName": "JulyJune",
+            "position": "HR",
+            "publicKey": "JKHIUGGfBHUIBHAKNKLASDANFHANASDKLDNHOIGHTGBNMJUYGF"
+          },
+          "parentReference": "",
+          "reference": "AFBBUlRJQ0lQQU5UADIA"
+        },
+        {
+          "data": {
+            "email": "john.rain@ibm.com",
+            "mspId": "Org2MSP",
+            "organizationName": "IBM",
+            "personName": "JohnRain",
+            "position": "Developer",
+            "publicKey": "JIBAHSBFIJASNFNLKPJIPJPSDLASDJNFHANKLDMALSMDNFOSA"
+          },
+          "parentReference": "",
+          "reference": "AFBBUlRJQ0lQQU5UADMA"
+        }
+      ]
+    },
+    {
+      "name": "createProcess",
+      "transactionID": "10",
+      "callType": "invoke",
+      "in": {
+        "name": "Tokyo",
+        "processTemplateReference": "AFBST0NURU1QTEFURQAxMTExMQA=",
+        "participants": [
+          "AFBBUlRJQ0lQQU5UADEA",
+          "AFBBUlRJQ0lQQU5UADIA"
+        ]
+      },
+      "out": {
+        "processReference": "AFBST0NFU1MAMTAA",
+        "creationDate": 1549620261
+      }
+    },
+    {
+      "name": "sendResponse",
+      "transactionID": "14",
+      "callType": "invoke",
+      "in": {
+        "processReference": "AFBST0NFU1MAMTAA",
+        "elementNumber": 0,
+        "response": {
+          "responseSigned": {
+            "agreement": "Approved",
+            "description": "",
+            "attachments": [
+              {
+                "attachmentReference": "",
+                "versionReference": ""
+              }
+            ]
+          },
+          "signature": "",
+          "type": "Approve"
+        }
+      },
+      "out": {
+        "reference": "AFBST0NFU1MAMTAA"
+      }
+    },
+    {
+      "name": "sendResponse",
+      "transactionID": "14",
+      "callType": "invoke",
+      "in": {
+        "processReference": "AFBST0NFU1MAMTAA",
+        "elementNumber": 0,
+        "response": {
+          "responseSigned": {
+            "agreement": "",
+            "description": "Hello all",
+            "attachments": [
+              {
+                "attachmentReference": "",
+                "versionReference": ""
+              }
+            ]
+          },
+          "signature": "",
+          "type": "Text"
+        }
+      },
+      "out": {
+        "reference": "AFBST0NFU1MAMTAA"
+      }
+    },
+    {
+      "name": "createAttachment",
+      "transactionID": "12",
+      "callType": "invoke",
+      "in": {
+        "processReference": "AFBST0NFU1MAMTAA",
+        "attachmentName": "One Latter File"
+      },
+      "out": {
+        "reference": "AEFUVEFDSE1FTlQAMTIA"
+      }
+    },
+    {
+      "name": "createAttachmentVersion",
+      "transactionID": "12",
+      "callType": "invoke",
+      "in": {
+        "attachmentReference": "AEFUVEFDSE1FTlQAMTIA",
+        "version": {
+          "name": "OneLatterFile",
+          "mimeType": ".txt",
+          "hash": "HJHH",
+          "size": 0,
+          "countParts": 0,
+          "partSize": 1
+        }
+      },
+      "out": {
+        "reference": "AFZFUlNJT04AMTIA"
+      }
+    },
+    {
+      "name": "createPart",
+      "transactionID": "13",
+      "callType": "invoke",
+      "in": {
+        "versionReference": "AFZFUlNJT04AMTIA",
+        "part": {
+          "index": 0,
+          "data": "W"
+        }
+      },
+      "out": {
+        "reference": "AFBBUlQAMTMA"
+      }
+    },
+    {
+      "name": "sendResponse",
+      "transactionID": "15",
+      "callType": "invoke",
+      "in": {
+        "processReference": "AFBST0NFU1MAMTAA",
+        "elementNumber": 0,
+        "response": {
+          "responseSigned": {
+            "agreement": "",
+            "description": "Here is my simple file!",
+            "attachments": [
+              {
+                "attachmentReference": "AEFUVEFDSE1FTlQAMTIA",
+                "versionReference": "AFZFUlNJT04AMTIA"
+              }
+            ]
+          },
+          "signature": "",
+          "type": "File"
+        }
+      },
+      "out": {
+        "reference": "AFBST0NFU1MAMTAA"
+      }
+    },
+    {
+      "name": "createAttachmentVersion",
+      "transactionID": "14",
+      "callType": "invoke",
+      "in": {
+        "attachmentReference": "AEFUVEFDSE1FTlQAMTIA",
+        "version": {
+          "name": "OneLatterFile",
+          "mimeType": ".txt",
+          "hash": "ASDODHAS",
+          "size": 0,
+          "countParts": 0,
+          "partSize": 1
+        }
+      },
+      "out": {
+        "reference": "AFZFUlNJT04AMTQA"
+      }
+    },
+    {
+      "name": "createPart",
+      "transactionID": "14",
+      "callType": "invoke",
+      "in": {
+        "versionReference": "AFZFUlNJT04AMTQA",
+        "part": {
+          "index": 0,
+          "data": "W"
+        }
+      },
+      "out": {
+        "reference": "AFBBUlQAMTQA"
+      }
+    },
+    {
+      "name": "sendResponse",
+      "transactionID": "115",
+      "callType": "invoke",
+      "in": {
+        "processReference": "AFBST0NFU1MAMTAA",
+        "elementNumber": 0,
+        "response": {
+          "responseSigned": {
+            "agreement": "",
+            "description": "Here is my simple file!",
+            "attachments": [
+              {
+                "attachmentReference": "AEFUVEFDSE1FTlQAMTIA",
+                "versionReference": "AFZFUlNJT04AMTQA"
+              }
+            ]
+          },
+          "signature": "",
+          "type": "File"
+        }
+      },
+      "out": {
+        "reference": "AFBST0NFU1MAMTAA"
+      }
+    },
+    {
+      "name": "createAttachment",
+      "transactionID": "12",
+      "callType": "invoke",
+      "in": {
+        "processReference": "AFBST0NFU1MAMTAA",
+        "attachmentName": "One Latter File"
+      },
+      "out": {
+        "reference": "AEFUVEFDSE1FTlQAMTIA"
+      }
+    },
+    {
+      "name": "getProcessElementHistory",
+      "transactionID": "",
+      "callType": "query",
+      "in": {
+        "processReference": "AFBST0NFU1MAMTAA",
+        "elementNumber": 0,
+        "sinceResponseDate": 1549620262,
+        "responsesCount": 3
+      },
+      "out": [
+        {
+          "participantReference": "AFBBUlRJQ0lQQU5UADEA",
+          "responseSigned": {
+            "agreement": "",
+            "approvedSignature": "",
+            "approvedTime": 0,
+            "attachments": [
+              {
+                "attachmentReference": "",
+                "versionReference": ""
+              }
+            ],
+            "dateTime": 1549620261,
+            "description": "Helloall",
+            "processReference": "AFBST0NFU1MAMTAA",
+            "versionSignatures": null
+          },
+          "signature": "",
+          "type": "Text"
+        },
+        {
+          "participantReference": "AFBBUlRJQ0lQQU5UADEA",
+          "responseSigned": {
+            "agreement": "",
+            "approvedSignature": "",
+            "approvedTime": 0,
+            "attachments": [
+              {
+                "attachmentReference": "AEFUVEFDSE1FTlQAMTIA",
+                "versionReference": "AFZFUlNJT04AMTIA"
+              }
+            ],
+            "dateTime": 1549620261,
+            "description": "Hereismysimplefile!",
+            "processReference": "AFBST0NFU1MAMTAA",
+            "versionSignatures": null
+          },
+          "signature": "",
+          "type": "File"
+        },
+        {
+          "participantReference": "AFBBUlRJQ0lQQU5UADEA",
+          "responseSigned": {
+            "agreement": "",
+            "approvedSignature": "",
+            "approvedTime": 0,
+            "attachments": [
+              {
+                "attachmentReference": "AEFUVEFDSE1FTlQAMTIA",
+                "versionReference": "AFZFUlNJT04AMTQA"
+              }
+            ],
+            "dateTime": 1549620261,
+            "description": "Hereismysimplefile!",
+            "processReference": "AFBST0NFU1MAMTAA",
+            "versionSignatures": null
+          },
+          "signature": "",
+          "type": "File"
+        }
+      ]
+    },
+    {
+      "name": "getPartsByVersionReference",
+      "transactionID": "20",
+      "callType": "query",
+      "in": {
+        "versionReference": "AFZFUlNJT04AMTIA"
+      },
+      "out": [
+        {
+          "data": {
+            "index": 0
+          },
+          "parentReference": "AFZFUlNJT04AMTIA",
+          "reference": "AFBBUlQAMTMA"
+        }
+      ]
+    },
+    {
+      "name": "getPartByReference",
+      "transactionID": "16",
+      "callType": "query",
+      "in": {
+        "partReference": "AFBBUlQAMTMA"
+      },
+      "out": {
+        "data": {
+          "index": 0,
+          "data": "W"
+        },
+        "parentReference": "AFZFUlNJT04AMTIA",
+        "reference": "AFBBUlQAMTMA"
+      }
+    },
+    {
+      "name": "sendResponse",
+      "transactionID": "20",
+      "callType": "invoke",
+      "in": {
+        "processReference": "AFBST0NFU1MAMTAA",
+        "elementNumber": 0,
+        "response": {
+          "responseSigned": {
+            "agreement": "Approved",
+            "versionSignatures": [
+              {
+                "attachmentName": "My file.json",
+                "versionReference": "AFZFUlNJT04AMTQA",
+                "signature": "TRASH_SIGNATURE_XXXXXXXXXXXXXXXX"
+              }
+            ],
+            "description": "trash!",
+            "attachments": [
+              {
+                "attachmentReference": "trash",
+                "versionReference": "trash"
+              }
+            ]
+          },
+          "signature": "",
+          "type": "Approve"
+        }
+      },
+      "out": {
+        "reference": "AFBST0NFU1MAMTAA"
+      }
+    },
+    {
+      "name": "sendResponse",
+      "transactionID": "20",
+      "callType": "invoke",
+      "in": {
+        "processReference": "AFBST0NFU1MAMTAA",
+        "elementNumber": 0,
+        "response": {
+          "responseSigned": {
+            "agreement": "Approved",
+            "versionSignatures": [
+              {
+                "attachmentName": "t",
+                "versionName": "Version1",
+                "versionReference": "AFZFUlNJT04AMTIA",
+                "signature": "Na2Q1I+FppRJ50hCLtuwqQ2xirA="
+              }
+            ]
+          },
+          "signature": "PF/uV8JjxeEbY8jE2JPnmbis1Z384KnIdhVROADDBVkU9dlrTBtxGgj9hNSTKfYcf4F56r0eANghlG1ocKw883i33DTSpmlIU4sqcW+9suB4xGQrryUNKvK3uu9sHBFHUZlQ+fnIsREPq2OqyfOkJNHiqOtMU2R02V/keF2NZv4=",
+          "type": "Approve"
+        }
+      },
+      "out": {
+        "reference": "AFBST0NFU1MAMTAA"
+      }
+    },
+    {
+      "name": "getAllProcesses",
+      "transactionID": "11",
+      "callType": "query",
+      "in": {
+      },
+      "out": [
+        {
+          "data": {
+            "approves": [
+              {
+                "AFBBUlRJQ0lQQU5UADEA": "Approved",
+                "AFBBUlRJQ0lQQU5UADIA": "None"
+              }
+            ],
+            "creationTime": 1549620261,
+            "creator": "AFBBUlRJQ0lQQU5UADEA",
+            "lastResponses": [
+              {
+                "participantReference": "AFBBUlRJQ0lQQU5UADEA",
+                "responseSigned": {
+                  "agreement": "Approved",
+                  "approvedSignature": "",
+                  "approvedTime": 0,
+                  "attachments": null,
+                  "dateTime": 1549620261,
+                  "description": "",
+                  "processReference": "AFBST0NFU1MAMTAA",
+                  "versionSignatures": [
+                    {
+                      "attachmentName": "t",
+                      "signature": "Na2Q1I+FppRJ50hCLtuwqQ2xirA=",
+                      "versionName": "Version1",
+                      "versionReference": "AFZFUlNJT04AMTIA"
+                    }
+                  ]
+                },
+                "signature": "PF/uV8JjxeEbY8jE2JPnmbis1Z384KnIdhVROADDBVkU9dlrTBtxGgj9hNSTKfYcf4F56r0eANghlG1ocKw883i33DTSpmlIU4sqcW+9suB4xGQrryUNKvK3uu9sHBFHUZlQ+fnIsREPq2OqyfOkJNHiqOtMU2R02V/keF2NZv4=",
+                "type": "Approve"
+              }
+            ],
+            "name": "Tokyo",
+            "participants": [
+              {
+                "data": {
+                  "email": "nick.adams@insolar.io",
+                  "mspId": "Org1MSP",
+                  "organizationName": "Insolar",
+                  "personName": "NickAdams",
+                  "position": "Director",
+                  "publicKey": "ASJHDJLLNBFIBOIFWQPMFasdKNKLASDANFHANKLDMALSMDNFOSA"
+                },
+                "parentReference": "",
+                "reference": "AFBBUlRJQ0lQQU5UADEA"
+              },
+              {
+                "data": {
+                  "email": "july.june@google.com",
+                  "mspId": "Org1MSP",
+                  "organizationName": "Google",
+                  "personName": "JulyJune",
+                  "position": "HR",
+                  "publicKey": "JKHIUGGfBHUIBHAKNKLASDANFHANASDKLDNHOIGHTGBNMJUYGF"
+                },
+                "parentReference": "",
+                "reference": "AFBBUlRJQ0lQQU5UADIA"
+              }
+            ],
+            "status": "open"
+          },
+          "parentReference": "",
+          "reference": "AFBST0NFU1MAMTAA"
+        }
+      ]
+    },
+    {
+      "name": "getAttachmentsByProcessReference",
+      "transactionID": "",
+      "callType": "query",
+      "in": {
+        "processReference": "AFBST0NFU1MAMTAA"
+      },
+      "out": [
+        {
+          "data": {
+            "name": "OneLatterFile",
+            "nc_versions": [
+              {
+                "data": {
+                  "countParts": 0,
+                  "creationTime": 1549620261,
+                  "creator": "AFBBUlRJQ0lQQU5UADEA",
+                  "hash": "HJHH",
+                  "mimeType": ".txt",
+                  "name": "OneLatterFile",
+                  "partSize": 1,
+                  "signatures": {
+                    "AFBBUlRJQ0lQQU5UADEA": "Na2Q1I+FppRJ50hCLtuwqQ2xirA="
+                  },
+                  "size": 0
+                },
+                "parentReference": "AEFUVEFDSE1FTlQAMTIA",
+                "reference": "AFZFUlNJT04AMTIA"
+              },
+              {
+                "data": {
+                  "countParts": 0,
+                  "creationTime": 1549620261,
+                  "creator": "AFBBUlRJQ0lQQU5UADEA",
+                  "hash": "ASDODHAS",
+                  "mimeType": ".txt",
+                  "name": "OneLatterFile",
+                  "partSize": 1,
+                  "signatures": {
+                    "AFBBUlRJQ0lQQU5UADEA": "TRASH_SIGNATURE_XXXXXXXXXXXXXXXX"
+                  },
+                  "size": 0
+                },
+                "parentReference": "AEFUVEFDSE1FTlQAMTIA",
+                "reference": "AFZFUlNJT04AMTQA"
+              }
+            ]
+          },
+          "parentReference": "AFBST0NFU1MAMTAA",
+          "reference": "AEFUVEFDSE1FTlQAMTIA"
+        }
+      ]
+    }
+  ]
+}

@@ -22,7 +22,6 @@ import (
 	"github.com/insolar/insolar/application/proxy/fabric"
 	"github.com/insolar/insolar/logicrunner/goplugin/foundation"
 
-	"github.com/insolar/docflow-hlf-cc/src/docflow/platform/sc"
 	"github.com/insolar/insolar/application/proxy/member"
 	"github.com/insolar/insolar/application/proxy/wallet"
 	"github.com/insolar/insolar/core"
@@ -56,7 +55,7 @@ func (rd *RootDomain) CreateMember(name string, key string) (string, error) {
 
 // CreateFabric processes create fabric request
 func (rd *RootDomain) CreateFabric() (string, error) {
-	fabricHolder := fabric.New("insFabric", new(sc.SmartContract))
+	fabricHolder := fabric.New()
 	f, err := fabricHolder.AsChild(rd.GetReference())
 	if err != nil {
 		return "", fmt.Errorf("[ CreateFabric ] Can't save as child: %s", err.Error())

@@ -2,7 +2,8 @@ package fabric
 
 import (
 	"fmt"
-	"github.com/hyperledger/fabric/core/chaincode/shim"
+	"github.com/insolar/insolar/application/contract/fabric/chaincode/src/docflow/platform/sc"
+	"github.com/insolar/insolar/application/contract/fabric/insstub"
 	"github.com/insolar/insolar/core"
 	"github.com/insolar/insolar/logicrunner/goplugin/foundation"
 )
@@ -11,15 +12,15 @@ type Fabric struct {
 	foundation.BaseContract
 	transactionId int
 	State         map[string][]byte
-	InsStub       shim.InsStub
+	InsStub       insstub.InsStub
 }
 
-func New(name string, cc shim.Chaincode) (*Fabric, error) {
+func New() (*Fabric, error) {
 	state := make(map[string][]byte)
 	return &Fabric{
 		transactionId: 0,
 		State:         state,
-		InsStub:       *shim.NewInsStub(name, cc, &state),
+		InsStub:       *insstub.NewInsStub("insFabric", new(sc.SmartContract), &state),
 	}, nil
 }
 

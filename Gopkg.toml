@@ -24,9 +24,30 @@
 #   go-tests = true
 #   unused-packages = true
 
-[[constraint]]
-  version = "1.1.0"
+#[[override]]
+#  name = "github.com/docker/docker"
+#  revision = "a422774e593b33bd287d9890544ad9e09b380d8c"
+#
+#[[override]]
+#  name = "github.com/fsouza/go-dockerclient"
+#  version = "1.3.1"
+
+
+[[override]]
+  name = "github.com/docker/docker"
+  branch = "master"
+
+[[override]]
+  name = "github.com/fsouza/go-dockerclient"
+  branch = "master"
+
+[[override]]
+  version = "1.2.0"
   name = "github.com/spf13/viper"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/op/go-logging"
 
 [[constraint]]
   branch = "master"
