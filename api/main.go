@@ -163,7 +163,7 @@ func (ar *Runner) Start(ctx context.Context) error {
 		}
 	}()
 
-	go QueueExporter.QueueExporter()
+	go QueueExporter.QueueExporter(ctx, inslog)
 
 	return nil
 }

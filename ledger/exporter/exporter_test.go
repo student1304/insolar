@@ -163,19 +163,19 @@ func (s *exporterSuite) TestExporter_Export() {
 	_, err = json.Marshal(result)
 	assert.NoError(s.T(), err)
 
-	pulse := result.Data[strconv.FormatUint(uint64(core.FirstPulseNumber), 10)].([]*pulseData)[0].Pulse
+	pulse := result.Data[strconv.FormatUint(uint64(core.FirstPulseNumber), 10)].([]*PulseData)[0].Pulse
 	assert.Equal(s.T(), core.FirstPulseNumber, int(pulse.PulseNumber))
 	assert.Equal(s.T(), int64(0), pulse.PulseTimestamp)
-	pulse = result.Data[strconv.FormatUint(uint64(core.FirstPulseNumber+10), 10)].([]*pulseData)[0].Pulse
+	pulse = result.Data[strconv.FormatUint(uint64(core.FirstPulseNumber+10), 10)].([]*PulseData)[0].Pulse
 	assert.Equal(s.T(), core.FirstPulseNumber+10, int(pulse.PulseNumber))
 	assert.Equal(s.T(), int64(20), pulse.PulseTimestamp)
 
-	records := result.Data[strconv.FormatUint(uint64(core.FirstPulseNumber+10), 10)].([]*pulseData)[0].Records
+	records := result.Data[strconv.FormatUint(uint64(core.FirstPulseNumber+10), 10)].([]*PulseData)[0].Records
 	object, ok := records[base58.Encode(objectID[:])]
 	if assert.True(s.T(), ok, "object not found by ID") {
 		assert.Equal(s.T(), "TypeActivate", object.Type)
 		assert.Equal(s.T(), true, object.Data.(*record.ObjectActivateRecord).IsDelegate)
-		assert.Equal(s.T(), "objectValue", object.Payload["Memory"].(payload)["Field"])
+		assert.Equal(s.T(), "objectValue", object.Payload["Memory"].(Payload)["Field"])
 	}
 
 	request, ok := records[base58.Encode(requestID[:])]

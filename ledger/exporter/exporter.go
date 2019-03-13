@@ -50,25 +50,25 @@ func NewExporter(cfg configuration.Exporter) *Exporter {
 	}
 }
 
-type payload map[string]interface{}
+type Payload map[string]interface{}
 
-// MarshalJSON serializes payload into JSON.
-func (p payload) MarshalJSON() ([]byte, error) {
+// MarshalJSON serializes Payload into JSON.
+func (p Payload) MarshalJSON() ([]byte, error) {
 	var buf []byte
 	err := codec.NewEncoderBytes(&buf, &codec.JsonHandle{}).Encode(&p)
 	return buf, err
 }
 
-type recordData struct {
+type RecordData struct {
 	Type    string
 	Data    record.Record
-	Payload payload
+	Payload Payload
 }
 
-type recordsData map[string]recordData
+type RecordsData map[string]RecordData
 
-type pulseData struct {
-	Records recordsData
+type PulseData struct {
+	Records RecordsData
 	Pulse   core.Pulse
 	JetID   core.RecordID
 }
@@ -131,7 +131,7 @@ func (e *Exporter) Export(ctx context.Context, fromPulse core.PulseNumber, size 
 			break
 		}
 
-		var data []*pulseData
+		var data []*PulseData
 		for jetID := range jetIDs {
 			fetchedData, err := e.exportPulse(ctx, jetID, &pulse.Pulse)
 			if err != nil {
@@ -152,12 +152,12 @@ func (e *Exporter) Export(ctx context.Context, fromPulse core.PulseNumber, size 
 	return &result, nil
 }
 
-func (e *Exporter) exportPulse(ctx context.Context, jetID core.RecordID, pulse *core.Pulse) (*pulseData, error) {
-	records := recordsData{}
+func (e *Exporter) exportPulse(ctx context.Context, jetID core.RecordID, pulse *core.Pulse) (*PulseData, error) {
+	records := RecordsData{}
 	err := e.DB.IterateRecordsOnPulse(ctx, jetID, pulse.PulseNumber, func(id core.RecordID, rec record.Record) error {
 		pl := e.getPayload(ctx, jetID, rec)
 
-		records[string(base58.Encode(id[:]))] = recordData{
+		records[string(base58.Encode(id[:]))] = RecordData{
 			Type:    recordType(rec),
 			Data:    rec,
 			Payload: pl,
@@ -168,7 +168,7 @@ func (e *Exporter) exportPulse(ctx context.Context, jetID core.RecordID, pulse *
 		return nil, errors.Wrap(err, "exportPulse failed to IterateRecordsOnPulse")
 	}
 
-	data := pulseData{
+	data := PulseData{
 		Records: records,
 		Pulse:   *pulse,
 		JetID:   jetID,
@@ -177,7 +177,7 @@ func (e *Exporter) exportPulse(ctx context.Context, jetID core.RecordID, pulse *
 	return &data, nil
 }
 
-func (e *Exporter) getPayload(ctx context.Context, jetID core.RecordID, rec record.Record) payload {
+func (e *Exporter) getPayload(ctx context.Context, jetID core.RecordID, rec record.Record) Payload {
 	switch r := rec.(type) {
 	case record.ObjectState:
 		if r.GetMemory() == nil {
@@ -186,21 +186,21 @@ func (e *Exporter) getPayload(ctx context.Context, jetID core.RecordID, rec reco
 		blob, err := e.ObjectStorage.GetBlob(ctx, jetID, r.GetMemory())
 		if err != nil {
 			inslogger.FromContext(ctx).Errorf("getPayload failed to GetBlob (jet: %s)", jetID.DebugString())
-			return payload{}
+			return Payload{}
 		}
-		memory := payload{}
+		memory := Payload{}
 		err = codec.NewDecoderBytes(blob, &codec.CborHandle{}).Decode(&memory)
 		if err != nil {
-			return payload{"MemoryBinary": blob}
+			return Payload{"MemoryBinary": blob}
 		}
-		return payload{"Memory": memory}
+		return Payload{"Memory": memory}
 	case record.Request:
 		if r.GetPayload() == nil {
 			break
 		}
 		parcel, err := message.DeserializeParcel(bytes.NewBuffer(r.GetPayload()))
 		if err != nil {
-			return payload{"PayloadBinary": r.GetPayload()}
+			return Payload{"PayloadBinary": r.GetPayload()}
 		}
 
 		msg := parcel.Message()
@@ -208,20 +208,20 @@ func (e *Exporter) getPayload(ctx context.Context, jetID core.RecordID, rec reco
 		case *message.CallMethod:
 			res, err := m.ToMap()
 			if err != nil {
-				return payload{"Payload": m, "Type": msg.Type().String()}
+				return Payload{"Payload": m, "Type": msg.Type().String()}
 			}
-			return payload{"Payload": res, "Type": msg.Type().String()}
+			return Payload{"Payload": res, "Type": msg.Type().String()}
 		case *message.CallConstructor:
 			res, err := m.ToMap()
 			if err != nil {
-				return payload{"Payload": m, "Type": msg.Type().String()}
+				return Payload{"Payload": m, "Type": msg.Type().String()}
 			}
-			return payload{"Payload": res, "Type": msg.Type().String()}
+			return Payload{"Payload": res, "Type": msg.Type().String()}
 		case *message.GenesisRequest:
-			return payload{"Payload": m, "Type": msg.Type().String()}
+			return Payload{"Payload": m, "Type": msg.Type().String()}
 		}
 
-		return payload{"Payload": msg, "Type": msg.Type().String()}
+		return Payload{"Payload": msg, "Type": msg.Type().String()}
 	}
 
 	return nil
