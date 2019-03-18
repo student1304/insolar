@@ -134,6 +134,14 @@
   version = "v1.2.0"
 
 [[projects]]
+  digest = "1:e4f5819333ac698d294fe04dbf640f84719658d5c7ce195b10060cc37292ce79"
+  name = "github.com/golang/snappy"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "2a8bb927dd31d8daada140a5d09578521ce5c36a"
+  version = "v0.0.1"
+
+[[projects]]
   branch = "master"
   digest = "1:3ee90c0d94da31b442dde97c99635aaafec68d0b8a3c12ee2075c6bdabeec6bb"
   name = "github.com/google/gofuzz"
@@ -394,9 +402,12 @@
   revision = "b2ce2384e17bbe0c6d34077efa39dbab3e09123b"
 
 [[projects]]
-  digest = "1:c6502cd848a89b1d62ed82ba5f20546444d3028879f4af40368e489fa962ba9f"
+  digest = "1:9c3afbd8e69598b384b8b5c32cd75545f8944c50b9b716fcd015eda33db281b7"
   name = "github.com/segmentio/kafka-go"
-  packages = ["."]
+  packages = [
+    ".",
+    "snappy",
+  ]
   pruneopts = "UT"
   revision = "0b3aacc527812d4040e51211146a43545e82d670"
   version = "v0.2.2"
@@ -647,6 +658,7 @@
     "github.com/rs/zerolog",
     "github.com/satori/go.uuid",
     "github.com/segmentio/kafka-go",
+    "github.com/segmentio/kafka-go/snappy",
     "github.com/sirupsen/logrus",
     "github.com/spf13/cobra",
     "github.com/spf13/jwalterweatherman",

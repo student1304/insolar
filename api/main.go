@@ -85,7 +85,10 @@ func (ar *Runner) registerServices(rpcServer *rpc.Server) error {
 		return errors.New("[ registerServices ] Can't RegisterService: exporter")
 	}
 
-	QueueExporter = NewStorageQueueExporterService(ar, []string{"localhost:9092"}, "test")
+	QueueExporter, err = NewStorageQueueExporterService(ar, []string{"localhost:9092"}, "test")
+	if err != nil {
+		return errors.New("[ registerServices ] Can't CreateService: queue_exporter. Error: " + err.Error())
+	}
 	err = rpcServer.RegisterService(QueueExporter, "queue_exporter")
 	if err != nil {
 		return errors.New("[ registerServices ] Can't RegisterService: queue_exporter. Error: " + err.Error())

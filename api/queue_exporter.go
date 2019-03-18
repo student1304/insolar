@@ -36,19 +36,35 @@ type StorageQueueExporterService struct {
 	runner  *Runner
 	brokers []string
 	topic   string
-	writer  *kafka.Writer
+
+	kafkaProducer *kafka.Writer
+	parent        context.Context
 }
 
 // NewStorageExporterService creates new StorageExporter service instance.
-func NewStorageQueueExporterService(runner *Runner, brokers []string, topic string) *StorageQueueExporterService {
-	// make a writer that produces to topic-A, using the least-bytes distribution
-	w := kafka.NewWriter(kafka.WriterConfig{
-		Brokers:  brokers,
-		Topic:    topic,
-		Balancer: &kafka.LeastBytes{},
-	})
+func NewStorageQueueExporterService(runner *Runner, brokers []string, topic string) (*StorageQueueExporterService, error) {
+	// connect to kafka
+	kafkaProducer, err := Configure(brokers, "my-kafka-client", topic)
+	if err != nil {
+		return nil, err
+	}
+	defer kafkaProducer.Close()
 
-	return &StorageQueueExporterService{runner: runner, brokers: brokers, topic: topic, writer: w}
+	parent := context.Background()
+	defer parent.Done()
+
+	return &StorageQueueExporterService{runner: runner, brokers: brokers, topic: topic, kafkaProducer: kafkaProducer, parent: parent}, nil
+}
+
+func (s *StorageQueueExporterService) Close() error {
+	error := s.kafkaProducer.Close()
+	if error != nil {
+		return error
+	}
+
+	s.parent.Done()
+
+	return nil
 }
 
 func (s *StorageQueueExporterService) send(result *core.StorageExportResult, inslog core.Logger) error {
@@ -68,7 +84,7 @@ func (s *StorageQueueExporterService) send(result *core.StorageExportResult, ins
 			})
 	}
 
-	err := s.writer.WriteMessages(context.Background(), msgs...) //dial tcp: lookup rfc1918.private.ip.localhost: no such host
+	err := writer.WriteMessages(s.parent, msgs...) //dial tcp: lookup rfc1918.private.ip.localhost: no such host
 
 	return err
 }
@@ -84,8 +100,11 @@ func (s *StorageQueueExporterService) QueueExporter(ctx context.Context, inslog 
 	var err error
 
 	defer func() {
-		s.writer.Close()
 		inslog.Error(err, "QueueExporterError")
+		err := s.Close()
+		if err != nil {
+			inslog.Error(err, "QueueExporterError.Close")
+		}
 	}()
 	time.Sleep(30 * 1000 * 1000 * 1000) // 30 sec
 
