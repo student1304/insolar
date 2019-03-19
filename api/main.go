@@ -166,7 +166,9 @@ func (ar *Runner) Start(ctx context.Context) error {
 		}
 	}()
 
-	go QueueExporter.QueueExporter(ctx, inslog)
+	if ar.NodeNetwork.GetOrigin().Role().String() == "heavy_material" {
+		go QueueExporter.QueueExporter(ctx, inslog)
+	}
 
 	return nil
 }
