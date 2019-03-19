@@ -22,8 +22,9 @@ import (
 	"strings"
 
 	jsonrpc "github.com/gorilla/rpc/v2/json2"
-	"github.com/insolar/insolar/core"
 	"github.com/pkg/errors"
+
+	"github.com/insolar/insolar/core"
 )
 
 const (

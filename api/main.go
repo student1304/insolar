@@ -27,10 +27,10 @@ import (
 
 	"github.com/gorilla/rpc/v2"
 	jsonrpc "github.com/gorilla/rpc/v2/json2"
-	"github.com/insolar/insolar/application/extractor"
 	"github.com/pkg/errors"
 
 	"github.com/insolar/insolar/api/seedmanager"
+	"github.com/insolar/insolar/application/extractor"
 	"github.com/insolar/insolar/configuration"
 	"github.com/insolar/insolar/core"
 	"github.com/insolar/insolar/core/reply"
@@ -85,7 +85,7 @@ func (ar *Runner) registerServices(rpcServer *rpc.Server) error {
 		return errors.New("[ registerServices ] Can't RegisterService: exporter")
 	}
 
-	QueueExporter, err = NewStorageQueueExporterService(ar, []string{"localhost:9092"}, "test")
+	QueueExporter, err = NewStorageQueueExporterService(ar, []string{"127.0.0.1:9092"}, "test-topic")
 	if err != nil {
 		return errors.New("[ registerServices ] Can't CreateService: queue_exporter. Error: " + err.Error())
 	}

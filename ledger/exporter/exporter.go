@@ -19,17 +19,19 @@ package exporter
 import (
 	"bytes"
 	"context"
+	"math"
+	"strconv"
+
+	"github.com/jbenet/go-base58"
+	"github.com/pkg/errors"
+	"github.com/ugorji/go/codec"
+
 	"github.com/insolar/insolar/configuration"
 	"github.com/insolar/insolar/core"
 	"github.com/insolar/insolar/core/message"
 	"github.com/insolar/insolar/instrumentation/inslogger"
 	"github.com/insolar/insolar/ledger/storage"
 	"github.com/insolar/insolar/ledger/storage/record"
-	"github.com/jbenet/go-base58"
-	"github.com/pkg/errors"
-	"github.com/ugorji/go/codec"
-	"math"
-	"strconv"
 )
 
 // Exporter provides methods for fetching data view from storage.

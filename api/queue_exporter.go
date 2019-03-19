@@ -19,16 +19,17 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"github.com/insolar/insolar/core"
-	"github.com/insolar/insolar/instrumentation/inslogger"
-	"github.com/insolar/insolar/ledger/exporter"
-	"github.com/pkg/errors"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/segmentio/kafka-go"
+	"github.com/segmentio/kafka-go/snappy"
+
+	"github.com/insolar/insolar/core"
+	"github.com/insolar/insolar/instrumentation/inslogger"
+	"github.com/insolar/insolar/ledger/exporter"
 )
 
 // StorageExporterService is a service that provides API for exporting storage data.
@@ -44,22 +45,28 @@ type StorageQueueExporterService struct {
 // NewStorageExporterService creates new StorageExporter service instance.
 func NewStorageQueueExporterService(runner *Runner, brokers []string, topic string) (*StorageQueueExporterService, error) {
 	// connect to kafka
-	kafkaProducer, err := Configure(brokers, "my-kafka-client", topic)
-	if err != nil {
-		return nil, err
+	config := kafka.WriterConfig{
+		Brokers:  brokers,
+		Topic:    topic,
+		Balancer: &kafka.LeastBytes{},
+		Dialer: &kafka.Dialer{
+			Timeout:  10 * time.Second,
+			ClientID: "my-kafka-client",
+		},
+		WriteTimeout:     10 * time.Second,
+		ReadTimeout:      10 * time.Second,
+		CompressionCodec: snappy.NewCompressionCodec(),
 	}
-	defer kafkaProducer.Close()
-
+	kafkaProducer := kafka.NewWriter(config)
 	parent := context.Background()
-	defer parent.Done()
 
 	return &StorageQueueExporterService{runner: runner, brokers: brokers, topic: topic, kafkaProducer: kafkaProducer, parent: parent}, nil
 }
 
 func (s *StorageQueueExporterService) Close() error {
-	error := s.kafkaProducer.Close()
-	if error != nil {
-		return error
+	err := s.kafkaProducer.Close()
+	if err != nil {
+		return err
 	}
 
 	s.parent.Done()
@@ -74,8 +81,6 @@ func (s *StorageQueueExporterService) send(result *core.StorageExportResult, ins
 		if err != nil {
 			return errors.Wrap(err, "Json marshal error")
 		} else {
-			inslog.Debug("QueueExporterError.send.Value ", string(value))
-			inslog.Debug("QueueExporterError.send.Key ", k)
 		}
 		msgs = append(msgs,
 			kafka.Message{
@@ -84,7 +89,7 @@ func (s *StorageQueueExporterService) send(result *core.StorageExportResult, ins
 			})
 	}
 
-	err := writer.WriteMessages(s.parent, msgs...) //dial tcp: lookup rfc1918.private.ip.localhost: no such host
+	err := s.kafkaProducer.WriteMessages(s.parent, msgs...) //io: read/write on closed pipeQueueExporterError
 
 	return err
 }
@@ -100,10 +105,9 @@ func (s *StorageQueueExporterService) QueueExporter(ctx context.Context, inslog 
 	var err error
 
 	defer func() {
-		inslog.Error(err, "QueueExporterError")
 		err := s.Close()
 		if err != nil {
-			inslog.Error(err, "QueueExporterError.Close")
+			inslog.Error("QueueExporter error on Close: ", err)
 		}
 	}()
 	time.Sleep(30 * 1000 * 1000 * 1000) // 30 sec
@@ -119,7 +123,6 @@ func (s *StorageQueueExporterService) QueueExporter(ctx context.Context, inslog 
 
 	for true {
 		currentPulse, err := exp.GetCurrentPulse(ctx)
-		inslog.Info("currentPulse  ..." + strconv.Itoa(int(currentPulse.PulseNumber)))
 		if err != nil {
 			err = errors.Wrap(err, "failed to get current pulse data")
 			return
@@ -136,21 +139,15 @@ func (s *StorageQueueExporterService) QueueExporter(ctx context.Context, inslog 
 				err = errors.Wrap(err, "[ Export ]")
 				return
 			} else {
-				inslog.Info("currentPulse  ..." + strconv.Itoa(int(currentPulse.PulseNumber)))
-				inslog.Info("previousPulse  ..." + strconv.Itoa(int(previousPulse)))
-				inslog.Info("dif  ..." + strconv.Itoa(dif))
-				inslog.Info(" s.send(result)  ..." + strconv.Itoa(result.Size))
 				err := s.send(result, inslog)
 				if err != nil {
 					err = errors.Wrap(err, "failed to send current pulse data")
-					inslog.Error(err, "QueueExporterError")
 					return
 				}
 			}
 			previousPulse = previousPulse + 10
 		} else {
-			inslog.Info("QueueExporter sleep   ")
-			time.Sleep(10 * 1000 * 1000 * 1000) // 10 sec
+			time.Sleep(5 * 1000 * 1000 * 1000) // 5 sec
 		}
 	}
 
