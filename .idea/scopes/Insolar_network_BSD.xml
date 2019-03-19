@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="Insolar network BSD" pattern="file[insolar]:consensus//*||file[insolar]:network//*||file[insolar]:networkcoordinator//* " />
+</component>

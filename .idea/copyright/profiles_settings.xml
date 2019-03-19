@@ -1,0 +1,8 @@
+<component name="CopyrightManager">
+  <settings default="Insolar Apache">
+    <module2copyright>
+      <element module="Insolar network BSD" copyright="Insolar Apache" />
+      <element module="Generated" copyright="no license" />
+    </module2copyright>
+  </settings>
+</component>

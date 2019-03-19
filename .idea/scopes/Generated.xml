@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="Generated" pattern="file[insolar]:*_mock.go||file[insolar]:*_string.go||file[insolar]:*_gen.go" />
+</component>
