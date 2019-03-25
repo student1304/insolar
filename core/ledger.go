@@ -279,7 +279,9 @@ type StorageExportResult struct {
 // StorageExporter provides methods for fetching data view from storage.
 type StorageExporter interface {
 	// Export returns data view from storage.
-	Export(ctx context.Context, fromPulse PulseNumber, size int) (*StorageExportResult, error)
+	ExportJet(ctx context.Context, fromPulse PulseNumber, fromJetIDs map[RecordID]struct{}) (*StorageExportResult, error)
+	GetJets(ctx context.Context, fromPulse PulseNumber) (*StorageExportResult, error)
+	GetNextPulseNumber(ctx context.Context, fromPulse PulseNumber) (*PulseNumber, error)
 }
 
 var (

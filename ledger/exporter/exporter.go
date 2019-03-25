@@ -75,7 +75,7 @@ type pulseData struct {
 }
 
 // Export returns data view from storage.
-func (e *Exporter) Export(ctx context.Context, fromPulse core.PulseNumber, size int) (*core.StorageExportResult, error) {
+func (e *Exporter) Export(ctx context.Context, fromPulse core.PulseNumber, fromJetIDs map[core.RecordID]struct{}) (*core.StorageExportResult, error) {
 	result := core.StorageExportResult{Data: map[string]interface{}{}}
 
 	jetIDs, err := e.JetStorage.GetJets(ctx)
@@ -113,7 +113,7 @@ func (e *Exporter) Export(ctx context.Context, fromPulse core.PulseNumber, size 
 	}
 
 	iterPulse := &fromPulsePN
-	for iterPulse != nil && counter < size {
+	for iterPulse != nil && counter < 1 {
 		pulse, err := e.PulseTracker.GetPulse(ctx, *iterPulse)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to fetch pulse data")
@@ -130,15 +130,133 @@ func (e *Exporter) Export(ctx context.Context, fromPulse core.PulseNumber, size 
 
 		var data []*pulseData
 		for jetID := range jetIDs {
-			fetchedData, err := e.exportPulse(ctx, jetID, &pulse.Pulse)
-			if err != nil {
-				return nil, err
+			_, ok := fromJetIDs[jetID]
+			if ok {
+				fetchedData, err := e.exportPulse(ctx, jetID, &pulse.Pulse)
+				if err != nil {
+					return nil, err
+				}
+				data = append(data, fetchedData)
 			}
-			data = append(data, fetchedData)
 		}
 
 		result.Data[strconv.FormatUint(uint64(pulse.Pulse.PulseNumber), 10)] = data
 
+		iterPulse = pulse.Next
+		counter++
+	}
+
+	result.Size = counter
+	result.NextFrom = iterPulse
+
+	return &result, nil
+}
+
+func (e *Exporter) GetNextPulseNumber(ctx context.Context, fromPulse core.PulseNumber) (*core.PulseNumber, error) {
+
+	currentPulse, err := e.PulseStorage.Current(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get current pulse data")
+	}
+
+	fromPulsePN := core.PulseNumber(math.Max(float64(fromPulse), float64(core.GenesisPulse.PulseNumber)))
+
+	if fromPulsePN > currentPulse.PulseNumber {
+		return nil, errors.Errorf("failed to fetch data: from-pulse[%v] > current-pulse[%v]",
+			fromPulsePN, currentPulse.PulseNumber)
+	}
+
+	_, err = e.PulseTracker.GetPulse(ctx, fromPulsePN)
+	if err != nil {
+		tryPulse, err := e.PulseTracker.GetPulse(ctx, core.GenesisPulse.PulseNumber)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to fetch genesis pulse data")
+		}
+
+		for fromPulsePN > *tryPulse.Next {
+			tryPulse, err = e.PulseTracker.GetPulse(ctx, *tryPulse.Next)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to iterate through first pulses")
+			}
+		}
+		fromPulsePN = *tryPulse.Next
+	}
+
+	iterPulse := &fromPulsePN
+	if iterPulse != nil {
+		pulse, err := e.PulseTracker.GetPulse(ctx, *iterPulse)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to fetch pulse data")
+		}
+
+		// We don't need data from current pulse, because of
+		// not all data for this pulse is persisted at this moment
+		// @sergey.morozov 20.01.18 - Blocks are synced to Heavy node with a lag.
+		// We can't reliably predict this lag so we add threshold of N seconds.
+		if pulse.Pulse.PulseNumber >= (currentPulse.PrevPulseNumber - core.PulseNumber(e.cfg.ExportLag)) {
+			iterPulse = nil
+		}
+		iterPulse = pulse.Next
+	}
+
+	return iterPulse, nil
+}
+
+// Export returns data view from storage.
+func (e *Exporter) GetJets(ctx context.Context, fromPulse core.PulseNumber) (*core.StorageExportResult, error) {
+	result := core.StorageExportResult{Data: map[string]interface{}{}}
+
+	jetIDs, err := e.JetStorage.GetJets(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch jets")
+	}
+
+	currentPulse, err := e.PulseStorage.Current(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get current pulse data")
+	}
+
+	counter := 0
+	fromPulsePN := core.PulseNumber(math.Max(float64(fromPulse), float64(core.GenesisPulse.PulseNumber)))
+
+	if fromPulsePN > currentPulse.PulseNumber {
+		return nil, errors.Errorf("failed to fetch data: from-pulse[%v] > current-pulse[%v]",
+			fromPulsePN, currentPulse.PulseNumber)
+	}
+
+	_, err = e.PulseTracker.GetPulse(ctx, fromPulsePN)
+	if err != nil {
+		tryPulse, err := e.PulseTracker.GetPulse(ctx, core.GenesisPulse.PulseNumber)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to fetch genesis pulse data")
+		}
+
+		for fromPulsePN > *tryPulse.Next {
+			tryPulse, err = e.PulseTracker.GetPulse(ctx, *tryPulse.Next)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to iterate through first pulses")
+			}
+		}
+		fromPulsePN = *tryPulse.Next
+	}
+
+	iterPulse := &fromPulsePN
+	for iterPulse != nil && counter < 1 {
+		pulse, err := e.PulseTracker.GetPulse(ctx, *iterPulse)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to fetch pulse data")
+		}
+
+		// We don't need data from current pulse, because of
+		// not all data for this pulse is persisted at this moment
+		// @sergey.morozov 20.01.18 - Blocks are synced to Heavy node with a lag.
+		// We can't reliably predict this lag so we add threshold of N seconds.
+		if pulse.Pulse.PulseNumber >= (currentPulse.PrevPulseNumber - core.PulseNumber(e.cfg.ExportLag)) {
+			iterPulse = nil
+			break
+		}
+
+		result.Data[strconv.FormatUint(uint64(pulse.Pulse.PulseNumber), 10)] = jetIDs
 		iterPulse = pulse.Next
 		counter++
 	}

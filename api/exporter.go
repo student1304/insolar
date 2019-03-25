@@ -30,10 +30,13 @@ const (
 	errCodePulseNotFound = 10404
 )
 
+type IDSet map[core.RecordID]struct{}
+
 // StorageExporterArgs is arguments that StorageExporter service accepts.
 type StorageExporterArgs struct {
-	From uint32
-	Size int
+	FromPulse uint32
+	FromJet   string
+	Size      int
 }
 
 // StorageExporterReply is reply for StorageExporter service requests.
@@ -58,7 +61,8 @@ func NewStorageExporterService(runner *Runner) *StorageExporterService {
 //     "params": {
 //       // Pulse number from which data load should start.
 //       // If less than first pulse, the load will start from the first pulse (e.i. use "0" to load from the beginning).
-//       "From": int,
+//       "FromPulse": int,
+//		 "FromJet": string,
 //       // Number of pulses to load.
 //       "Size": int
 //       },
@@ -85,10 +89,24 @@ func NewStorageExporterService(runner *Runner) *StorageExporterService {
 //       "Size": int // Number of returned pulses (length of the "Data" dictionary).
 //   }
 //
-func (s *StorageExporterService) Export(r *http.Request, args *StorageExporterArgs, reply *StorageExporterReply) error {
+func (s *StorageExporterService) ExportJet(r *http.Request, args *StorageExporterArgs, reply *StorageExporterReply) error {
 	exp := s.runner.StorageExporter
 	ctx := context.TODO()
-	result, err := exp.Export(ctx, core.PulseNumber(args.From), args.Size)
+	jetId, err := core.NewIDFromBase58(args.FromJet)
+	if err != nil {
+		if strings.Contains(err.Error(), "failed to fetch pulse data") {
+			return &jsonrpc.Error{
+				Code:    errCodePulseNotFound,
+				Message: "[ Export ]: " + err.Error(),
+				Data:    nil,
+			}
+		}
+		return errors.Wrap(err, "[ Export ]")
+	}
+	var jetIds IDSet
+	jetIds[*jetId] = struct{}{}
+
+	result, err := exp.ExportJet(ctx, core.PulseNumber(args.FromPulse), jetIds)
 	if err != nil {
 		if strings.Contains(err.Error(), "failed to fetch pulse data") {
 			return &jsonrpc.Error{
@@ -103,6 +121,48 @@ func (s *StorageExporterService) Export(r *http.Request, args *StorageExporterAr
 	reply.Data = result.Data
 	reply.Size = result.Size
 	reply.NextFrom = result.NextFrom
+
+	return nil
+}
+
+func (s *StorageExporterService) GetJets(r *http.Request, args *StorageExporterArgs, reply *StorageExporterReply) error {
+	exp := s.runner.StorageExporter
+	ctx := context.TODO()
+
+	result, err := exp.GetJets(ctx, core.PulseNumber(args.FromPulse))
+	if err != nil {
+		if strings.Contains(err.Error(), "failed to fetch pulse data") {
+			return &jsonrpc.Error{
+				Code:    errCodePulseNotFound,
+				Message: "[ Export ]: " + err.Error(),
+				Data:    nil,
+			}
+		}
+		return errors.Wrap(err, "[ Export ]")
+	}
+
+	reply.Data = result.Data
+	reply.Size = result.Size
+	reply.NextFrom = result.NextFrom
+
+	return nil
+}
+
+func (s *StorageExporterService) GetNextPulse(r *http.Request, args *StorageExporterArgs, result *core.PulseNumber) error {
+	exp := s.runner.StorageExporter
+	ctx := context.TODO()
+
+	result, err := exp.GetNextPulseNumber(ctx, core.PulseNumber(args.FromPulse))
+	if err != nil {
+		if strings.Contains(err.Error(), "failed to fetch pulse data") {
+			return &jsonrpc.Error{
+				Code:    errCodePulseNotFound,
+				Message: "[ Export ]: " + err.Error(),
+				Data:    nil,
+			}
+		}
+		return errors.Wrap(err, "[ Export ]")
+	}
 
 	return nil
 }
