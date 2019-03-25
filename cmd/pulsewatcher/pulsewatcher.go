@@ -157,11 +157,6 @@ func displayResultsJSON(results [][]string, ready bool, buffer *bytes.Buffer) {
 }
 
 func collectNodesStatuses(conf *pulsewatcher.Config) ([][]string, bool) {
-	client = http.Client{
-		Transport: &http.Transport{},
-		Timeout:   conf.Timeout,
-	}
-
 	state := true
 	errored := 0
 	results := make([][]string, len(conf.Nodes))
@@ -171,6 +166,11 @@ func collectNodesStatuses(conf *pulsewatcher.Config) ([][]string, bool) {
 	wg.Add(len(conf.Nodes))
 	for i, url := range conf.Nodes {
 		go func(url string, i int) {
+			client = http.Client{
+				Transport: &http.Transport{},
+				Timeout:   conf.Timeout,
+			}
+
 			res, err := client.Post("http://"+url+"/api/rpc", "application/json",
 				strings.NewReader(`{"jsonrpc": "2.0", "method": "status.Get", "id": 0}`))
 			if err != nil {
