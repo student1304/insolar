@@ -17,6 +17,7 @@
 package member
 
 import (
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"math"
@@ -69,6 +70,8 @@ func (m *Member) verifySig(method string, params []byte, seed []byte, sign []byt
 
 	verified := foundation.Verify(args, sign, publicKey)
 	if !verified {
+		fmt.Println("\n\n\n\n\n\n\n\n\n\n[ verifySig ] dump")
+		fmt.Println(hex.Dump([]byte(args)))
 		return fmt.Errorf("[ verifySig ] Incorrect signature")
 	}
 	return nil
