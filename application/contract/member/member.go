@@ -72,7 +72,7 @@ func (m *Member) verifySig(method string, params []byte, seed []byte, sign []byt
 	if !verified {
 		fmt.Println("\n\n\n\n\n\n\n\n\n\n[ verifySig ] dump")
 		fmt.Println(hex.Dump([]byte(args)))
-		return fmt.Errorf("[ verifySig ] Incorrect signature")
+		return fmt.Errorf("[ verifySig ] Incorrect signature. >>" + hex.Dump([]byte(args)))
 	}
 	return nil
 }
