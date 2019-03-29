@@ -72,7 +72,13 @@ func (m *Member) verifySig(method string, params []byte, seed []byte, sign []byt
 	if !verified {
 		fmt.Println("\n\n\n\n\n\n\n\n\n\n[ verifySig ] dump")
 		fmt.Println(hex.Dump([]byte(args)))
-		return fmt.Errorf("[ verifySig ] Incorrect signature. >>" + hex.Dump([]byte(args)))
+
+		exportPublicKey, _ := foundation.ExportPublicKey(publicKey)
+
+		return fmt.Errorf("[ verifySig ] Incorrect signature. args, sign, publicKey" +
+			">>" + hex.Dump([]byte(args)) + "<< \n\n" +
+			">>" + hex.Dump([]byte(sign)) + "<< \n\n" +
+			">>" + exportPublicKey + "<<")
 	}
 	return nil
 }
