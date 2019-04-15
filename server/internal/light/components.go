@@ -20,6 +20,7 @@ import (
 	"context"
 
 	"github.com/insolar/insolar/api"
+	"github.com/insolar/insolar/bus"
 	"github.com/insolar/insolar/certificate"
 	"github.com/insolar/insolar/component"
 	"github.com/insolar/insolar/configuration"
@@ -168,6 +169,7 @@ func newComponents(ctx context.Context, cfg configuration.Configuration) (*compo
 		Pulses       pulse.Accessor
 		Jets         jet.Accessor
 		Handler      *artifactmanager.MessageHandler
+		BusAsync     *bus.Bus
 	)
 	{
 		conf := cfg.Ledger
@@ -222,6 +224,8 @@ func newComponents(ctx context.Context, cfg configuration.Configuration) (*compo
 		handler.IndexModifier = indices
 		handler.IndexStorage = indices
 
+		BusAsync = bus.NewBus(handler.FlowHandler)
+
 		pm := pulsemanager.NewPulseManager(
 			conf, drops, blobs, blobs, pulses, records, records, indices, indices,
 		)
@@ -268,7 +272,7 @@ func newComponents(ctx context.Context, cfg configuration.Configuration) (*compo
 		Requester,
 		Tokens,
 		Parcels,
-		artifacts.NewClient(),
+		artifacts.NewClient(nil),
 		Genesis,
 		API,
 		NetworkSwitcher,
@@ -280,6 +284,7 @@ func newComponents(ctx context.Context, cfg configuration.Configuration) (*compo
 		CertManager,
 		NodeNetwork,
 		NetworkService,
+		BusAsync,
 	)
 
 	err = c.cmp.Init(ctx)

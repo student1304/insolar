@@ -17,6 +17,7 @@
 package bus
 
 import (
+	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/insolar/insolar/insolar"
 )
 
@@ -26,6 +27,8 @@ type Reply struct {
 }
 
 type Message struct {
-	Parcel  insolar.Parcel
-	ReplyTo chan Reply
+	Parcel    insolar.Parcel
+	ReplyTo   chan Reply
+	Publisher message.Publisher
+	Msg       *message.Message
 }

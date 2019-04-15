@@ -102,7 +102,7 @@ func (m *ledgerArtifactSenders) cachedSender(scheme insolar.PlatformCryptography
 }
 
 // followRedirectSender is using for redirecting responses with delegation token
-func followRedirectSender(bus insolar.MessageBus) PreSender {
+func followRedirectSender(bus insolar.MBSender) PreSender {
 	return func(sender Sender) Sender {
 		return func(ctx context.Context, msg insolar.Message, options *insolar.MessageSendOptions) (insolar.Reply, error) {
 			rep, err := sender(ctx, msg, options)

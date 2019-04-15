@@ -19,6 +19,7 @@ package message
 import (
 	"context"
 	"crypto"
+	"fmt"
 
 	"github.com/insolar/insolar/insolar"
 	"github.com/insolar/insolar/instrumentation/inslogger"
@@ -77,6 +78,7 @@ func (p *Parcel) Message() insolar.Message {
 func (p *Parcel) Context(ctx context.Context) context.Context {
 	ctx = inslogger.ContextWithTrace(ctx, p.ServiceData.LogTraceID)
 	ctx = inslogger.WithLoggerLevel(ctx, p.ServiceData.LogLevel)
+	fmt.Println("p.ServiceData.TraceSpanData, lol", p.ServiceData.TraceSpanData)
 	parentspan := instracer.MustDeserialize(p.ServiceData.TraceSpanData)
 	return instracer.WithParentSpan(ctx, parentspan)
 }

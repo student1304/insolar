@@ -114,6 +114,11 @@ func (n *ServiceNetwork) SendMessage(nodeID insolar.Reference, method string, ms
 	return n.Controller.SendMessage(nodeID, method, msg)
 }
 
+// // SendMessage sends a message from MessageBus.
+// func (n *ServiceNetwork) SendBytes(nodeID insolar.Reference, method string, msg []byte) ([]byte, error) {
+// 	return n.Controller.SendMessage(nodeID, method, msg)
+// }
+
 // SendCascadeMessage sends a message from MessageBus to a cascade of nodes
 func (n *ServiceNetwork) SendCascadeMessage(data insolar.Cascade, method string, msg insolar.Parcel) error {
 	return n.Controller.SendCascadeMessage(data, method, msg)

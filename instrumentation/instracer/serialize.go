@@ -18,6 +18,7 @@ package instracer
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/ugorji/go/codec"
 	"go.opencensus.io/trace"
@@ -59,6 +60,7 @@ func MustDeserialize(b []byte) TraceSpan {
 func Deserialize(b []byte) (TraceSpan, error) {
 	var ts TraceSpan
 	ch := new(codec.CborHandle)
+	fmt.Println("Deserialize, lol", ch)
 	err := codec.NewDecoderBytes(b, ch).Decode(&ts)
 	return ts, err
 }

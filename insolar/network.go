@@ -38,6 +38,7 @@ type RemoteProcedure func(ctx context.Context, args [][]byte) ([]byte, error)
 type Network interface {
 	// SendParcel sends a message.
 	SendMessage(nodeID Reference, method string, msg Parcel) ([]byte, error)
+	// SendBytes(nodeID Reference, method string, msg []byte) ([]byte, error)
 	// SendCascadeMessage sends a message.
 	SendCascadeMessage(data Cascade, method string, msg Parcel) error
 	// RemoteProcedureRegister is remote procedure register func.

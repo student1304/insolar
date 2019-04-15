@@ -20,6 +20,7 @@ import (
 	"context"
 
 	"github.com/insolar/insolar/api"
+	"github.com/insolar/insolar/bus"
 	"github.com/insolar/insolar/certificate"
 	"github.com/insolar/insolar/component"
 	"github.com/insolar/insolar/configuration"
@@ -157,6 +158,9 @@ func initComponents(
 	err = logicRunner.OnPulse(ctx, *pulsar.NewPulse(cfg.Pulsar.NumberDelta, 0, &entropygenerator.StandardEntropyGenerator{}))
 	checkError(ctx, err, "failed init pulse for LogicRunner")
 
+	// h := handler.NewHandler()
+	b := bus.NewBus(nil)
+
 	cm.Register(
 		terminationHandler,
 		platformCryptographyScheme,
@@ -173,7 +177,7 @@ func initComponents(
 		messageBus,
 		contractRequester,
 		logicRunner,
-		artifacts.NewClient(),
+		artifacts.NewClient(b),
 		pulse.NewStorageMem(),
 		jet.NewStore(),
 		jetcoordinator.NewJetCoordinator(cfg.Ledger.LightChainLimit),
@@ -189,6 +193,7 @@ func initComponents(
 		networkCoordinator,
 		cryptographyService,
 		keyProcessor,
+		b,
 	}...)
 
 	cm.Inject(components...)

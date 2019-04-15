@@ -18,6 +18,7 @@ package artifactmanager
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/insolar/insolar/insolar"
 	"github.com/insolar/insolar/insolar/flow"
@@ -38,6 +39,7 @@ type WaitJet struct {
 }
 
 func (s *WaitJet) Present(ctx context.Context, f flow.Flow) error {
+	fmt.Println("lol here love, WaitJet")
 	jet := s.dep.FetchJet(&FetchJet{Parcel: s.Message.Parcel})
 	if err := f.Procedure(ctx, jet); err != nil {
 		if err == flow.ErrCancelled {

@@ -125,7 +125,7 @@ func TmpLedger(t *testing.T, dir string, c insolar.Components) (*TMPLedger, stor
 	recordAccessor := recMem
 	recordModifier := recMem
 
-	am := NewClient()
+	am := NewClient(nil)
 	am.PlatformCryptographyScheme = testutils.NewPlatformCryptographyScheme()
 
 	conf.PulseManager.HeavySyncEnabled = false

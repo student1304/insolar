@@ -31,3 +31,11 @@ func FromContext(ctx context.Context) insolar.PulseNumber {
 func ContextWith(ctx context.Context, pn insolar.PulseNumber) context.Context {
 	return context.WithValue(ctx, contextKey{}, pn)
 }
+
+func FromContextString(ctx context.Context) string {
+	return ctx.Value(contextKey{}).(string)
+}
+
+func ContextWithString(ctx context.Context, pn string) context.Context {
+	return context.WithValue(ctx, contextKey{}, pn)
+}

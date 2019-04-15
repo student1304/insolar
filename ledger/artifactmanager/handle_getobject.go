@@ -17,7 +17,9 @@
 package artifactmanager
 
 import (
+	"bytes"
 	"context"
+	"fmt"
 
 	"github.com/insolar/insolar/insolar/flow"
 	"github.com/insolar/insolar/insolar/flow/bus"
@@ -34,6 +36,13 @@ type GetObject struct {
 }
 
 func (s *GetObject) Present(ctx context.Context, f flow.Flow) error {
+	parcel, err := message.DeserializeParcel(bytes.NewBuffer(s.Message.Msg.Payload))
+	if err != nil {
+		fmt.Println("love, GetObject with err", err)
+	}
+	fmt.Println("lol here love, GetObject")
+	s.Message.Parcel = parcel
+	// msg := parcel.Message().(*message.GetObject)
 	msg := s.Message.Parcel.Message().(*message.GetObject)
 	ctx, _ = inslogger.WithField(ctx, "object", msg.Head.Record().DebugString())
 

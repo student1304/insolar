@@ -181,7 +181,7 @@ func (h *MessageHandler) setHandlersForLight(m *middleware) {
 		m.checkJet,
 	))
 
-	h.Bus.MustRegister(insolar.TypeGetObject, h.FlowHandler.WrapBusHandle)
+	// h.Bus.MustRegister(insolar.TypeGetObject, h.FlowHandler.WrapBusHandle)
 
 	h.Bus.MustRegister(insolar.TypeGetDelegate,
 		BuildMiddleware(h.handleGetDelegate,

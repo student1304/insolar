@@ -18,7 +18,9 @@ package artifactmanager
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/insolar/insolar/insolar"
 	"github.com/insolar/insolar/insolar/flow/bus"
 )
@@ -34,9 +36,15 @@ type ReturnReply struct {
 	ReplyTo chan<- bus.Reply
 	Err     error
 	Reply   insolar.Reply
+	Pub     message.Publisher
 }
 
 func (p *ReturnReply) Proceed(context.Context) error {
+	fmt.Println("lol here love, Return reply", p.Reply, p.Err)
 	p.ReplyTo <- bus.Reply{Reply: p.Reply, Err: p.Err}
+	// if p.Pub != nil {
+	// 	msg
+	// 	p.Pub.Publish("outbound", msg)
+	// }
 	return nil
 }

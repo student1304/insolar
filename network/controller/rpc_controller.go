@@ -131,14 +131,18 @@ func (rpc *rpcController) RemoteProcedureRegister(name string, method insolar.Re
 		trace.StringAttribute("method", name),
 	)
 	defer span.End()
+	fmt.Println("add love: ", name)
 	rpc.methodTable[name] = method
 }
 
 func (rpc *rpcController) invoke(ctx context.Context, name string, data [][]byte) ([]byte, error) {
+	fmt.Println("is love?: ", name)
 	method, exists := rpc.methodTable[name]
 	if !exists {
+		fmt.Println("is love?: no(")
 		return nil, errors.New(fmt.Sprintf("RPC with name %s is not registered", name))
 	}
+	fmt.Println("is love?: yes)")
 	return method(ctx, data)
 }
 

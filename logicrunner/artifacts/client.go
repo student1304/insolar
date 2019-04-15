@@ -21,6 +21,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/insolar/insolar/bus"
 	"github.com/insolar/insolar/insolar/record"
 	"github.com/insolar/insolar/ledger/storage/pulse"
 
@@ -50,6 +51,7 @@ type client struct {
 
 	getChildrenChunkSize int
 	senders              *ledgerArtifactSenders
+	asyncBus             *bus.Bus
 }
 
 // State returns hash state for artifact manager.
@@ -59,10 +61,11 @@ func (m *client) State() ([]byte, error) {
 }
 
 // NewClient creates new client instance.
-func NewClient() *client { // nolint
+func NewClient(asyncBus *bus.Bus) *client { // nolint
 	return &client{
 		getChildrenChunkSize: getChildrenChunkSize,
 		senders:              newLedgerArtifactSenders(),
+		asyncBus:             asyncBus,
 	}
 }
 
@@ -194,9 +197,17 @@ func (m *client) GetObject(
 		Approved: approved,
 	}
 
+	fmt.Println("hi love, happy to see you")
 	bus := insolar.MessageBusFromContext(ctx, m.DefaultBus)
+	var busSendFunc Sender
+	if bus == m.DefaultBus {
+		busSendFunc = m.asyncBus.Send
+	} else {
+		busSendFunc = bus.Send
+	}
 	sender := BuildSender(
-		bus.Send,
+		busSendFunc,
+		// bus.Send,
 		followRedirectSender(bus),
 		retryJetSender(m.JetStorage),
 	)

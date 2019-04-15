@@ -20,6 +20,7 @@ import (
 	"context"
 
 	"github.com/insolar/insolar/api"
+	"github.com/insolar/insolar/bus"
 	"github.com/insolar/insolar/certificate"
 	"github.com/insolar/insolar/component"
 	"github.com/insolar/insolar/configuration"
@@ -221,6 +222,7 @@ func newComponents(ctx context.Context, cfg configuration.Configuration) *compon
 		Jets = jets
 		PulseManager = pm
 	}
+	b := bus.NewBus(nil)
 
 	c.cmp.Inject(
 		PulseManager,
@@ -240,7 +242,7 @@ func newComponents(ctx context.Context, cfg configuration.Configuration) *compon
 		Requester,
 		Tokens,
 		Parcels,
-		artifacts.NewClient(),
+		artifacts.NewClient(nil),
 		Genesis,
 		API,
 		NetworkSwitcher,
@@ -252,6 +254,7 @@ func newComponents(ctx context.Context, cfg configuration.Configuration) *compon
 		CertManager,
 		NodeNetwork,
 		NetworkService,
+		b,
 	)
 	err = c.cmp.Init(ctx)
 	checkError(ctx, err, "failed to init components")
