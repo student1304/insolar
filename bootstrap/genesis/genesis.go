@@ -41,15 +41,14 @@ import (
 )
 
 const (
-	nodeDomain        = "nodedomain"
-	nodeRecord        = "noderecord"
-	rootDomain        = "rootdomain"
-	walletContract    = "wallet"
-	memberContract    = "member"
-	allowanceContract = "allowance"
+	nodeDomain     = "nodedomain"
+	nodeRecord     = "noderecord"
+	rootDomain     = "rootdomain"
+	walletContract = "wallet"
+	memberContract = "member"
 )
 
-var contractNames = []string{walletContract, memberContract, allowanceContract, rootDomain, nodeDomain, nodeRecord}
+var contractNames = []string{walletContract, memberContract, rootDomain, nodeDomain, nodeRecord}
 
 type nodeInfo struct {
 	privateKey crypto.PrivateKey
