@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/insolar/insolar/ledger/handle"
 	"github.com/pkg/errors"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
@@ -36,6 +37,8 @@ import (
 	"github.com/insolar/insolar/insolar/reply"
 	"github.com/insolar/insolar/instrumentation/inslogger"
 	"github.com/insolar/insolar/instrumentation/insmetrics"
+	"github.com/insolar/insolar/ledger/hot"
+	"github.com/insolar/insolar/ledger/proc"
 	"github.com/insolar/insolar/ledger/recentstorage"
 	"github.com/insolar/insolar/ledger/storage"
 	"github.com/insolar/insolar/ledger/storage/blob"
@@ -68,14 +71,15 @@ type MessageHandler struct {
 	Nodes          node.Accessor         `inject:""`
 
 	DBContext     storage.DBContext    `inject:""`
-	HotDataWaiter HotDataWaiter        `inject:""`
+	HotDataWaiter hot.JetWaiter        `inject:""`
+	JetReleaser   hot.JetReleaser      `inject:""`
 	IndexAccessor object.IndexAccessor `inject:""`
 	IndexModifier object.IndexModifier `inject:""`
 	IndexStorage  object.IndexStorage  `inject:""`
 
 	conf           *configuration.Ledger
 	middleware     *middleware
-	jetTreeUpdater *jetTreeUpdater
+	jetTreeUpdater jet.TreeUpdater
 
 	FlowHandler *handler.Handler
 	handlers    map[insolar.MessageType]insolar.MessageHandler
@@ -88,18 +92,18 @@ func NewMessageHandler(conf *configuration.Ledger) *MessageHandler {
 		conf:     conf,
 	}
 
-	dep := &Dependencies{
-		FetchJet: func(p *FetchJet) *FetchJet {
+	dep := &proc.Dependencies{
+		FetchJet: func(p *proc.FetchJet) *proc.FetchJet {
 			p.Dep.JetAccessor = h.JetStorage
 			p.Dep.Coordinator = h.JetCoordinator
 			p.Dep.JetUpdater = h.jetTreeUpdater
 			return p
 		},
-		WaitHot: func(p *WaitHot) *WaitHot {
+		WaitHot: func(p *proc.WaitHot) *proc.WaitHot {
 			p.Dep.Waiter = h.HotDataWaiter
 			return p
 		},
-		GetIndex: func(p *GetIndex) *GetIndex {
+		GetIndex: func(p *proc.GetIndex) *proc.GetIndex {
 			p.Dep.Recent = h.RecentStorageProvider
 			p.Dep.Locker = h.IDLocker
 			p.Dep.Storage = h.IndexStorage
@@ -107,7 +111,7 @@ func NewMessageHandler(conf *configuration.Ledger) *MessageHandler {
 			p.Dep.Bus = h.Bus
 			return p
 		},
-		SendObject: func(p *SendObject) *SendObject {
+		SendObject: func(p *proc.SendObject) *proc.SendObject {
 			p.Dep.Jets = h.JetStorage
 			p.Dep.Blobs = h.Blobs
 			p.Dep.Coordinator = h.JetCoordinator
@@ -119,8 +123,8 @@ func NewMessageHandler(conf *configuration.Ledger) *MessageHandler {
 	}
 
 	h.FlowHandler = handler.NewHandler(func(msg bus.Message) flow.Handle {
-		return (&Init{
-			dep: dep,
+		return (&handle.Init{
+			Dep: dep,
 
 			Message: msg,
 		}).Present
@@ -162,7 +166,7 @@ func (h *MessageHandler) Init(ctx context.Context) error {
 	m := newMiddleware(h)
 	h.middleware = m
 
-	h.jetTreeUpdater = newJetTreeUpdater(h.Nodes, h.JetStorage, h.Bus, h.JetCoordinator)
+	h.jetTreeUpdater = jet.NewJetTreeUpdater(h.Nodes, h.JetStorage, h.Bus, h.JetCoordinator)
 
 	h.setHandlersForLight(m)
 
@@ -483,7 +487,7 @@ func (h *MessageHandler) handleGetChildren(
 	childJet = (*insolar.ID)(&childJetID)
 
 	if !actual {
-		actualJet, err := h.jetTreeUpdater.fetchJet(ctx, *msg.Parent.Record(), currentChild.Pulse())
+		actualJet, err := h.jetTreeUpdater.FetchJet(ctx, *msg.Parent.Record(), currentChild.Pulse())
 		if err != nil {
 			return nil, err
 		}
@@ -965,7 +969,7 @@ func (h *MessageHandler) handleHotRecords(ctx context.Context, parcel insolar.Pa
 		ctx, msg.PulseNumber, true, insolar.JetID(jetID),
 	)
 
-	h.jetTreeUpdater.releaseJet(ctx, jetID, msg.PulseNumber)
+	h.jetTreeUpdater.ReleaseJet(ctx, jetID, msg.PulseNumber)
 
 	return &reply.OK{}, nil
 }

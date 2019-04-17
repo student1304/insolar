@@ -41,7 +41,6 @@ import (
 	"github.com/insolar/insolar/metrics"
 	"github.com/insolar/insolar/network/nodenetwork"
 	"github.com/insolar/insolar/network/servicenetwork"
-	"github.com/insolar/insolar/network/state"
 	"github.com/insolar/insolar/network/termination"
 	"github.com/insolar/insolar/networkcoordinator"
 	"github.com/insolar/insolar/platformpolicy"
@@ -116,7 +115,7 @@ func initComponents(
 ) (*component.Manager, insolar.TerminationHandler, error) {
 	cm := component.Manager{}
 
-	nodeNetwork, err := nodenetwork.NewNodeNetwork(cfg.Host, certManager.GetCertificate())
+	nodeNetwork, err := nodenetwork.NewNodeNetwork(cfg.Host.Transport, certManager.GetCertificate())
 	checkError(ctx, err, "failed to start NodeNetwork")
 
 	logicRunner, err := logicrunner.NewLogicRunner(&cfg.LogicRunner)
@@ -144,9 +143,6 @@ func initComponents(
 
 	metricsHandler, err := metrics.NewMetrics(ctx, cfg.Metrics, metrics.GetInsolarRegistry("virtual"), "virtual")
 	checkError(ctx, err, "failed to start Metrics")
-
-	networkSwitcher, err := state.NewNetworkSwitcher()
-	checkError(ctx, err, "failed to start NetworkSwitcher")
 
 	networkCoordinator, err := networkcoordinator.New()
 	checkError(ctx, err, "failed to start NetworkCoordinator")
@@ -189,7 +185,6 @@ func initComponents(
 		genesisDataProvider,
 		apiRunner,
 		metricsHandler,
-		networkSwitcher,
 		networkCoordinator,
 		cryptographyService,
 		keyProcessor,
