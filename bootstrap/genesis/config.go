@@ -37,6 +37,7 @@ type Oracle struct {
 // Config contains all genesis config
 type Config struct {
 	RootKeysFile     string   `mapstructure:"root_keys_file"`
+	MDAdminKeysFile  string   `mapstructure:"md_admin_keys_file"`
 	OracleKeysFiles  []Oracle `mapstructure:"oracle_keys_file"`
 	DiscoveryKeysDir string   `mapstructure:"discovery_keys_dir"`
 	KeysNameFormat   string   `mapstructure:"keys_name_format"`

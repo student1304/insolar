@@ -30,6 +30,7 @@ import (
 type RootDomain struct {
 	foundation.BaseContract
 	RootMember    insolar.Reference
+	MDAdminMember insolar.Reference
 	NodeDomainRef insolar.Reference
 }
 
