@@ -17,8 +17,10 @@
 package rootdomain
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"golang.org/x/crypto/sha3"
 
 	"github.com/insolar/insolar/application/proxy/member"
 	"github.com/insolar/insolar/application/proxy/wallet"
@@ -35,6 +37,27 @@ type RootDomain struct {
 }
 
 var INSATTR_CreateMember_API = true
+
+func decodeHex(s string) []byte {
+	b, err := hex.DecodeString(s)
+	if err != nil {
+		panic(err)
+	}
+
+	return b
+}
+
+func hash(msg string) string {
+
+	hash := sha3.NewLegacyKeccak256()
+
+	var buf []byte
+	//hash.Write([]byte{0xcc})
+	hash.Write(decodeHex(msg))
+	buf = hash.Sum(nil)
+
+	return hex.EncodeToString(buf)
+}
 
 // CreateMember processes create member request
 func (rd *RootDomain) CreateMember(name string, key string) (string, error) {
