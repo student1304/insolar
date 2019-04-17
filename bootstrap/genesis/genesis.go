@@ -21,6 +21,7 @@ import (
 	"crypto"
 	"encoding/json"
 	"fmt"
+	"github.com/insolar/insolar/application/contract/mdcenter"
 	"io/ioutil"
 	"path"
 	"path/filepath"
@@ -41,14 +42,15 @@ import (
 )
 
 const (
-	nodeDomain     = "nodedomain"
-	nodeRecord     = "noderecord"
-	rootDomain     = "rootdomain"
-	walletContract = "wallet"
-	memberContract = "member"
+	nodeDomain       = "nodedomain"
+	nodeRecord       = "noderecord"
+	rootDomain       = "rootdomain"
+	walletContract   = "wallet"
+	memberContract   = "member"
+	mdcenterContract = "mdcenter"
 )
 
-var contractNames = []string{walletContract, memberContract, rootDomain, nodeDomain, nodeRecord}
+var contractNames = []string{walletContract, memberContract, rootDomain, nodeDomain, nodeRecord, mdcenterContract}
 
 type nodeInfo struct {
 	privateKey crypto.PrivateKey
@@ -64,6 +66,7 @@ type Generator struct {
 	rootDomainRef *insolar.Reference
 	nodeDomainRef *insolar.Reference
 	rootMemberRef *insolar.Reference
+	mdCenterRef   *insolar.Reference
 
 	keyOut string
 }
@@ -271,11 +274,60 @@ func (g *Generator) activateRootMember(
 	return nil
 }
 
-func (g *Generator) activateOracleMembers(
+func (g *Generator) activateMDCenter(
 	ctx context.Context,
 	domain *insolar.ID,
 	oraclePubKeys map[string]string,
 	memberContractProto insolar.Reference,
+) error {
+
+	mdc, err := mdcenter.New(oraclePubKeys)
+	if err != nil {
+		return errors.Wrap(err, "[ activateMDCenter ]")
+	}
+
+	instanceData, err := insolar.Serialize(mdc)
+	if err != nil {
+		return errors.Wrap(err, "[ activateMDCenter ]")
+	}
+
+	contractID, err := g.artifactManager.RegisterRequest(
+		ctx,
+		*g.rootDomainRef,
+		&message.Parcel{
+			Msg: &message.GenesisRequest{Name: "MDCenter"},
+		},
+	)
+
+	if err != nil {
+		return errors.Wrap(err, "[ activateMDCenter ] couldn't create MDCenter instance")
+	}
+	contract := insolar.NewReference(*domain, *contractID)
+	_, err = g.artifactManager.ActivateObject(
+		ctx,
+		insolar.Reference{},
+		*contract,
+		*g.rootDomainRef,
+		memberContractProto,
+		true,
+		instanceData,
+	)
+	if err != nil {
+		return errors.Wrap(err, "[ activateMDCenter ] couldn't create MDCenter instance")
+	}
+	_, err = g.artifactManager.RegisterResult(ctx, *g.rootDomainRef, *contract, nil)
+	if err != nil {
+		return errors.Wrap(err, "[ activateMDCenter ] couldn't create MDCenter instance")
+	}
+	g.mdCenterRef = contract
+	return nil
+}
+
+func (g *Generator) activateOracleMembers(
+	ctx context.Context,
+	domain *insolar.ID,
+	oraclePubKeys map[string]string,
+	mdcenterContractProto insolar.Reference,
 ) error {
 
 	for name, key := range oraclePubKeys {
@@ -306,7 +358,7 @@ func (g *Generator) activateOracleMembers(
 			insolar.Reference{},
 			*contract,
 			*g.rootDomainRef,
-			memberContractProto,
+			mdcenterContractProto,
 			false,
 			instanceData,
 		)
@@ -317,7 +369,6 @@ func (g *Generator) activateOracleMembers(
 		if err != nil {
 			return errors.Wrap(err, "[ activateOracleMembers ] couldn't create oracle member instance with name: "+name)
 		}
-		g.rootMemberRef = contract
 
 	}
 	return nil
@@ -391,6 +442,52 @@ func (g *Generator) activateRootMemberWallet(
 	return nil
 }
 
+func (g *Generator) activateMDCenterWallet(
+	ctx context.Context, domain *insolar.ID, walletContractProto insolar.Reference,
+) error {
+
+	w, err := wallet.New(g.config.MDCenterBalance)
+	if err != nil {
+		return errors.Wrap(err, "[ activateMDCenterWallet ]")
+	}
+
+	instanceData, err := insolar.Serialize(w)
+	if err != nil {
+		return errors.Wrap(err, "[ activateMDCenterWallet ]")
+	}
+
+	contractID, err := g.artifactManager.RegisterRequest(
+		ctx,
+		*g.rootDomainRef,
+		&message.Parcel{
+			Msg: &message.GenesisRequest{Name: "RootWallet"},
+		},
+	)
+
+	if err != nil {
+		return errors.Wrap(err, "[ activateMDCenterWallet ] couldn't create root wallet")
+	}
+	contract := insolar.NewReference(*domain, *contractID)
+	_, err = g.artifactManager.ActivateObject(
+		ctx,
+		insolar.Reference{},
+		*contract,
+		*g.mdCenterRef,
+		walletContractProto,
+		true,
+		instanceData,
+	)
+	if err != nil {
+		return errors.Wrap(err, "[ activateMDCenterWallet ] couldn't create root wallet")
+	}
+	_, err = g.artifactManager.RegisterResult(ctx, *g.rootDomainRef, *contract, nil)
+	if err != nil {
+		return errors.Wrap(err, "[ activateMDCenterWallet ] couldn't create root wallet")
+	}
+
+	return nil
+}
+
 func (g *Generator) activateSmartContracts(
 	ctx context.Context,
 	cb *contractsBuilder,
@@ -410,6 +507,14 @@ func (g *Generator) activateSmartContracts(
 		return nil, errors.Wrap(err, errMsg)
 	}
 	err = g.activateRootMember(ctx, rootDomainID, rootPubKey, *cb.prototypes[memberContract])
+	if err != nil {
+		return nil, errors.Wrap(err, errMsg)
+	}
+	err = g.activateOracleMembers(ctx, rootDomainID, oracleMap, *cb.prototypes[memberContract])
+	if err != nil {
+		return nil, errors.Wrap(err, errMsg)
+	}
+	err = g.activateMDCenter(ctx, rootDomainID, oracleMap, *cb.prototypes[mdcenterContract])
 	if err != nil {
 		return nil, errors.Wrap(err, errMsg)
 	}

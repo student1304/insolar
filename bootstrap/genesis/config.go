@@ -42,6 +42,7 @@ type Config struct {
 	KeysNameFormat   string   `mapstructure:"keys_name_format"`
 	ReuseKeys        bool     `mapstructure:"reuse_keys"`
 	RootBalance      uint     `mapstructure:"root_balance"`
+	MDCenterBalance  uint     `mapstructure:"md_center_balance"`
 	MajorityRule     int      `mapstructure:"majority_rule"`
 	MinRoles         struct {
 		Virtual       uint `mapstructure:"virtual"`
