@@ -1,4 +1,15 @@
 root_keys_file: "scripts/insolard/configs/root_member_keys.json"
+oracle_keys_file:
+  -
+    name: "oracle1"
+    keys_file: "scripts/insolard/configs/oracle1_member_keys.json"
+  -
+    name: "oracle2"
+    keys_file: "scripts/insolard/configs/oracle2_member_keys.json"
+  -
+    name: "oracle3"
+    keys_file: "scripts/insolard/configs/oracle3_member_keys.json"
+
 discovery_keys_dir: "scripts/insolard/reusekeys/discovery"
 keys_name_format: "/node_%02d.json"
 reuse_keys: false

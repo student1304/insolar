@@ -21,6 +21,9 @@ CONFIGS_DIR=configs
 BASE_DIR=scripts/insolard
 KEYS_FILE=$BASE_DIR/$CONFIGS_DIR/bootstrap_keys.json
 ROOT_MEMBER_KEYS_FILE=$BASE_DIR/$CONFIGS_DIR/root_member_keys.json
+ORACLE1_MEMBER_KEYS_FILE=$BASE_DIR/$CONFIGS_DIR/oracle1_member_keys.json
+ORACLE2_MEMBER_KEYS_FILE=$BASE_DIR/$CONFIGS_DIR/oracle2_member_keys.json
+ORACLE3_MEMBER_KEYS_FILE=$BASE_DIR/$CONFIGS_DIR/oracle3_member_keys.json
 DISCOVERY_NODES_DATA=$BASE_DIR/discoverynodes/
 NODES_DATA=$BASE_DIR/nodes/
 INSGORUND_DATA=$BASE_DIR/insgorund/
@@ -171,10 +174,13 @@ generate_bootstrap_keys()
     bin/insolar -c gen_keys > $KEYS_FILE
 }
 
-generate_root_member_keys()
+generate_member_keys()
 {
-    echo "generate root member_keys"
+    echo "generate member_keys"
     bin/insolar -c gen_keys > $ROOT_MEMBER_KEYS_FILE
+    bin/insolar -c gen_keys > $ORACLE1_MEMBER_KEYS_FILE
+    bin/insolar -c gen_keys > $ORACLE2_MEMBER_KEYS_FILE
+    bin/insolar -c gen_keys > $ORACLE3_MEMBER_KEYS_FILE
 }
 
 check_working_dir()
@@ -298,7 +304,7 @@ genesis()
         echo "SKIP: build binaries"
     fi
     generate_bootstrap_keys
-    generate_root_member_keys
+    generate_member_keys
     generate_insolard_configs
 
     printf "start genesis ... \n"

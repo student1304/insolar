@@ -116,8 +116,18 @@ func (g *Generator) Run(ctx context.Context) error {
 		return errors.Wrap(err, "[ Genesis ] couldn't get root keys")
 	}
 
+	inslog.Info("[ Genesis ] getKeysFromFile for oracles ...")
+	oracleMap := map[string]string{}
+	for _, o := range g.config.OracleKeysFiles {
+		_, oraclePubKey, err := getKeysFromFile(ctx, o.KeysFile)
+		if err != nil {
+			return errors.Wrap(err, "[ Genesis ] couldn't get oracle keys for oracle: "+o.Name)
+		}
+		oracleMap[o.Name] = oraclePubKey
+	}
+
 	inslog.Info("[ Genesis ] activateSmartContracts ...")
-	nodes, err := g.activateSmartContracts(ctx, cb, rootPubKey, rootDomainID, prototypes)
+	nodes, err := g.activateSmartContracts(ctx, cb, rootPubKey, oracleMap, rootDomainID, prototypes)
 	if err != nil {
 		panic(errors.Wrap(err, "[ Genesis ] could't activate smart contracts"))
 	}
@@ -261,6 +271,58 @@ func (g *Generator) activateRootMember(
 	return nil
 }
 
+func (g *Generator) activateOracleMembers(
+	ctx context.Context,
+	domain *insolar.ID,
+	oraclePubKeys map[string]string,
+	memberContractProto insolar.Reference,
+) error {
+
+	for name, key := range oraclePubKeys {
+		o, err := member.New(name, key)
+		if err != nil {
+			return errors.Wrap(err, "[ activateOracleMembers ]")
+		}
+
+		instanceData, err := insolar.Serialize(o)
+		if err != nil {
+			return errors.Wrap(err, "[ activateOracleMembers ]")
+		}
+
+		contractID, err := g.artifactManager.RegisterRequest(
+			ctx,
+			*g.rootDomainRef,
+			&message.Parcel{
+				Msg: &message.GenesisRequest{Name: name},
+			},
+		)
+
+		if err != nil {
+			return errors.Wrap(err, "[ activateOracleMembers ] couldn't create oracle member instance with name: "+name)
+		}
+		contract := insolar.NewReference(*domain, *contractID)
+		_, err = g.artifactManager.ActivateObject(
+			ctx,
+			insolar.Reference{},
+			*contract,
+			*g.rootDomainRef,
+			memberContractProto,
+			false,
+			instanceData,
+		)
+		if err != nil {
+			return errors.Wrap(err, "[ activateOracleMembers ] couldn't create oracle member instance with name: "+name)
+		}
+		_, err = g.artifactManager.RegisterResult(ctx, *g.rootDomainRef, *contract, nil)
+		if err != nil {
+			return errors.Wrap(err, "[ activateOracleMembers ] couldn't create oracle member instance with name: "+name)
+		}
+		g.rootMemberRef = contract
+
+	}
+	return nil
+}
+
 // TODO: this is not required since we refer by request id.
 func (g *Generator) updateRootDomain(
 	ctx context.Context, domainDesc artifact.ObjectDescriptor,
@@ -333,6 +395,7 @@ func (g *Generator) activateSmartContracts(
 	ctx context.Context,
 	cb *contractsBuilder,
 	rootPubKey string,
+	oracleMap map[string]string,
 	rootDomainID *insolar.ID,
 	prototypes prototypes,
 ) ([]genesisNode, error) {
