@@ -452,52 +452,6 @@ func (g *Generator) updateRootDomain(
 	return nil
 }
 
-func (g *Generator) activateRootMemberWallet(
-	ctx context.Context, domain *insolar.ID, walletContractProto insolar.Reference,
-) error {
-
-	w, err := wallet.New(g.config.RootBalance)
-	if err != nil {
-		return errors.Wrap(err, "[ ActivateRootWallet ]")
-	}
-
-	instanceData, err := insolar.Serialize(w)
-	if err != nil {
-		return errors.Wrap(err, "[ ActivateRootWallet ]")
-	}
-
-	contractID, err := g.artifactManager.RegisterRequest(
-		ctx,
-		*g.rootDomainRef,
-		&message.Parcel{
-			Msg: &message.GenesisRequest{Name: "RootWallet"},
-		},
-	)
-
-	if err != nil {
-		return errors.Wrap(err, "[ ActivateRootWallet ] couldn't create root wallet")
-	}
-	contract := insolar.NewReference(*domain, *contractID)
-	_, err = g.artifactManager.ActivateObject(
-		ctx,
-		insolar.Reference{},
-		*contract,
-		*g.rootMemberRef,
-		walletContractProto,
-		true,
-		instanceData,
-	)
-	if err != nil {
-		return errors.Wrap(err, "[ ActivateRootWallet ] couldn't create root wallet")
-	}
-	_, err = g.artifactManager.RegisterResult(ctx, *g.rootDomainRef, *contract, nil)
-	if err != nil {
-		return errors.Wrap(err, "[ ActivateRootWallet ] couldn't create root wallet")
-	}
-
-	return nil
-}
-
 func (g *Generator) activateMDCenterWallet(
 	ctx context.Context, domain *insolar.ID, walletContractProto insolar.Reference,
 ) error {
@@ -584,12 +538,8 @@ func (g *Generator) activateSmartContracts(
 	if err != nil {
 		return nil, errors.Wrap(err, errMsg)
 	}
-	err = g.activateRootMemberWallet(ctx, rootDomainID, *cb.prototypes[walletContract])
-	if err != nil {
-		return nil, errors.Wrap(err, errMsg)
-	}
-	indexMap := make(map[string]string)
 
+	indexMap := make(map[string]string)
 	discoveryNodes, indexMap, err := g.addDiscoveryIndex(ctx, indexMap, *cb.prototypes[nodeRecord])
 	if err != nil {
 		return nil, errors.Wrap(err, errMsg)
