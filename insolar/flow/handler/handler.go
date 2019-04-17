@@ -84,34 +84,6 @@ func (h *Handler) WrapBusHandle(ctx context.Context, parcel insolar.Parcel) (ins
 	}
 }
 
-func (h *Handler) Innner(msgWM *message.Message) ([]*message.Message, error) {
-	msg := bus.Message{
-		ReplyTo: make(chan bus.Reply),
-		Msg:     msgWM,
-	}
-	ctx, logger := inslogger.WithField(ctx, "pulse", fmt.Sprintf("%d", parcel.Pulse()))
-	ctx = pulse.ContextWith(ctx, parcel.Pulse())
-	go func() {
-		f := thread.NewThread(msg, h.controller)
-		err := f.Run(ctx, h.handles.present(msg))
-		if err != nil {
-			select {
-			case msg.ReplyTo <- bus.Reply{Err: err}:
-			default:
-			}
-			logger.Error("Handling failed", err)
-		}
-	}()
-	var rep bus.Reply
-	select {
-	case rep = <-msg.ReplyTo:
-		return rep.Reply, rep.Err
-	case <-time.After(handleTimeout):
-		return nil, errors.New("handler timeout")
-	}
-	return nil, nil
-}
-
 func (h *Handler) Process(ctx context.Context, msg *message.Message, pub message.Publisher) error {
 	msgBus := bus.Message{
 		Publisher: pub,
@@ -151,6 +123,7 @@ func (h *Handler) Process(ctx context.Context, msg *message.Message, pub message
 		}
 		resInBytes := buf.Bytes()
 		resAsMsg := message.NewMessage(watermill.NewUUID(), resInBytes)
+		resAsMsg.Metadata.Set("Type", "Reply")
 		fmt.Println("get Reply with UUid:", resAsMsg.UUID)
 		err = pub.Publish("outbound", resAsMsg)
 		if err != nil {

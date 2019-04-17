@@ -62,12 +62,36 @@ func NewBus(
 		gochannel.Config{},
 		watermill.NewStdLogger(false, false),
 	)
+	// logger := watermill.NewStdLogger(false, false)
+	// router, err := message.NewRouter(message.RouterConfig{}, logger)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// router.AddPlugin(plugin.SignalsHandler)
+	// router.AddMiddleware(
+	// 	// correlation ID will copy correlation id from consumed message metadata to produced messages
+	// 	middleware.CorrelationID,
+	// )
 	bus := &Bus{
 		Pub:       pubSub,
 		sub:       pubSub,
 		Handler:   handler,
 		resultMap: make(map[string]*future),
 	}
+	// router.AddNoPublisherHandler(
+	// 	"inbound",                // handler name, must be unique
+	// 	"example.topiinboundc_1", // topic from which we will read events
+	// 	pubSub,
+	// 	nil,
+	// )
+	// router.AddHandler(
+	// 	"struct_handler", // handler name, must be unique
+	// 	"outbound",       // topic from which we will read events
+	// 	pubSub,
+	// 	"inbound", // topic to which we will publish event
+	// 	pubSub,
+	// 	nil,
+	// )
 	return bus
 }
 
@@ -123,6 +147,7 @@ func (b *Bus) toIncome(ctx context.Context, args [][]byte) ([]byte, error) {
 	// create msg from network bytes
 	wmMsg := parcel.Message().(*insolar.Watermill)
 	msg := wmMsg.Msg
+	msg.Metadata.Set("Sender", parcel.GetSender().String())
 	fmt.Println("hi love, get type:", msg.Metadata.Get("Type"))
 	fmt.Println("hi love, get mets:", msg.Metadata, msg.UUID)
 	fmt.Println("hi love, get pays:", msg.Payload)
@@ -174,23 +199,31 @@ func (b *Bus) processIncome(ctx context.Context, messages <-chan *message.Messag
 func (b *Bus) processOutcome(ctx context.Context, messages <-chan *message.Message) {
 	for msg := range messages {
 
-		// b.resultMutex.RLock()
-		// f, ok := b.resultMap[msg.UUID]
-		// b.resultMutex.RUnlock()
-		// if ok {
-		// 	fmt.Println("msg.UUID love,", msg.UUID)
-		// 	res, err := reply.Deserialize(bytes.NewBuffer(msg.Payload))
-		// 	if err != nil {
-		// 		fmt.Println("lol kek sorry", err)
-		// 		// 	do staff
-		// 	}
-		// 	f.SetResult(res)
-		// 	msg.Ack()
-		// 	continue
-		// }
+		sender := msg.Metadata.Get("Sender")
+		if sender != "" {
+			serviceData := insMsg.ServiceData{
+				LogTraceID:    inslogger.TraceID(ctx),
+				LogLevel:      inslogger.GetLoggerLevel(ctx),
+				TraceSpanData: instracer.MustSerialize(ctx),
+			}
+
+			parcelForNet := &insMsg.Parcel{
+				Msg: &insolar.Watermill{
+					Msg: *msg,
+				},
+				// Signature:   signature.Bytes(),
+				Sender:      sender,
+				Token:       parcel.DelegationToken(),
+				PulseNumber: parcel.Pulse(),
+				ServiceData: serviceData,
+			}
+			fmt.Println("deliverIncomeMsg was send")
+			_, err = b.Network.SendMessage(nodes[0], deliverIncomeMsg, parcelForNet)
+		}
 
 		parcel, err := insMsg.DeserializeParcel(bytes.NewBuffer(msg.Payload))
 		if err != nil {
+			fmt.Println("lol kek err,", err)
 			// 	do staff
 		}
 
@@ -206,6 +239,8 @@ func (b *Bus) processOutcome(ctx context.Context, messages <-chan *message.Messa
 			fmt.Println("kek no rec", nodes)
 		} else {
 			// TODO: send to all actors of the role if nil Target
+			fmt.Println("lol kek parcel - ", parcel)
+			fmt.Println("lol kek", parcel.Type().String())
 			target := parcel.DefaultTarget()
 			// FIXME: @andreyromancev. 21.12.18. Temp hack. All messages should have a default target.
 			if target == nil {
@@ -248,6 +283,7 @@ func (b *Bus) processOutcome(ctx context.Context, messages <-chan *message.Messa
 
 		// Short path when sending to self node. Skip serialization
 		origin := b.NodeNetwork.GetOrigin()
+		fmt.Println("Hi love, origin:", origin, ", nodes[0]:", nodes[0])
 		if nodes[0].Equal(origin.ID()) {
 			err = b.Pub.Publish("inbound", msg)
 			if err != nil {
