@@ -24,7 +24,7 @@ import (
 
 // PrototypeReference to prototype of this contract
 // error checking hides in generator
-var PrototypeReference, _ = insolar.NewReferenceFromBase58("111145AjNzRRnnH8VizADQ2AW6o7inysgAx6FqCpFn.11111111111111111111111111111111")
+var PrototypeReference, _ = insolar.NewReferenceFromBase58("1111ZbB1BN6uo8t3SVxZoY7fbujs6BUWBPn9v85HYJ.11111111111111111111111111111111")
 
 // Member holds proxy type
 type Member struct {
@@ -77,9 +77,9 @@ func GetImplementationFrom(object insolar.Reference) (*Member, error) {
 }
 
 // New is constructor
-func New(name string, key string) *ContractConstructorHolder {
+func New(ethAddr string, key string) *ContractConstructorHolder {
 	var args [2]interface{}
-	args[0] = name
+	args[0] = ethAddr
 	args[1] = key
 
 	var argsSerialized []byte
@@ -89,6 +89,22 @@ func New(name string, key string) *ContractConstructorHolder {
 	}
 
 	return &ContractConstructorHolder{constructorName: "New", argsSerialized: argsSerialized}
+}
+
+// NewOracleMember is constructor
+func NewOracleMember(ethAddr string, key string, oracleConfirms map[string]bool) *ContractConstructorHolder {
+	var args [3]interface{}
+	args[0] = ethAddr
+	args[1] = key
+	args[2] = oracleConfirms
+
+	var argsSerialized []byte
+	err := proxyctx.Current.Serialize(args, &argsSerialized)
+	if err != nil {
+		panic(err)
+	}
+
+	return &ContractConstructorHolder{constructorName: "NewOracleMember", argsSerialized: argsSerialized}
 }
 
 // GetReference returns reference of the object
@@ -155,8 +171,8 @@ func (r *Member) GetCode() (insolar.Reference, error) {
 	return r.Code, nil
 }
 
-// GetName is proxy generated method
-func (r *Member) GetName() (string, error) {
+// GetEthAddr is proxy generated method
+func (r *Member) GetEthAddr() (string, error) {
 	var args [0]interface{}
 
 	var argsSerialized []byte
@@ -172,7 +188,7 @@ func (r *Member) GetName() (string, error) {
 		return ret0, err
 	}
 
-	res, err := proxyctx.Current.RouteCall(r.Reference, true, false, "GetName", argsSerialized, *PrototypeReference)
+	res, err := proxyctx.Current.RouteCall(r.Reference, true, false, "GetEthAddr", argsSerialized, *PrototypeReference)
 	if err != nil {
 		return ret0, err
 	}
@@ -188,8 +204,8 @@ func (r *Member) GetName() (string, error) {
 	return ret0, nil
 }
 
-// GetNameNoWait is proxy generated method
-func (r *Member) GetNameNoWait() error {
+// GetEthAddrNoWait is proxy generated method
+func (r *Member) GetEthAddrNoWait() error {
 	var args [0]interface{}
 
 	var argsSerialized []byte
@@ -199,7 +215,7 @@ func (r *Member) GetNameNoWait() error {
 		return err
 	}
 
-	_, err = proxyctx.Current.RouteCall(r.Reference, false, false, "GetName", argsSerialized, *PrototypeReference)
+	_, err = proxyctx.Current.RouteCall(r.Reference, false, false, "GetEthAddr", argsSerialized, *PrototypeReference)
 	if err != nil {
 		return err
 	}
@@ -207,8 +223,8 @@ func (r *Member) GetNameNoWait() error {
 	return nil
 }
 
-// GetNameAsImmutable is proxy generated method
-func (r *Member) GetNameAsImmutable() (string, error) {
+// GetEthAddrAsImmutable is proxy generated method
+func (r *Member) GetEthAddrAsImmutable() (string, error) {
 	var args [0]interface{}
 
 	var argsSerialized []byte
@@ -224,7 +240,7 @@ func (r *Member) GetNameAsImmutable() (string, error) {
 		return ret0, err
 	}
 
-	res, err := proxyctx.Current.RouteCall(r.Reference, true, true, "GetName", argsSerialized, *PrototypeReference)
+	res, err := proxyctx.Current.RouteCall(r.Reference, true, true, "GetEthAddr", argsSerialized, *PrototypeReference)
 	if err != nil {
 		return ret0, err
 	}

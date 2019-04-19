@@ -19,7 +19,10 @@ package member
 import (
 	"errors"
 	"fmt"
+	"github.com/insolar/insolar/application/proxy/deposit"
+	"github.com/insolar/insolar/application/proxy/member"
 	"math"
+	"strconv"
 
 	"github.com/insolar/insolar/application/contract/member/signer"
 	"github.com/insolar/insolar/application/proxy/nodedomain"
@@ -31,12 +34,13 @@ import (
 
 type Member struct {
 	foundation.BaseContract
-	Name      string
-	PublicKey string
+	EthAddr        string
+	PublicKey      string
+	OracleConfirms map[string]bool
 }
 
-func (m *Member) GetName() (string, error) {
-	return m.Name, nil
+func (m *Member) GetEthAddr() (string, error) {
+	return m.EthAddr, nil
 }
 
 var INSATTR_GetPublicKey_API = true
@@ -45,10 +49,18 @@ func (m *Member) GetPublicKey() (string, error) {
 	return m.PublicKey, nil
 }
 
-func New(name string, key string) (*Member, error) {
+func New(ethAddr string, key string) (*Member, error) {
 	return &Member{
-		Name:      name,
+		EthAddr:   ethAddr,
 		PublicKey: key,
+	}, nil
+}
+
+func NewOracleMember(ethAddr string, key string, oracleConfirms map[string]bool) (*Member, error) {
+	return &Member{
+		EthAddr:        ethAddr,
+		PublicKey:      key,
+		OracleConfirms: oracleConfirms,
 	}, nil
 }
 
@@ -103,6 +115,9 @@ func (m *Member) Call(rootDomain insolar.Reference, method string, params []byte
 		return m.registerNodeCall(rootDomain, params)
 	case "GetNodeRef":
 		return m.getNodeRefCall(rootDomain, params)
+
+	case "Migration":
+		return m.migration(rootDomain, params)
 	}
 	return nil, &foundation.Error{S: "Unknown method"}
 }
@@ -241,4 +256,32 @@ func (m *Member) getNodeRefCall(ref insolar.Reference, params []byte) (interface
 	}
 
 	return nodeRef, nil
+}
+
+func (mdMember *Member) migration(rdRef insolar.Reference, params []byte) (interface{}, error) {
+	var txHash, ethAddr, amountStr, insAddr string
+	if err := signer.UnmarshalParams(params, &txHash, &ethAddr, &amountStr, &insAddr); err != nil {
+		return nil, fmt.Errorf("[ migration ] Can't unmarshal params: %s", err.Error())
+	}
+
+	amount, err := strconv.Atoi(amountStr)
+	if err != nil {
+		return "", fmt.Errorf("[ migration ] Cann't parse amount: %s", err.Error())
+	}
+
+	if insAddr == "" {
+		memberHolder := member.New(ethAddr, "")
+		m, err := memberHolder.AsChild(rdRef)
+		if err != nil {
+			return "", fmt.Errorf("[ migration ] Can't save as child: %s", err.Error())
+		}
+
+		dHolder := deposit.New(mdMember.OracleConfirms, txHash, uint(amount))
+		_, err = dHolder.AsDelegate(m.GetReference())
+		if err != nil {
+			return "", fmt.Errorf("[ migration ] Can't save as delegate: %s", err.Error())
+		}
+	}
+
+	return nil, nil
 }

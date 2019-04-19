@@ -33,7 +33,7 @@ type RootDomain struct {
 	foundation.BaseContract
 	RootMember    insolar.Reference
 	MDAdminMember insolar.Reference
-	NodeDomainRef insolar.Reference
+	NodeDomain    insolar.Reference
 }
 
 var INSATTR_CreateMember_API = true
@@ -87,7 +87,7 @@ func (rd *RootDomain) getUserInfoMap(m *member.Member) (map[string]interface{}, 
 		return nil, fmt.Errorf("[ getUserInfoMap ] Can't get implementation: %s", err.Error())
 	}
 
-	name, err := m.GetName()
+	ethAddr, err := m.GetEthAddr()
 	if err != nil {
 		return nil, fmt.Errorf("[ getUserInfoMap ] Can't get name: %s", err.Error())
 	}
@@ -97,7 +97,7 @@ func (rd *RootDomain) getUserInfoMap(m *member.Member) (map[string]interface{}, 
 		return nil, fmt.Errorf("[ getUserInfoMap ] Can't get total balance: %s", err.Error())
 	}
 	return map[string]interface{}{
-		"member": name,
+		"member": ethAddr,
 		"wallet": balance,
 	}, nil
 }
@@ -159,7 +159,7 @@ var INSATTR_Info_API = true
 func (rd *RootDomain) Info() (interface{}, error) {
 	res := map[string]interface{}{
 		"root_member": rd.RootMember.String(),
-		"node_domain": rd.NodeDomainRef.String(),
+		"node_domain": rd.NodeDomain.String(),
 	}
 	resJSON, err := json.Marshal(res)
 	if err != nil {
@@ -170,7 +170,7 @@ func (rd *RootDomain) Info() (interface{}, error) {
 
 // GetNodeDomainRef returns reference of NodeDomain instance
 func (rd *RootDomain) GetNodeDomainRef() (insolar.Reference, error) {
-	return rd.NodeDomainRef, nil
+	return rd.NodeDomain, nil
 }
 
 // NewRootDomain creates new RootDomain

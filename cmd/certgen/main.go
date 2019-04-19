@@ -61,7 +61,7 @@ func generateKeys() (crypto.PublicKey, crypto.PrivateKey) {
 	privKey, err := ks.GeneratePrivateKey()
 	checkError("Failed to generate private key:", err)
 	pubKey := ks.ExtractPublicKey(privKey)
-	fmt.Println("Generate reys")
+	fmt.Println("Generate keys")
 	return pubKey, privKey
 }
 
