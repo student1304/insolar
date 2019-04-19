@@ -39,28 +39,28 @@ func New(oracleConfirms map[string]bool, txHash string, amount uint) (*Deposit, 
 	}, nil
 }
 
-func (d *Deposit) Confirm(oracleName string, txHash string, amount uint) error {
+func (d *Deposit) Confirm(oracleName string, txHash string, amount uint) (bool, error) {
 	if txHash != d.TxHash {
-		return fmt.Errorf("[ Confirm ] Transaction hash is incorrect")
+		return false, fmt.Errorf("[ Confirm ] Transaction hash is incorrect")
 	}
 
 	if amount != d.Amount {
-		return fmt.Errorf("[ Confirm ] Amount is incorrect")
+		return false, fmt.Errorf("[ Confirm ] Amount is incorrect")
 	}
 
 	if confirm, ok := d.OracleConfirms[oracleName]; ok {
 		if confirm {
-			return fmt.Errorf("[ Confirm ] Confirm from the oracle" + oracleName + " already exists")
+			return false, fmt.Errorf("[ Confirm ] Confirm from the oracle" + oracleName + " already exists")
 		} else {
 			d.OracleConfirms[oracleName] = true
 			d.Confirms++
-			if d.Confirms >= 3 {
-				return nil
+			if d.Confirms == 3 {
+				return true, nil
 			} else {
-				return nil
+				return false, nil
 			}
 		}
 	} else {
-		return fmt.Errorf("[ Confirm ] Oracle name is incorrect")
+		return false, fmt.Errorf("[ Confirm ] Oracle name is incorrect")
 	}
 }

@@ -19,24 +19,22 @@ package member
 import (
 	"errors"
 	"fmt"
+	"github.com/insolar/insolar/application/contract/member/signer"
 	"github.com/insolar/insolar/application/proxy/deposit"
 	"github.com/insolar/insolar/application/proxy/member"
-	"math"
-	"strconv"
-
-	"github.com/insolar/insolar/application/contract/member/signer"
 	"github.com/insolar/insolar/application/proxy/nodedomain"
 	"github.com/insolar/insolar/application/proxy/rootdomain"
 	"github.com/insolar/insolar/application/proxy/wallet"
 	"github.com/insolar/insolar/insolar"
 	"github.com/insolar/insolar/logicrunner/goplugin/foundation"
+	"math"
 )
 
 type Member struct {
 	foundation.BaseContract
-	EthAddr        string
-	PublicKey      string
-	OracleConfirms map[string]bool
+	Name      string
+	EthAddr   string
+	PublicKey string
 }
 
 func (m *Member) GetEthAddr() (string, error) {
@@ -56,11 +54,10 @@ func New(ethAddr string, key string) (*Member, error) {
 	}, nil
 }
 
-func NewOracleMember(ethAddr string, key string, oracleConfirms map[string]bool) (*Member, error) {
+func NewOracleMember(name string, key string) (*Member, error) {
 	return &Member{
-		EthAddr:        ethAddr,
-		PublicKey:      key,
-		OracleConfirms: oracleConfirms,
+		Name:      name,
+		PublicKey: key,
 	}, nil
 }
 
@@ -158,6 +155,32 @@ func (m *Member) getBalanceCall(params []byte) (interface{}, error) {
 	return w.GetBalance()
 }
 
+func parseAmount(inAmount interface{}) (amount uint, err error) {
+	switch a := inAmount.(type) {
+	case uint:
+		amount = a
+	case uint64:
+		if a > math.MaxUint32 {
+			return 0, errors.New("Transfer ammount bigger than integer")
+		}
+		amount = uint(a)
+	case float32:
+		if a > math.MaxUint32 {
+			return 0, errors.New("Transfer ammount bigger than integer")
+		}
+		amount = uint(a)
+	case float64:
+		if a > math.MaxUint32 {
+			return 0, errors.New("Transfer ammount bigger than integer")
+		}
+		amount = uint(a)
+	default:
+		return 0, fmt.Errorf("Wrong type for amount %t", inAmount)
+	}
+
+	return amount, nil
+}
+
 func (m *Member) transferCall(params []byte) (interface{}, error) {
 	var amount uint
 	var toStr string
@@ -165,27 +188,12 @@ func (m *Member) transferCall(params []byte) (interface{}, error) {
 	if err := signer.UnmarshalParams(params, &inAmount, &toStr); err != nil {
 		return nil, fmt.Errorf("[ transferCall ] Can't unmarshal params: %s", err.Error())
 	}
-	switch a := inAmount.(type) {
-	case uint:
-		amount = a
-	case uint64:
-		if a > math.MaxUint32 {
-			return nil, errors.New("Transfer ammount bigger than integer")
-		}
-		amount = uint(a)
-	case float32:
-		if a > math.MaxUint32 {
-			return nil, errors.New("Transfer ammount bigger than integer")
-		}
-		amount = uint(a)
-	case float64:
-		if a > math.MaxUint32 {
-			return nil, errors.New("Transfer ammount bigger than integer")
-		}
-		amount = uint(a)
-	default:
-		return nil, fmt.Errorf("Wrong type for amount %t", inAmount)
+
+	amount, err := parseAmount(inAmount)
+	if err != nil {
+		return nil, fmt.Errorf("[ transferCall ] Failed to parse amount: %s", err.Error())
 	}
+
 	to, err := insolar.NewReferenceFromBase58(toStr)
 	if err != nil {
 		return nil, fmt.Errorf("[ transferCall ] Failed to parse 'to' param: %s", err.Error())
@@ -259,28 +267,84 @@ func (m *Member) getNodeRefCall(ref insolar.Reference, params []byte) (interface
 }
 
 func (mdMember *Member) migration(rdRef insolar.Reference, params []byte) (interface{}, error) {
-	var txHash, ethAddr, amountStr, insAddr string
-	if err := signer.UnmarshalParams(params, &txHash, &ethAddr, &amountStr, &insAddr); err != nil {
+	if mdMember.Name == "" {
+		return nil, fmt.Errorf("[ migration ] Only oracles can call migration")
+	}
+
+	rd := rootdomain.GetObject(rdRef)
+	oc, err := rd.GetOracleConfirms()
+	if err != nil {
+		return nil, fmt.Errorf("[ migration ] Can't get oracles map: %s", err.Error())
+	}
+
+	if _, ok := oc[mdMember.Name]; !ok {
+		return nil, fmt.Errorf("[ migration ] This oracle is not in the list")
+	}
+
+	var txHash, ethAddr, inInsAddr string
+	var inAmount interface{}
+	if err := signer.UnmarshalParams(params, &txHash, &ethAddr, &inAmount, &inInsAddr); err != nil {
 		return nil, fmt.Errorf("[ migration ] Can't unmarshal params: %s", err.Error())
 	}
 
-	amount, err := strconv.Atoi(amountStr)
+	amount, err := parseAmount(inAmount)
 	if err != nil {
-		return "", fmt.Errorf("[ migration ] Cann't parse amount: %s", err.Error())
+		return nil, fmt.Errorf("[ migration ] Failed to parse amount: %s", err.Error())
 	}
 
-	if insAddr == "" {
+	var insAddr insolar.Reference
+	var txDeposite *deposit.Deposit
+	if inInsAddr == "" {
 		memberHolder := member.New(ethAddr, "")
 		m, err := memberHolder.AsChild(rdRef)
 		if err != nil {
 			return "", fmt.Errorf("[ migration ] Can't save as child: %s", err.Error())
 		}
+		insAddr := m.GetReference()
 
-		dHolder := deposit.New(mdMember.OracleConfirms, txHash, uint(amount))
-		_, err = dHolder.AsDelegate(m.GetReference())
+		dHolder := deposit.New(oc, txHash, uint(amount))
+		txDeposite, err = dHolder.AsDelegate(insAddr)
 		if err != nil {
 			return "", fmt.Errorf("[ migration ] Can't save as delegate: %s", err.Error())
 		}
+
+	} else {
+		pInsAddr, err := insolar.NewReferenceFromBase58(inInsAddr)
+		insAddr = *pInsAddr
+
+		if err != nil {
+			return nil, fmt.Errorf("[ migration ] Failed to parse 'inInsAddr' param: %s", err.Error())
+		}
+
+		txDeposite, err = deposit.GetImplementationFrom(insAddr)
+		if err != nil {
+			return nil, fmt.Errorf("[ migration ] Can't get implementation: %s", err.Error())
+		}
+	}
+
+	allConfirmed, err := txDeposite.Confirm(mdMember.Name, txHash, amount)
+	if err != nil {
+		return nil, fmt.Errorf("[ migration ] Confirmed failed: %s", err.Error())
+	}
+
+	if allConfirmed {
+
+		mdWalletRef, err := rd.GetMDWalletRef()
+		if err != nil {
+			return nil, fmt.Errorf("[ migration ] Can't get md wallet ref: %s", err.Error())
+		}
+		mdWallet := wallet.GetObject(*mdWalletRef)
+
+		w, err := wallet.GetImplementationFrom(insAddr)
+		if err != nil {
+			wHolder := wallet.New(0)
+			w, err = wHolder.AsDelegate(insAddr)
+			if err != nil {
+				return "", fmt.Errorf("[ migration ] Can't save as delegate: %s", err.Error())
+			}
+		}
+
+		mdWallet.Transfer(amount, &w.Reference)
 	}
 
 	return nil, nil

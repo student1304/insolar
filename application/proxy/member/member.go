@@ -24,7 +24,7 @@ import (
 
 // PrototypeReference to prototype of this contract
 // error checking hides in generator
-var PrototypeReference, _ = insolar.NewReferenceFromBase58("1111ZbB1BN6uo8t3SVxZoY7fbujs6BUWBPn9v85HYJ.11111111111111111111111111111111")
+var PrototypeReference, _ = insolar.NewReferenceFromBase58("1111KKoKpxWvF2wYSVDrertB2rfkD77rqZsDunakoj.11111111111111111111111111111111")
 
 // Member holds proxy type
 type Member struct {
@@ -92,11 +92,10 @@ func New(ethAddr string, key string) *ContractConstructorHolder {
 }
 
 // NewOracleMember is constructor
-func NewOracleMember(ethAddr string, key string, oracleConfirms map[string]bool) *ContractConstructorHolder {
-	var args [3]interface{}
-	args[0] = ethAddr
+func NewOracleMember(name string, key string) *ContractConstructorHolder {
+	var args [2]interface{}
+	args[0] = name
 	args[1] = key
-	args[2] = oracleConfirms
 
 	var argsSerialized []byte
 	err := proxyctx.Current.Serialize(args, &argsSerialized)

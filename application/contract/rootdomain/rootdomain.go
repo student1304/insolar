@@ -31,9 +31,11 @@ import (
 // RootDomain is smart contract representing entrance point to system
 type RootDomain struct {
 	foundation.BaseContract
-	RootMember    insolar.Reference
-	MDAdminMember insolar.Reference
-	NodeDomain    insolar.Reference
+	RootMember     insolar.Reference
+	OracleConfirms map[string]bool
+	MDAdminMember  insolar.Reference
+	MDWallet       insolar.Reference
+	NodeDomain     insolar.Reference
 }
 
 var INSATTR_CreateMember_API = true
@@ -45,6 +47,21 @@ func decodeHex(s string) []byte {
 	}
 
 	return b
+}
+
+// GetRootMemberRef returns root member's reference
+func (rd *RootDomain) GetMDAdminMemberRef() (*insolar.Reference, error) {
+	return &rd.MDAdminMember, nil
+}
+
+// GetRootMemberRef returns root member's reference
+func (rd *RootDomain) GetMDWalletRef() (*insolar.Reference, error) {
+	return &rd.MDWallet, nil
+}
+
+// GetRootMemberRef returns root member's reference
+func (rd *RootDomain) GetOracleConfirms() (map[string]bool, error) {
+	return rd.OracleConfirms, nil
 }
 
 func hash(msg string) string {
