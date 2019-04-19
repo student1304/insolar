@@ -21,15 +21,18 @@ import (
 	"fmt"
 	"time"
 
+	watermillMsg "github.com/ThreeDotsLabs/watermill/message"
+
+	"github.com/insolar/insolar/insolar/flow"
+	"github.com/insolar/insolar/insolar/flow/bus"
 	"github.com/insolar/insolar/ledger/handle"
+	"github.com/insolar/insolar/ledger/proc"
 	"github.com/pkg/errors"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
 
 	"github.com/insolar/insolar/configuration"
 	"github.com/insolar/insolar/insolar"
-	"github.com/insolar/insolar/insolar/flow"
-	"github.com/insolar/insolar/insolar/flow/bus"
 	"github.com/insolar/insolar/insolar/flow/handler"
 	"github.com/insolar/insolar/insolar/jet"
 	"github.com/insolar/insolar/insolar/message"
@@ -38,7 +41,6 @@ import (
 	"github.com/insolar/insolar/instrumentation/inslogger"
 	"github.com/insolar/insolar/instrumentation/insmetrics"
 	"github.com/insolar/insolar/ledger/hot"
-	"github.com/insolar/insolar/ledger/proc"
 	"github.com/insolar/insolar/ledger/recentstorage"
 	"github.com/insolar/insolar/ledger/storage"
 	"github.com/insolar/insolar/ledger/storage/blob"
@@ -86,13 +88,14 @@ type MessageHandler struct {
 }
 
 // NewMessageHandler creates new handler.
-func NewMessageHandler(conf *configuration.Ledger) *MessageHandler {
+func NewMessageHandler(conf *configuration.Ledger, pub watermillMsg.Publisher) *MessageHandler {
 	h := &MessageHandler{
 		handlers: map[insolar.MessageType]insolar.MessageHandler{},
 		conf:     conf,
 	}
 
 	dep := &proc.Dependencies{
+		Publisher: pub,
 		FetchJet: func(p *proc.FetchJet) *proc.FetchJet {
 			p.Dep.JetAccessor = h.JetStorage
 			p.Dep.Coordinator = h.JetCoordinator
@@ -138,6 +141,7 @@ func NewMessageHandler(conf *configuration.Ledger) *MessageHandler {
 			Message: msg,
 		}).Present
 	})
+	h.FlowHandler.JetCoordinator = h.JetCoordinator
 	return h
 }
 

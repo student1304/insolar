@@ -25,7 +25,10 @@ import (
 
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill/message"
+	"github.com/ThreeDotsLabs/watermill/message/router/middleware"
+	commonbus "github.com/insolar/insolar/bus"
 	"github.com/insolar/insolar/insolar"
+
 	"github.com/insolar/insolar/insolar/flow"
 	"github.com/insolar/insolar/insolar/flow/bus"
 	"github.com/insolar/insolar/insolar/flow/internal/pulse"
@@ -38,7 +41,9 @@ type Handler struct {
 	handles struct {
 		present flow.MakeHandle
 	}
-	controller *thread.Controller
+	controller     *thread.Controller
+	Pub            message.Publisher
+	JetCoordinator insolar.JetCoordinator
 }
 
 func NewHandler(present flow.MakeHandle) *Handler {
@@ -99,9 +104,8 @@ func (h *Handler) InnerSubscriber(watermillMsg *message.Message) ([]*message.Mes
 	return nil, nil
 }
 
-func (h *Handler) Process(ctx context.Context, msg *message.Message, pub message.Publisher) error {
+func (h *Handler) Process(ctx context.Context, msg *message.Message) error {
 	msgBus := bus.Message{
-		Publisher:    pub,
 		WatermillMsg: msg,
 		ReplyTo:      make(chan bus.Reply),
 	}
@@ -124,8 +128,12 @@ func (h *Handler) Process(ctx context.Context, msg *message.Message, pub message
 			logger.Error("Handling failed", err)
 		}
 	}()
-	go func(msg bus.Message, pub message.Publisher) {
+	go func(msg bus.Message) {
 		rep := <-msg.ReplyTo
+		if rep.Reply == nil {
+			fmt.Println("err and no reply", rep.Err)
+			rep.Reply = &reply.Error{ErrType: reply.ErrType(10)}
+		}
 		rd, err := reply.Serialize(rep.Reply)
 		fmt.Println("get Reply:", rep.Reply.Type())
 		if err != nil {
@@ -139,11 +147,21 @@ func (h *Handler) Process(ctx context.Context, msg *message.Message, pub message
 		resInBytes := buf.Bytes()
 		resAsMsg := message.NewMessage(watermill.NewUUID(), resInBytes)
 		resAsMsg.Metadata.Set("Type", "Reply")
-		fmt.Println("get Reply with UUid:", resAsMsg.UUID)
-		err = pub.Publish("outbound", resAsMsg)
+		id := middleware.MessageCorrelationID(msg.WatermillMsg)
+		middleware.SetCorrelationID(id, resAsMsg)
+
+		// err = pub.Publish("outbound", resAsMsg)
+		// if err != nil {
+		// 	fmt.Println("All was bad, really bad", err)
+		// }
+		receiver := msg.WatermillMsg.Metadata.Get("Sender")
+		resAsMsg.Metadata.Set("Receiver", receiver)
+
+		err = h.Pub.Publish(commonbus.ExternalMsgTopic, resAsMsg)
 		if err != nil {
-			fmt.Println("All was bad, really bad", err)
+			fmt.Println("lol kek Process love,", err)
+			// TODO: handle error
 		}
-	}(msgBus, pub)
+	}(msgBus)
 	return nil
 }

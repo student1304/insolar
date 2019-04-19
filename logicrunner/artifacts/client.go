@@ -21,7 +21,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/insolar/insolar/bus"
 	"github.com/insolar/insolar/insolar/record"
 	"github.com/insolar/insolar/ledger/storage/pulse"
 	"github.com/insolar/insolar/messagebus"
@@ -51,7 +50,6 @@ type client struct {
 	JetCoordinator             insolar.JetCoordinator             `inject:""`
 
 	getChildrenChunkSize int
-	asyncBus             *bus.Bus
 	senders              *messagebus.Senders
 }
 
@@ -62,10 +60,9 @@ func (m *client) State() ([]byte, error) {
 }
 
 // NewClient creates new client instance.
-func NewClient(asyncBus *bus.Bus) *client { // nolint
+func NewClient() *client { // nolint
 	return &client{
 		getChildrenChunkSize: getChildrenChunkSize,
-		asyncBus:             asyncBus,
 		senders:              messagebus.NewSenders(),
 	}
 }
@@ -187,12 +184,9 @@ func (m *client) GetObject(
 		Approved: approved,
 	}
 
-	fmt.Println("hi love, happy to see you")
 	sender := messagebus.BuildSender(
-		m.asyncBus.Send,
-		// m.DefaultBus.Send,
-		messagebus.FollowRedirectSender(m.asyncBus),
-		// messagebus.FollowRedirectSender(m.DefaultBus),
+		m.DefaultBus.SendViaWatermill,
+		messagebus.FollowRedirectSender(m.DefaultBus),
 		messagebus.RetryJetSender(m.JetStorage),
 	)
 

@@ -20,7 +20,6 @@ import (
 	"context"
 
 	"github.com/insolar/insolar/api"
-	"github.com/insolar/insolar/bus"
 	"github.com/insolar/insolar/certificate"
 	"github.com/insolar/insolar/component"
 	"github.com/insolar/insolar/configuration"
@@ -164,7 +163,7 @@ func newComponents(ctx context.Context, cfg configuration.Configuration) (*compo
 		var err error
 		Tokens = delegationtoken.NewDelegationTokenFactory()
 		Parcels = messagebus.NewParcelFactory()
-		Bus, err = messagebus.NewMessageBus(cfg)
+		Bus, err = messagebus.NewMessageBus(cfg, nil)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to start MessageBus")
 		}
@@ -239,7 +238,6 @@ func newComponents(ctx context.Context, cfg configuration.Configuration) (*compo
 		Jets = jets
 		PulseManager = pm
 	}
-	b := bus.NewBus(nil)
 
 	c.cmp.Inject(
 		PulseManager,
@@ -259,7 +257,7 @@ func newComponents(ctx context.Context, cfg configuration.Configuration) (*compo
 		Requester,
 		Tokens,
 		Parcels,
-		artifacts.NewClient(nil),
+		artifacts.NewClient(),
 		Genesis,
 		API,
 		NetworkCoordinator,
@@ -270,7 +268,6 @@ func newComponents(ctx context.Context, cfg configuration.Configuration) (*compo
 		CertManager,
 		NodeNetwork,
 		NetworkService,
-		b,
 	)
 	err = c.cmp.Init(ctx)
 	if err != nil {

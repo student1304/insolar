@@ -19,8 +19,12 @@ package virtual
 import (
 	"context"
 
-	"github.com/insolar/insolar/api"
+	"github.com/ThreeDotsLabs/watermill"
+	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/insolar/insolar/bus"
+
+	"github.com/ThreeDotsLabs/watermill/message/infrastructure/gochannel"
+	"github.com/insolar/insolar/api"
 	"github.com/insolar/insolar/certificate"
 	"github.com/insolar/insolar/component"
 	"github.com/insolar/insolar/configuration"
@@ -115,6 +119,13 @@ func initComponents(
 ) (*component.Manager, insolar.TerminationHandler, error) {
 	cm := component.Manager{}
 
+	logger := watermill.NewStdLogger(false, false)
+	externalPubSub := gochannel.NewGoChannel(gochannel.Config{}, logger)
+	router, err := message.NewRouter(message.RouterConfig{}, logger)
+	if err != nil {
+		panic(err)
+	}
+
 	nodeNetwork, err := nodenetwork.NewNodeNetwork(cfg.Host.Transport, certManager.GetCertificate())
 	checkError(ctx, err, "failed to start NodeNetwork")
 
@@ -124,12 +135,19 @@ func initComponents(
 	nw, err := servicenetwork.NewServiceNetwork(cfg, &cm, isGenesis)
 	checkError(ctx, err, "failed to start Network")
 
+	router.AddNoPublisherHandler(
+		"InnerMsgHandler",
+		bus.ExternalMsgTopic,
+		externalPubSub,
+		nw.ProcessOutcome,
+	)
+
 	terminationHandler := termination.NewHandler(nw)
 
 	delegationTokenFactory := delegationtoken.NewDelegationTokenFactory()
 	parcelFactory := messagebus.NewParcelFactory()
 
-	messageBus, err := messagebus.NewMessageBus(cfg)
+	messageBus, err := messagebus.NewMessageBus(cfg, externalPubSub)
 	checkError(ctx, err, "failed to start MessageBus")
 
 	contractRequester, err := contractrequester.New()
@@ -155,7 +173,6 @@ func initComponents(
 	checkError(ctx, err, "failed init pulse for LogicRunner")
 
 	// h := handler.NewHandler()
-	b := bus.NewBus(nil)
 
 	cm.Register(
 		terminationHandler,
@@ -173,7 +190,7 @@ func initComponents(
 		messageBus,
 		contractRequester,
 		logicRunner,
-		artifacts.NewClient(b),
+		artifacts.NewClient(),
 		pulse.NewStorageMem(),
 		jet.NewStore(),
 		jetcoordinator.NewJetCoordinator(cfg.Ledger.LightChainLimit),
@@ -188,10 +205,14 @@ func initComponents(
 		networkCoordinator,
 		cryptographyService,
 		keyProcessor,
-		b,
 	}...)
 
 	cm.Inject(components...)
 
+	go func() {
+		if err := router.Run(); err != nil {
+			panic(err)
+		}
+	}()
 	return &cm, terminationHandler, nil
 }

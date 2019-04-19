@@ -19,6 +19,9 @@ package light
 import (
 	"context"
 
+	"github.com/ThreeDotsLabs/watermill"
+	watermillMsg "github.com/ThreeDotsLabs/watermill/message"
+	"github.com/ThreeDotsLabs/watermill/message/infrastructure/gochannel"
 	"github.com/insolar/insolar/api"
 	"github.com/insolar/insolar/bus"
 	"github.com/insolar/insolar/certificate"
@@ -101,6 +104,13 @@ func newComponents(ctx context.Context, cfg configuration.Configuration) (*compo
 	c.NodeRef = CertManager.GetCertificate().GetNodeRef().String()
 	c.NodeRole = CertManager.GetCertificate().GetRole().String()
 
+	logger := watermill.NewStdLogger(false, false)
+	externalPubSub := gochannel.NewGoChannel(gochannel.Config{}, logger)
+	router, err := watermillMsg.NewRouter(watermillMsg.RouterConfig{}, logger)
+	if err != nil {
+		panic(err)
+	}
+
 	// Network.
 	var (
 		NetworkService     insolar.Network
@@ -115,6 +125,12 @@ func newComponents(ctx context.Context, cfg configuration.Configuration) (*compo
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to start Network")
 		}
+		router.AddNoPublisherHandler(
+			"InnerMsgHandler",
+			bus.ExternalMsgTopic,
+			externalPubSub,
+			NetworkService.ProcessOutcome,
+		)
 
 		Termination = termination.NewHandler(NetworkService)
 
@@ -164,7 +180,7 @@ func newComponents(ctx context.Context, cfg configuration.Configuration) (*compo
 		var err error
 		Tokens = delegationtoken.NewDelegationTokenFactory()
 		Parcels = messagebus.NewParcelFactory()
-		Bus, err = messagebus.NewMessageBus(cfg)
+		Bus, err = messagebus.NewMessageBus(cfg, externalPubSub)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to start MessageBus")
 		}
@@ -187,7 +203,6 @@ func newComponents(ctx context.Context, cfg configuration.Configuration) (*compo
 		Pulses       pulse.Accessor
 		Jets         jet.Accessor
 		Handler      *artifactmanager.MessageHandler
-		BusAsync     *bus.Bus
 	)
 	{
 		conf := cfg.Ledger
@@ -220,7 +235,7 @@ func newComponents(ctx context.Context, cfg configuration.Configuration) (*compo
 		cord.PlatformCryptographyScheme = CryptoScheme
 		cord.Nodes = nodes
 
-		handler := artifactmanager.NewMessageHandler(&conf)
+		handler := artifactmanager.NewMessageHandler(&conf, externalPubSub)
 		handler.RecentStorageProvider = hots
 		handler.Bus = Bus
 		handler.PlatformCryptographyScheme = CryptoScheme
@@ -242,8 +257,9 @@ func newComponents(ctx context.Context, cfg configuration.Configuration) (*compo
 		handler.IndexAccessor = indices
 		handler.IndexModifier = indices
 		handler.IndexStorage = indices
+		handler.FlowHandler.Pub = externalPubSub
 
-		BusAsync = bus.NewBus(handler.FlowHandler)
+		NetworkService.(*servicenetwork.ServiceNetwork).Handler = handler.FlowHandler
 
 		pm := pulsemanager.NewPulseManager(
 			conf, drops, blobs, blobs, pulses, records, records, indices, indices,
@@ -291,7 +307,7 @@ func newComponents(ctx context.Context, cfg configuration.Configuration) (*compo
 		Requester,
 		Tokens,
 		Parcels,
-		artifacts.NewClient(nil),
+		artifacts.NewClient(),
 		Genesis,
 		API,
 		NetworkCoordinator,
@@ -302,7 +318,6 @@ func newComponents(ctx context.Context, cfg configuration.Configuration) (*compo
 		CertManager,
 		NodeNetwork,
 		NetworkService,
-		BusAsync,
 	)
 
 	err = c.cmp.Init(ctx)
@@ -310,6 +325,11 @@ func newComponents(ctx context.Context, cfg configuration.Configuration) (*compo
 		return nil, errors.Wrap(err, "failed to init components")
 	}
 
+	go func() {
+		if err := router.Run(); err != nil {
+			panic(err)
+		}
+	}()
 	return c, nil
 }
 

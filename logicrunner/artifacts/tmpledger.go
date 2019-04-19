@@ -126,7 +126,7 @@ func TmpLedger(t *testing.T, dir string, c insolar.Components) (*TMPLedger, stor
 	recordAccessor := recMem
 	recordModifier := recMem
 
-	am := NewClient(nil)
+	am := NewClient()
 	am.PlatformCryptographyScheme = testutils.NewPlatformCryptographyScheme()
 
 	conf.PulseManager.HeavySyncEnabled = false
@@ -157,7 +157,7 @@ func TmpLedger(t *testing.T, dir string, c insolar.Components) (*TMPLedger, stor
 		c.NodeNetwork = nodenetwork.NewNodeKeeper(networknode.NewNode(insolar.Reference{}, insolar.StaticRoleLightMaterial, nil, "127.0.0.1:5432", ""))
 	}
 
-	handler := artifactmanager.NewMessageHandler(&conf)
+	handler := artifactmanager.NewMessageHandler(&conf, nil)
 	handler.JetStorage = js
 	handler.Nodes = ns
 	handler.DBContext = tmpDB

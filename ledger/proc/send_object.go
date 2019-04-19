@@ -56,7 +56,7 @@ func (p *SendObject) Proceed(ctx context.Context) error {
 	p.Message.ReplyTo <- r
 	// if p.Message.Publisher != nil {
 	// 	msg :=
-	// 		p.Pub.Publish("outbound", msg)
+	// 		p.pub.Publish("outbound", msg)
 	// }
 	return nil
 }

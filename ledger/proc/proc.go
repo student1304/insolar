@@ -31,6 +31,7 @@ type Dependencies struct {
 	GetIndex   func(*GetIndex) *GetIndex
 	SendObject func(p *SendObject) *SendObject
 	GetCode    func(*GetCode) *GetCode
+	Publisher  message.Publisher
 }
 
 type ReturnReply struct {
@@ -43,9 +44,14 @@ type ReturnReply struct {
 func (p *ReturnReply) Proceed(context.Context) error {
 	fmt.Println("lol here love, Return reply", p.Reply, p.Err)
 	p.ReplyTo <- bus.Reply{Reply: p.Reply, Err: p.Err}
-	// if p.Pub != nil {
-	// 	msg
-	// 	p.Pub.Publish("outbound", msg)
+	// if p.pub != nil {
+	// 	msg := createMsg()
+	// 	p.pub.Publish(insBus.ExternalMsgTopic, msg)
 	// }
 	return nil
 }
+
+// func createMsg(reply insolar.Reply) message.Message {
+// 	msg := message.NewMessage()
+// 	return msg
+// }
