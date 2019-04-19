@@ -23,7 +23,6 @@ import (
 	"io"
 	"io/ioutil"
 
-	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/ugorji/go/codec"
 
 	"github.com/pkg/errors"
@@ -228,7 +227,4 @@ func init() {
 
 	// NodeCert
 	gob.Register(&NodeSignPayload{})
-	gob.Register(&insolar.Watermill{})
-	gob.Register(&message.Message{})
-	gob.Register(&message.Metadata{})
 }

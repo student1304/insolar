@@ -20,7 +20,6 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/pkg/errors"
 	"github.com/ugorji/go/codec"
 )
@@ -160,6 +159,8 @@ type MBSender interface {
 type MessageBus interface {
 	// Send an `Message` and get a `Reply` or error from remote host.
 	Send(context.Context, Message, *MessageSendOptions) (Reply, error)
+	// SendViaWatermill sends an `Message` and get a `Value` or error from remote host, using watermill pub/sub system.
+	SendViaWatermill(ctx context.Context, msg Message, ops *MessageSendOptions) (Reply, error)
 	// Register saves message handler in the registry. Only one handler can be registered for a message type.
 	Register(p MessageType, handler MessageHandler) error
 	// MustRegister is a Register wrapper that panics if an error was returned.
@@ -264,32 +265,3 @@ const (
 	DTTypeGetChildrenRedirect
 	DTTypeGetCodeRedirect
 )
-
-type Watermill struct {
-	Msg message.Message
-}
-
-// AllowedSenderObjectAndRole implements interface method
-func (*Watermill) AllowedSenderObjectAndRole() (*Reference, DynamicRole) {
-	return nil, 0
-}
-
-// DefaultRole returns role for this event
-func (*Watermill) DefaultRole() DynamicRole {
-	return DynamicRoleVirtualExecutor
-}
-
-// DefaultTarget returns of target of this event.
-func (gr *Watermill) DefaultTarget() *Reference {
-	return &Reference{}
-}
-
-// Type implementation for genesis request.
-func (*Watermill) Type() MessageType {
-	return TypeBootstrapRequest
-}
-
-// GetCaller implementation for genesis request.
-func (*Watermill) GetCaller() *Reference {
-	return nil
-}

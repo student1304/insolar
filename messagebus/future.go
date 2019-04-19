@@ -14,10 +14,11 @@
  *    limitations under the License.
  */
 
-package bus
+package messagebus
 
 import (
 	"errors"
+	"fmt"
 	"sync/atomic"
 	"time"
 
@@ -62,6 +63,7 @@ func (future *future) GetResult(duration time.Duration) (insolar.Reply, error) {
 		if !ok {
 			return nil, ErrFutureChannelClosed
 		}
+		fmt.Println("All was well, result get")
 		return result, nil
 	case <-time.After(duration):
 		future.Cancel()
