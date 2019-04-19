@@ -793,7 +793,7 @@ func (suite *LogicRunnerTestSuite) TestConcurrency() {
 
 			ctx := inslogger.ContextWithTrace(suite.ctx, "req-"+strconv.Itoa(i))
 
-			_, err := suite.lr.FlowHandler.WrapBusHandle(ctx, parcel)
+			_, err := suite.lr.HandleCalls(ctx, parcel)
 			suite.Require().NoError(err)
 
 			wg.Done()
@@ -1028,7 +1028,7 @@ func (suite *LogicRunnerTestSuite) TestCallMethodWithOnPulse() {
 
 			ctx := inslogger.ContextWithTrace(suite.ctx, "req")
 
-			_, err := suite.lr.FlowHandler.WrapBusHandle(ctx, parcel)
+			_, err := suite.lr.HandleCalls(ctx, parcel)
 			if test.errorExpected {
 				suite.Require().Error(err)
 			} else {
