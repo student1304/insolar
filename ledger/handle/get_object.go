@@ -35,7 +35,7 @@ type GetObject struct {
 }
 
 func (s *GetObject) Present(ctx context.Context, f flow.Flow) error {
-	parcel, err := message.DeserializeParcel(bytes.NewBuffer(s.Message.Msg.Payload))
+	parcel, err := message.DeserializeParcel(bytes.NewBuffer(s.Message.WatermillMsg.Payload))
 	if err != nil {
 		fmt.Println("love, GetObject with err", err)
 	}

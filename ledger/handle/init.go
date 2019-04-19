@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/insolar/insolar/insolar"
 	"github.com/insolar/insolar/insolar/flow"
 	"github.com/insolar/insolar/insolar/flow/bus"
 	"github.com/insolar/insolar/ledger/proc"
@@ -37,19 +38,24 @@ func (s *Init) Future(ctx context.Context, f flow.Flow) error {
 }
 
 func (s *Init) Present(ctx context.Context, f flow.Flow) error {
-	// switch s.Message.Parcel.Message().Type() {
-	// case insolar.TypeGetObject:
-	// 	h := &GetObject{
-	// 		dep:     s.dep,
-	// 		Message: s.Message,
-	// 	}
-	// 	return f.Handle(ctx, h.Present)
-	// default:
-	// 	return fmt.Errorf("no handler for message type %s", s.Message.Parcel.Message().Type().String())
-	// }
-	fmt.Println("sorry love, type is", s.Message.Msg.Metadata.Get("Type"))
-	switch s.Message.Msg.Metadata.Get("Type") {
-	case "TypeGetObject":
+	if s.Message.WatermillMsg != nil {
+		fmt.Println("sorry love, type is", s.Message.WatermillMsg.Metadata.Get("Type"))
+		switch s.Message.WatermillMsg.Metadata.Get("Type") {
+		case "TypeGetObject":
+			h := &GetObject{
+				dep:     s.Dep,
+				Message: s.Message,
+			}
+			fmt.Println("all well love")
+			return f.Handle(ctx, h.Present)
+		default:
+			fmt.Println("sorry love, msg is", s.Message)
+			return fmt.Errorf("no handler for message type %s", s.Message.Parcel.Message().Type().String())
+		}
+	}
+	fmt.Println("sorry love, type is not watermill", s.Message.Parcel.Message().Type())
+	switch s.Message.Parcel.Message().Type() {
+	case insolar.TypeGetObject:
 		h := &GetObject{
 			dep:     s.Dep,
 			Message: s.Message,
