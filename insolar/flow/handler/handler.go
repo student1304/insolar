@@ -56,41 +56,54 @@ func (h *Handler) ChangePulse(ctx context.Context, pulse insolar.Pulse) {
 
 func (h *Handler) WrapBusHandle(ctx context.Context, parcel insolar.Parcel) (insolar.Reply, error) {
 	msg := bus.Message{
-		ReplyTo: make(chan bus.Reply),
+		ReplyTo: make(chan bus.Reply, 1),
 		Parcel:  parcel,
 	}
-	ctx, logger := inslogger.WithField(ctx, "pulse", fmt.Sprintf("%d", parcel.Pulse()))
+	defer func() {
+		close(msg.ReplyTo)
+	}()
+
 	ctx = pulse.ContextWith(ctx, parcel.Pulse())
+
+	f := thread.NewThread(msg, h.controller)
+	err := f.Run(ctx, h.handles.present(msg))
+
+	var rep bus.Reply
+	select {
+	case rep = <-msg.ReplyTo:
+		return rep.Reply, rep.Err
+	default:
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, errors.New("no reply from handler")
+}
+
+func (h *Handler) InnerSubscriber(watermillMsg *message.Message) ([]*message.Message, error) {
+	msg := bus.Message{
+		WatermillMsg: watermillMsg,
+	}
+
+	ctx := watermillMsg.Context()
+	logger := inslogger.FromContext(ctx)
 	go func() {
 		f := thread.NewThread(msg, h.controller)
 		err := f.Run(ctx, h.handles.present(msg))
-		defer func() {
-			_ = recover()
-		}()
 		if err != nil {
-			select {
-			case msg.ReplyTo <- bus.Reply{Err: err}:
-			default:
-				logger.Errorf("error %s from handler was returned but replay was sent already", err)
-			}
 			logger.Error("Handling failed", err)
-		} else {
-			select {
-			case msg.ReplyTo <- bus.Reply{Err: errors.New("no reply from handler")}:
-			default:
-			}
 		}
 	}()
-	rep := <-msg.ReplyTo
-	close(msg.ReplyTo)
-	return rep.Reply, rep.Err
+	return nil, nil
 }
 
 func (h *Handler) Process(ctx context.Context, msg *message.Message, pub message.Publisher) error {
 	msgBus := bus.Message{
-		Publisher: pub,
-		Msg:       msg,
-		ReplyTo:   make(chan bus.Reply),
+		Publisher:    pub,
+		WatermillMsg: msg,
+		ReplyTo:      make(chan bus.Reply),
 	}
 	// fix it
 	pStr := msg.Metadata.Get("Pulse")

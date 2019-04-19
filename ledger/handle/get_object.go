@@ -28,8 +28,6 @@ import (
 	"github.com/insolar/insolar/ledger/proc"
 )
 
-// =====================================================================================================================
-
 type GetObject struct {
 	dep *proc.Dependencies
 

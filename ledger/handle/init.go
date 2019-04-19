@@ -56,6 +56,12 @@ func (s *Init) Present(ctx context.Context, f flow.Flow) error {
 		}
 		fmt.Println("all well love")
 		return f.Handle(ctx, h.Present)
+	case insolar.TypeGetCode:
+		h := &GetCode{
+			dep:     s.Dep,
+			Message: s.Message,
+		}
+		return f.Handle(ctx, h.Present)
 	default:
 		fmt.Println("sorry love, msg is", s.Message)
 		return fmt.Errorf("no handler for message type %s", s.Message.Parcel.Message().Type().String())
