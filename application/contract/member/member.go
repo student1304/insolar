@@ -17,6 +17,8 @@
 package member
 
 import (
+	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/insolar/insolar/application/contract/member/signer"
@@ -27,6 +29,7 @@ import (
 	"github.com/insolar/insolar/application/proxy/wallet"
 	"github.com/insolar/insolar/insolar"
 	"github.com/insolar/insolar/logicrunner/goplugin/foundation"
+	"golang.org/x/crypto/sha3"
 	"math"
 )
 
@@ -213,20 +216,6 @@ func (m *Member) transferCall(params []byte) (interface{}, error) {
 	return nil, w.Transfer(amount, to)
 }
 
-func (m *Member) dumpUserInfoCall(ref insolar.Reference, params []byte) (interface{}, error) {
-	rootDomain := rootdomain.GetObject(ref)
-	var user string
-	if err := signer.UnmarshalParams(params, &user); err != nil {
-		return nil, fmt.Errorf("[ dumpUserInfoCall ] Can't unmarshal params: %s", err.Error())
-	}
-	return rootDomain.DumpUserInfo(user)
-}
-
-func (m *Member) dumpAllUsersCall(ref insolar.Reference) (interface{}, error) {
-	rootDomain := rootdomain.GetObject(ref)
-	return rootDomain.DumpAllUsers()
-}
-
 func (m *Member) registerNodeCall(ref insolar.Reference, params []byte) (interface{}, error) {
 	var publicKey string
 	var role string
@@ -276,12 +265,17 @@ func (mdMember *Member) migration(rdRef insolar.Reference, params []byte) (inter
 	}
 
 	rd := rootdomain.GetObject(rdRef)
-	oc, err := rd.GetOracleConfirms()
+	om, err := rd.GetOracleMembers()
 	if err != nil {
 		return nil, fmt.Errorf("[ migration ] Can't get oracles map: %s", err.Error())
 	}
 
-	if _, ok := oc[mdMember.Name]; !ok {
+	oracleConfirmes := map[string]bool{}
+	for name, _ := range om {
+		oracleConfirmes[name] = false
+	}
+
+	if _, ok := oracleConfirmes[mdMember.Name]; !ok {
 		return nil, fmt.Errorf("[ migration ] This oracle is not in the list")
 	}
 
@@ -306,7 +300,7 @@ func (mdMember *Member) migration(rdRef insolar.Reference, params []byte) (inter
 		}
 		insAddr := m.GetReference()
 
-		dHolder := deposit.New(oc, txHash, uint(amount))
+		dHolder := deposit.New(oracleConfirmes, txHash, uint(amount))
 		txDeposite, err = dHolder.AsDelegate(insAddr)
 		if err != nil {
 			return "", fmt.Errorf("[ migration ] Can't save as delegate: %s", err.Error())
@@ -314,11 +308,10 @@ func (mdMember *Member) migration(rdRef insolar.Reference, params []byte) (inter
 
 	} else {
 		pInsAddr, err := insolar.NewReferenceFromBase58(inInsAddr)
-		insAddr = *pInsAddr
-
 		if err != nil {
 			return nil, fmt.Errorf("[ migration ] Failed to parse 'inInsAddr' param: %s", err.Error())
 		}
+		insAddr = *pInsAddr
 
 		txDeposite, err = deposit.GetImplementationFrom(insAddr)
 		if err != nil {
@@ -352,4 +345,130 @@ func (mdMember *Member) migration(rdRef insolar.Reference, params []byte) (inter
 	}
 
 	return insAddr, nil
+}
+
+//////////////////
+
+func (m *Member) dumpUserInfoCall(rdRef insolar.Reference, params []byte) (interface{}, error) {
+	var userRefIn string
+	if err := signer.UnmarshalParams(params, &userRefIn); err != nil {
+		return nil, fmt.Errorf("[ dumpUserInfoCall ] Can't unmarshal params: %s", err.Error())
+	}
+	userRef, err := insolar.NewReferenceFromBase58(userRefIn)
+	if err != nil {
+		return nil, fmt.Errorf("[ migration ] Failed to parse 'inInsAddr' param: %s", err.Error())
+	}
+
+	rootDomain := rootdomain.GetObject(rdRef)
+	rootMember, err := rootDomain.GetRootMemberRef()
+	if err != nil {
+		return nil, fmt.Errorf("[ DumpUserInfo ] Can't get root member: %s", err.Error())
+	}
+	if *userRef != m.GetReference() && m.GetReference() != *rootMember {
+		return nil, fmt.Errorf("[ DumpUserInfo ] You can dump only yourself")
+	}
+
+	return m.DumpUserInfo(rdRef, *userRef)
+}
+
+func (m *Member) dumpAllUsersCall(rdRef insolar.Reference) (interface{}, error) {
+	rootDomain := rootdomain.GetObject(rdRef)
+	rootMember, err := rootDomain.GetRootMemberRef()
+	if err != nil {
+		return nil, fmt.Errorf("[ DumpUserInfo ] Can't get root member: %s", err.Error())
+	}
+	if m.GetReference() != *rootMember {
+		return nil, fmt.Errorf("[ DumpUserInfo ] You can dump only yourself")
+	}
+
+	return m.DumpAllUsers(rdRef)
+}
+
+func (rootMember *Member) getUserInfoMap(m *member.Member) (map[string]interface{}, error) {
+	w, err := wallet.GetImplementationFrom(m.GetReference())
+	if err != nil {
+		return nil, fmt.Errorf("[ getUserInfoMap ] Can't get implementation: %s", err.Error())
+	}
+
+	name, err := m.GetName()
+	if err != nil {
+		return nil, fmt.Errorf("[ getUserInfoMap ] Can't get name: %s", err.Error())
+	}
+
+	ethAddr, err := m.GetEthAddr()
+	if err != nil {
+		return nil, fmt.Errorf("[ getUserInfoMap ] Can't get name: %s", err.Error())
+	}
+
+	balance, err := w.GetBalance()
+	if err != nil {
+		return nil, fmt.Errorf("[ getUserInfoMap ] Can't get total balance: %s", err.Error())
+	}
+	return map[string]interface{}{
+		"name":    name,
+		"ethAddr": ethAddr,
+		"balance": balance,
+	}, nil
+}
+
+// DumpUserInfo processes dump user info request
+func (m *Member) DumpUserInfo(rdRef insolar.Reference, userRef insolar.Reference) ([]byte, error) {
+
+	user := member.GetObject(userRef)
+	res, err := m.getUserInfoMap(user)
+	if err != nil {
+		return nil, fmt.Errorf("[ DumpUserInfo ] Problem with making request: %s", err.Error())
+	}
+
+	return json.Marshal(res)
+}
+
+// DumpAllUsers processes dump all users request
+func (rootMember *Member) DumpAllUsers(rdRef insolar.Reference) ([]byte, error) {
+
+	res := []map[string]interface{}{}
+
+	rootDomain := rootdomain.GetObject(rdRef)
+	iterator, err := rootDomain.DumpAllUsers()
+	if err != nil {
+		return nil, fmt.Errorf("[ DumpAllUsers ] Can't get children: %s", err.Error())
+	}
+
+	for iterator.HasNext() {
+		cref, err := iterator.Next()
+		if err != nil {
+			return nil, fmt.Errorf("[ DumpAllUsers ] Can't get next child: %s", err.Error())
+		}
+
+		m := member.GetObject(cref)
+		userInfo, err := rootMember.getUserInfoMap(m)
+		if err != nil {
+			return nil, fmt.Errorf("[ DumpAllUsers ] Problem with making request: %s", err.Error())
+		}
+		res = append(res, userInfo)
+	}
+	resJSON, _ := json.Marshal(res)
+	return resJSON, nil
+}
+
+//////
+
+func decodeHex(s string) []byte {
+	b, err := hex.DecodeString(s)
+	if err != nil {
+		panic(err)
+	}
+
+	return b
+}
+
+func hash(msg string) string {
+
+	hash := sha3.NewLegacyKeccak256()
+
+	var buf []byte
+	hash.Write(decodeHex(msg))
+	buf = hash.Sum(nil)
+
+	return hex.EncodeToString(buf)
 }

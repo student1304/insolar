@@ -396,12 +396,11 @@ func (g *Generator) updateRootDomain(
 ) error {
 
 	updateData, err := insolar.Serialize(&rootdomain.RootDomain{
-		RootMember:     *g.rootMemberRef,
-		OracleMembers:  g.oracleMembers,
-		OracleConfirms: g.oracleConfirms,
-		MDAdminMember:  *g.mdAdminMemberRef,
-		MDWallet:       *g.mdWalletRef,
-		NodeDomain:     *g.nodeDomainRef})
+		RootMember:    *g.rootMemberRef,
+		OracleMembers: g.oracleMembers,
+		MDAdminMember: *g.mdAdminMemberRef,
+		MDWallet:      *g.mdWalletRef,
+		NodeDomain:    *g.nodeDomainRef})
 	if err != nil {
 		return errors.Wrap(err, "[ updateRootDomain ]")
 	}

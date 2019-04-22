@@ -17,40 +17,27 @@
 package rootdomain
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"golang.org/x/crypto/sha3"
-
 	"github.com/insolar/insolar/application/proxy/member"
 	"github.com/insolar/insolar/application/proxy/wallet"
 	"github.com/insolar/insolar/insolar"
 	"github.com/insolar/insolar/logicrunner/goplugin/foundation"
+	"github.com/insolar/insolar/logicrunner/goplugin/proxyctx"
 )
 
 // RootDomain is smart contract representing entrance point to system
 type RootDomain struct {
 	foundation.BaseContract
-	RootMember     insolar.Reference
-	OracleMembers  map[string]insolar.Reference
-	OracleConfirms map[string]bool
-	MDAdminMember  insolar.Reference
-	MDWallet       insolar.Reference
-	NodeDomain     insolar.Reference
+	RootMember    insolar.Reference
+	OracleMembers map[string]insolar.Reference
+	MDAdminMember insolar.Reference
+	MDWallet      insolar.Reference
+	NodeDomain    insolar.Reference
 }
 
 var INSATTR_CreateMember_API = true
 
-func decodeHex(s string) []byte {
-	b, err := hex.DecodeString(s)
-	if err != nil {
-		panic(err)
-	}
-
-	return b
-}
-
-// GetRootMemberRef returns root member's reference
 func (rd *RootDomain) GetMDAdminMemberRef() (*insolar.Reference, error) {
 	return &rd.MDAdminMember, nil
 }
@@ -59,19 +46,12 @@ func (rd *RootDomain) GetMDWalletRef() (*insolar.Reference, error) {
 	return &rd.MDWallet, nil
 }
 
-func (rd *RootDomain) GetOracleConfirms() (map[string]bool, error) {
-	return rd.OracleConfirms, nil
+func (rd *RootDomain) GetOracleMembers() (map[string]insolar.Reference, error) {
+	return rd.OracleMembers, nil
 }
 
-func hash(msg string) string {
-
-	hash := sha3.NewLegacyKeccak256()
-
-	var buf []byte
-	hash.Write(decodeHex(msg))
-	buf = hash.Sum(nil)
-
-	return hex.EncodeToString(buf)
+func (rd *RootDomain) GetRootMemberRef() (*insolar.Reference, error) {
+	return &rd.RootMember, nil
 }
 
 // CreateMember processes create member request
@@ -91,90 +71,19 @@ func (rd *RootDomain) CreateMember(name string, key string) (string, error) {
 	return m.GetReference().String(), nil
 }
 
-// GetRootMemberRef returns root member's reference
-func (rd *RootDomain) GetRootMemberRef() (*insolar.Reference, error) {
-	return &rd.RootMember, nil
-}
-
-func (rd *RootDomain) getUserInfoMap(m *member.Member) (map[string]interface{}, error) {
-	w, err := wallet.GetImplementationFrom(m.GetReference())
-	if err != nil {
-		return nil, fmt.Errorf("[ getUserInfoMap ] Can't get implementation: %s", err.Error())
-	}
-
-	ethAddr, err := m.GetEthAddr()
-	if err != nil {
-		return nil, fmt.Errorf("[ getUserInfoMap ] Can't get name: %s", err.Error())
-	}
-
-	balance, err := w.GetBalance()
-	if err != nil {
-		return nil, fmt.Errorf("[ getUserInfoMap ] Can't get total balance: %s", err.Error())
-	}
-	return map[string]interface{}{
-		"member": ethAddr,
-		"wallet": balance,
-	}, nil
-}
-
-// DumpUserInfo processes dump user info request
-func (rd *RootDomain) DumpUserInfo(reference string) ([]byte, error) {
-	caller := *rd.GetContext().Caller
-	ref, err := insolar.NewReferenceFromBase58(reference)
-	if err != nil {
-		return nil, fmt.Errorf("[ DumpUserInfo ] Failed to parse reference: %s", err.Error())
-	}
-	if *ref != caller && caller != rd.RootMember {
-		return nil, fmt.Errorf("[ DumpUserInfo ] You can dump only yourself")
-	}
-	m := member.GetObject(*ref)
-
-	res, err := rd.getUserInfoMap(m)
-	if err != nil {
-		return nil, fmt.Errorf("[ DumpUserInfo ] Problem with making request: %s", err.Error())
-	}
-
-	return json.Marshal(res)
-}
-
-// DumpAllUsers processes dump all users request
-func (rd *RootDomain) DumpAllUsers() ([]byte, error) {
-	if *rd.GetContext().Caller != rd.RootMember {
-		return nil, fmt.Errorf("[ DumpAllUsers ] Only root can call this method")
-	}
-	res := []map[string]interface{}{}
-	iterator, err := rd.NewChildrenTypedIterator(member.GetPrototype())
-	if err != nil {
-		return nil, fmt.Errorf("[ DumpAllUsers ] Can't get children: %s", err.Error())
-	}
-
-	for iterator.HasNext() {
-		cref, err := iterator.Next()
-		if err != nil {
-			return nil, fmt.Errorf("[ DumpAllUsers ] Can't get next child: %s", err.Error())
-		}
-
-		if cref == rd.RootMember {
-			continue
-		}
-		m := member.GetObject(cref)
-		userInfo, err := rd.getUserInfoMap(m)
-		if err != nil {
-			return nil, fmt.Errorf("[ DumpAllUsers ] Problem with making request: %s", err.Error())
-		}
-		res = append(res, userInfo)
-	}
-	resJSON, _ := json.Marshal(res)
-	return resJSON, nil
-}
-
 var INSATTR_Info_API = true
 
 // Info returns information about basic objects
 func (rd *RootDomain) Info() (interface{}, error) {
+	oracleMembersOut := map[string]string{}
+	for name, ref := range rd.OracleMembers {
+		oracleMembersOut[name] = ref.String()
+	}
+
 	res := map[string]interface{}{
-		"root_member": rd.RootMember.String(),
-		"node_domain": rd.NodeDomain.String(),
+		"root_member":    rd.RootMember.String(),
+		"oracle_members": oracleMembersOut,
+		"node_domain":    rd.NodeDomain.String(),
 	}
 	resJSON, err := json.Marshal(res)
 	if err != nil {
@@ -191,4 +100,9 @@ func (rd *RootDomain) GetNodeDomainRef() (insolar.Reference, error) {
 // NewRootDomain creates new RootDomain
 func NewRootDomain() (*RootDomain, error) {
 	return &RootDomain{}, nil
+}
+
+// DumpAllUsers processes dump all users request
+func (rd *RootDomain) DumpAllUsers() (*proxyctx.ChildrenTypedIterator, error) {
+	return rd.NewChildrenTypedIterator(member.GetPrototype())
 }
