@@ -32,6 +32,7 @@ import (
 type RootDomain struct {
 	foundation.BaseContract
 	RootMember     insolar.Reference
+	OracleMembers  map[string]insolar.Reference
 	OracleConfirms map[string]bool
 	MDAdminMember  insolar.Reference
 	MDWallet       insolar.Reference
@@ -54,12 +55,10 @@ func (rd *RootDomain) GetMDAdminMemberRef() (*insolar.Reference, error) {
 	return &rd.MDAdminMember, nil
 }
 
-// GetRootMemberRef returns root member's reference
 func (rd *RootDomain) GetMDWalletRef() (*insolar.Reference, error) {
 	return &rd.MDWallet, nil
 }
 
-// GetRootMemberRef returns root member's reference
 func (rd *RootDomain) GetOracleConfirms() (map[string]bool, error) {
 	return rd.OracleConfirms, nil
 }

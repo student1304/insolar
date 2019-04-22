@@ -65,6 +65,7 @@ type Generator struct {
 	rootDomainRef    *insolar.Reference
 	nodeDomainRef    *insolar.Reference
 	rootMemberRef    *insolar.Reference
+	oracleMembers    map[string]insolar.Reference
 	oracleConfirms   map[string]bool
 	mdAdminMemberRef *insolar.Reference
 	mdWalletRef      *insolar.Reference
@@ -337,6 +338,7 @@ func (g *Generator) activateOracleMembers(
 	mdcenterContractProto insolar.Reference,
 ) error {
 
+	g.oracleMembers = map[string]insolar.Reference{}
 	g.oracleConfirms = map[string]bool{}
 	for name, _ := range oraclePubKeys {
 		g.oracleConfirms[name] = false
@@ -382,6 +384,8 @@ func (g *Generator) activateOracleMembers(
 			return errors.Wrap(err, "[ activateOracleMembers ] couldn't create oracle member instance with name: "+name)
 		}
 
+		g.oracleMembers[name] = *contract
+
 	}
 	return nil
 }
@@ -390,8 +394,10 @@ func (g *Generator) activateOracleMembers(
 func (g *Generator) updateRootDomain(
 	ctx context.Context, domainDesc artifact.ObjectDescriptor,
 ) error {
+
 	updateData, err := insolar.Serialize(&rootdomain.RootDomain{
 		RootMember:     *g.rootMemberRef,
+		OracleMembers:  g.oracleMembers,
 		OracleConfirms: g.oracleConfirms,
 		MDAdminMember:  *g.mdAdminMemberRef,
 		MDWallet:       *g.mdWalletRef,

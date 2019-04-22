@@ -37,6 +37,10 @@ type Member struct {
 	PublicKey string
 }
 
+func (m *Member) GetName() (string, error) {
+	return m.Name, nil
+}
+
 func (m *Member) GetEthAddr() (string, error) {
 	return m.EthAddr, nil
 }
