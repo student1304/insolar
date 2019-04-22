@@ -69,7 +69,6 @@ func hash(msg string) string {
 	hash := sha3.NewLegacyKeccak256()
 
 	var buf []byte
-	//hash.Write([]byte{0xcc})
 	hash.Write(decodeHex(msg))
 	buf = hash.Sum(nil)
 

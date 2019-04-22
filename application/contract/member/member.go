@@ -347,5 +347,5 @@ func (mdMember *Member) migration(rdRef insolar.Reference, params []byte) (inter
 		mdWallet.Transfer(amount, &w.Reference)
 	}
 
-	return nil, nil
+	return insAddr, nil
 }
