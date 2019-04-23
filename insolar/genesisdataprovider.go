@@ -23,4 +23,5 @@ type GenesisDataProvider interface {
 	GetRootDomain(ctx context.Context) *Reference
 	GetNodeDomain(ctx context.Context) (*Reference, error)
 	GetRootMember(ctx context.Context) (*Reference, error)
+	GetOracleMembers(ctx context.Context) (map[string]*Reference, error)
 }
