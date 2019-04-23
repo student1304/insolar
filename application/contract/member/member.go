@@ -298,7 +298,7 @@ func (mdMember *Member) migration(rdRef insolar.Reference, params []byte) (strin
 		if err != nil {
 			return "", fmt.Errorf("[ migration ] Can't save as child: %s", err.Error())
 		}
-		insAddr := m.GetReference()
+		insAddr = m.GetReference()
 
 		dHolder := deposit.New(oracleConfirmes, txHash, uint(amount))
 		txDeposite, err = dHolder.AsDelegate(insAddr)
@@ -342,6 +342,7 @@ func (mdMember *Member) migration(rdRef insolar.Reference, params []byte) (strin
 		}
 
 		mdWallet.Transfer(amount, &w.Reference)
+
 	}
 
 	return insAddr.String(), nil
