@@ -72,10 +72,11 @@ type bootstrapNode struct {
 }
 
 type infoResponse struct {
-	RootDomain string `json:"RootDomain"`
-	RootMember string `json:"RootMember"`
-	NodeDomain string `json:"NodeDomain"`
-	TraceID    string `json:"TraceID"`
+	RootDomain    string            `json:"RootDomain"`
+	RootMember    string            `json:"RootMember"`
+	OracleMembers map[string]string `json:"OracleMembers"`
+	NodeDomain    string            `json:"NodeDomain"`
+	TraceID       string            `json:"TraceID"`
 }
 
 type rpcInfoResponse struct {

@@ -29,5 +29,6 @@ func TestGetInfo(t *testing.T) {
 	require.NotNil(t, info)
 	require.NotEqual(t, "", info.RootDomain)
 	require.NotEqual(t, "", info.RootMember)
+	require.NotEqual(t, "", info.OracleMembers)
 	require.NotEqual(t, "", info.NodeDomain)
 }

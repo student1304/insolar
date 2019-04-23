@@ -30,10 +30,11 @@ type InfoArgs struct{}
 
 // InfoReply is reply for Info service requests.
 type InfoReply struct {
-	RootDomain string
-	RootMember string
-	NodeDomain string
-	TraceID    string
+	RootDomain    string
+	RootMember    string
+	OracleMembers map[string]string
+	NodeDomain    string
+	TraceID       string
 }
 
 // InfoService is a service that provides API for getting info about genesis objects.
@@ -86,6 +87,15 @@ func (s *InfoService) Get(r *http.Request, args *InfoArgs, reply *InfoReply) err
 		inslog.Error("[ INFO ] rootMember ref is nil")
 		return errors.New("[ INFO ] rootMember ref is nil")
 	}
+	oracleMembers, err := s.runner.GenesisDataProvider.GetOracleMembers(ctx)
+	if err != nil {
+		inslog.Error(errors.Wrap(err, "[ INFO ] Can't get oracleMembers refs"))
+		return errors.Wrap(err, "[ INFO ] Can't get oracleMembers refs")
+	}
+	if oracleMembers == nil {
+		inslog.Error("[ INFO ] oracleMembers refs is nil")
+		return errors.New("[ INFO ] oracleMembers refs is nil")
+	}
 	nodeDomain, err := s.runner.GenesisDataProvider.GetNodeDomain(ctx)
 	if err != nil {
 		inslog.Error(errors.Wrap(err, "[ INFO ] Can't get nodeDomain ref"))
@@ -98,6 +108,12 @@ func (s *InfoService) Get(r *http.Request, args *InfoArgs, reply *InfoReply) err
 
 	reply.RootDomain = rootDomain.String()
 	reply.RootMember = rootMember.String()
+
+	reply.OracleMembers = map[string]string{}
+	for name, ref := range oracleMembers {
+		reply.OracleMembers[name] = ref.String()
+	}
+
 	reply.NodeDomain = nodeDomain.String()
 	reply.TraceID = utils.RandTraceID()
 
