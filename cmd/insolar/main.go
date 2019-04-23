@@ -319,7 +319,7 @@ func getInfo(out io.Writer) {
 	check("[ sendRequest ]", err)
 	fmt.Fprintf(out, "TraceID    : %s\n", info.TraceID)
 	fmt.Fprintf(out, "RootMember : %s\n", info.RootMember)
-	fmt.Fprintf(out, "RootMember : %s\n", info.OracleMembers)
+	fmt.Fprintf(out, "OracleMembers : %s\n", info.OracleMembers)
 	fmt.Fprintf(out, "NodeDomain : %s\n", info.NodeDomain)
 	fmt.Fprintf(out, "RootDomain : %s\n", info.RootDomain)
 }
