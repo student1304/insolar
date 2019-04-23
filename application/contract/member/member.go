@@ -259,15 +259,15 @@ func (m *Member) getNodeRefCall(ref insolar.Reference, params []byte) (interface
 	return nodeRef, nil
 }
 
-func (mdMember *Member) migration(rdRef insolar.Reference, params []byte) (interface{}, error) {
+func (mdMember *Member) migration(rdRef insolar.Reference, params []byte) (string, error) {
 	if mdMember.Name == "" {
-		return nil, fmt.Errorf("[ migration ] Only oracles can call migration")
+		return "", fmt.Errorf("[ migration ] Only oracles can call migration")
 	}
 
 	rd := rootdomain.GetObject(rdRef)
 	om, err := rd.GetOracleMembers()
 	if err != nil {
-		return nil, fmt.Errorf("[ migration ] Can't get oracles map: %s", err.Error())
+		return "", fmt.Errorf("[ migration ] Can't get oracles map: %s", err.Error())
 	}
 
 	oracleConfirmes := map[string]bool{}
@@ -276,18 +276,18 @@ func (mdMember *Member) migration(rdRef insolar.Reference, params []byte) (inter
 	}
 
 	if _, ok := oracleConfirmes[mdMember.Name]; !ok {
-		return nil, fmt.Errorf("[ migration ] This oracle is not in the list")
+		return "", fmt.Errorf("[ migration ] This oracle is not in the list")
 	}
 
 	var txHash, ethAddr, inInsAddr string
 	var inAmount interface{}
 	if err := signer.UnmarshalParams(params, &txHash, &ethAddr, &inAmount, &inInsAddr); err != nil {
-		return nil, fmt.Errorf("[ migration ] Can't unmarshal params: %s", err.Error())
+		return "", fmt.Errorf("[ migration ] Can't unmarshal params: %s", err.Error())
 	}
 
 	amount, err := parseAmount(inAmount)
 	if err != nil {
-		return nil, fmt.Errorf("[ migration ] Failed to parse amount: %s", err.Error())
+		return "", fmt.Errorf("[ migration ] Failed to parse amount: %s", err.Error())
 	}
 
 	var insAddr insolar.Reference
@@ -309,26 +309,26 @@ func (mdMember *Member) migration(rdRef insolar.Reference, params []byte) (inter
 	} else {
 		pInsAddr, err := insolar.NewReferenceFromBase58(inInsAddr)
 		if err != nil {
-			return nil, fmt.Errorf("[ migration ] Failed to parse 'inInsAddr' param: %s", err.Error())
+			return "", fmt.Errorf("[ migration ] Failed to parse 'inInsAddr' param: %s", err.Error())
 		}
 		insAddr = *pInsAddr
 
 		txDeposite, err = deposit.GetImplementationFrom(insAddr)
 		if err != nil {
-			return nil, fmt.Errorf("[ migration ] Can't get implementation: %s", err.Error())
+			return "", fmt.Errorf("[ migration ] Can't get implementation: %s", err.Error())
 		}
 	}
 
 	allConfirmed, err := txDeposite.Confirm(mdMember.Name, txHash, amount)
 	if err != nil {
-		return nil, fmt.Errorf("[ migration ] Confirmed failed: %s", err.Error())
+		return "", fmt.Errorf("[ migration ] Confirmed failed: %s", err.Error())
 	}
 
 	if allConfirmed {
 
 		mdWalletRef, err := rd.GetMDWalletRef()
 		if err != nil {
-			return nil, fmt.Errorf("[ migration ] Can't get md wallet ref: %s", err.Error())
+			return "", fmt.Errorf("[ migration ] Can't get md wallet ref: %s", err.Error())
 		}
 		mdWallet := wallet.GetObject(*mdWalletRef)
 
@@ -344,7 +344,7 @@ func (mdMember *Member) migration(rdRef insolar.Reference, params []byte) (inter
 		mdWallet.Transfer(amount, &w.Reference)
 	}
 
-	return insAddr, nil
+	return insAddr.String(), nil
 }
 
 //////////////////
