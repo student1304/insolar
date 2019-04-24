@@ -28,15 +28,14 @@ import (
 	"github.com/insolar/insolar/insolar/message"
 	"github.com/insolar/insolar/insolar/reply"
 	"github.com/insolar/insolar/instrumentation/inslogger"
-	"github.com/insolar/insolar/ledger/recentstorage"
+	"github.com/insolar/insolar/ledger/light/recentstorage"
 	"github.com/insolar/insolar/logicrunner/artifacts"
-	"github.com/insolar/insolar/logicrunner/builtin/helloworld"
+	"github.com/insolar/insolar/logicrunner/builtin/contract/helloworld"
 	"github.com/insolar/insolar/logicrunner/goplugin/goplugintestutils"
 	"github.com/insolar/insolar/logicrunner/pulsemanager"
 	"github.com/insolar/insolar/messagebus"
 	"github.com/insolar/insolar/platformpolicy"
 	"github.com/insolar/insolar/testutils"
-	"github.com/insolar/insolar/testutils/network"
 	"github.com/insolar/insolar/testutils/nodekeeper"
 	"github.com/insolar/insolar/testutils/testmessagebus"
 	"github.com/stretchr/testify/assert"
@@ -71,7 +70,7 @@ func TestBareHelloworld(t *testing.T) {
 	mb := testmessagebus.NewTestMessageBus(t)
 
 	// FIXME: TmpLedger is deprecated. Use mocks instead.
-	l, db, cleaner := artifacts.TmpLedger(
+	l := artifacts.TmpLedger(
 		t,
 		"",
 		insolar.Components{
@@ -80,7 +79,6 @@ func TestBareHelloworld(t *testing.T) {
 			MessageBus:  mb,
 		},
 	)
-	defer cleaner()
 
 	recent := recentstorage.NewProviderMock(t)
 
@@ -99,13 +97,13 @@ func TestBareHelloworld(t *testing.T) {
 		true,
 	)
 
-	nw := network.GetTestNetwork()
+	nw := testutils.GetTestNetwork(t)
 	scheme := platformpolicy.NewPlatformCryptographyScheme()
 
 	cm := &component.Manager{}
 	cm.Register(scheme)
 	cm.Register(l.GetPulseManager(), l.GetArtifactManager(), l.GetJetCoordinator())
-	cm.Inject(db, nk, recent, l, lr, nw, mb, delegationTokenFactory, parcelFactory, mock)
+	cm.Inject(nk, recent, l, lr, nw, mb, delegationTokenFactory, parcelFactory, mock)
 	err = cm.Init(ctx)
 	assert.NoError(t, err)
 	err = cm.Start(ctx)
@@ -115,14 +113,14 @@ func TestBareHelloworld(t *testing.T) {
 
 	MessageBusTrivialBehavior(mb, lr)
 
-	hw := helloworld.NewHelloWorld()
+	hw, _ := helloworld.New()
 
 	domain := byteRecorRef(2)
 	request := byteRecorRef(3)
 	_, _, protoRef, err := goplugintestutils.AMPublishCode(t, am, domain, request, insolar.MachineTypeBuiltin, []byte("helloworld"))
 	assert.NoError(t, err)
 
-	contract, err := am.RegisterRequest(ctx, *am.GenesisRef(), &message.Parcel{Msg: &message.CallConstructor{PrototypeRef: byteRecorRef(4)}})
+	contract, err := am.RegisterRequest(ctx, insolar.GenesisRecord.Ref(), &message.Parcel{Msg: &message.CallConstructor{PrototypeRef: byteRecorRef(4)}})
 	assert.NoError(t, err)
 
 	// TODO: use proper conversion
@@ -130,7 +128,7 @@ func TestBareHelloworld(t *testing.T) {
 	reqref.SetRecord(*contract)
 
 	_, err = am.ActivateObject(
-		ctx, domain, reqref, *am.GenesisRef(), *protoRef, false,
+		ctx, domain, reqref, insolar.GenesisRecord.Ref(), *protoRef, false,
 		goplugintestutils.CBORMarshal(t, hw),
 	)
 	assert.NoError(t, err)
@@ -145,7 +143,7 @@ func TestBareHelloworld(t *testing.T) {
 	assert.NoError(t, err)
 	// #1
 	ctx = inslogger.ContextWithTrace(ctx, "TestBareHelloworld1")
-	resp, err := lr.Execute(
+	resp, err := lr.FlowHandler.WrapBusHandle(
 		ctx,
 		parcel,
 	)
@@ -163,7 +161,7 @@ func TestBareHelloworld(t *testing.T) {
 	assert.NoError(t, err)
 	// #2
 	ctx = inslogger.ContextWithTrace(ctx, "TestBareHelloworld2")
-	resp, err = lr.Execute(
+	resp, err = lr.FlowHandler.WrapBusHandle(
 		ctx,
 		parcel,
 	)

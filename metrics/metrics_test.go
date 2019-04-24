@@ -19,35 +19,36 @@ package metrics_test
 import (
 	"math/rand"
 	"net/http"
+	"os"
+	"os/exec"
 	"regexp"
 	"testing"
 
+	"github.com/insolar/insolar/instrumentation/inslogger"
+	"github.com/insolar/insolar/instrumentation/insmetrics"
+	"github.com/insolar/insolar/testutils/testmetrics"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
-
-	"github.com/insolar/insolar/instrumentation/inslogger"
-	"github.com/insolar/insolar/instrumentation/insmetrics"
-	"github.com/insolar/insolar/ledger/storage/storagetest"
-	"github.com/insolar/insolar/testutils/testmetrics"
 )
 
-func TestMetrics_NewMetrics(t *testing.T) {
+func newMetrics(t *testing.T) {
 	t.Parallel()
 	ctx := inslogger.TestContext(t)
 	testm := testmetrics.Start(ctx, t)
 
 	var (
 		// https://godoc.org/go.opencensus.io/stats
-		videoCount = stats.Int64("example.com/measures/video_count", "number of processed videos", stats.UnitDimensionless)
+		videoCount = stats.Int64("video_count", "number of processed videos", stats.UnitDimensionless)
 		videoSize  = stats.Int64("video_size", "size of processed video", stats.UnitBytes)
 	)
 	osxtag := insmetrics.MustTagKey("osx")
 
 	err := view.Register(
 		&view.View{
+			Name:        "video_count",
 			Measure:     videoCount,
 			Aggregation: view.Count(),
 			TagKeys:     []tag.Key{osxtag},
@@ -69,9 +70,22 @@ func TestMetrics_NewMetrics(t *testing.T) {
 	// fmt.Println("/metrics => ", content)
 
 	assert.Regexp(t, regexp.MustCompile(`insolar_video_size_count{[^}]*osx="11\.12\.13"[^}]*} 1`), content)
-	assert.Regexp(t, regexp.MustCompile(`insolar_example_com_measures_video_count{[^}]*osx="11\.12\.13"[^}]*} 1`), content)
+	assert.Regexp(t, regexp.MustCompile(`insolar_video_count{[^}]*osx="11\.12\.13"[^}]*} 1`), content)
 
 	assert.NoError(t, testm.Stop())
+}
+
+func TestMetrics_NewMetrics(t *testing.T) {
+	if os.Getenv("ISOLATE_METRICS_STATE") == "1" {
+		newMetrics(t)
+		return
+	}
+	cmd := exec.Command(os.Args[0], "-test.run=TestMetrics_NewMetrics")
+	cmd.Env = append(os.Environ(), "ISOLATE_METRICS_STATE=1")
+	err := cmd.Run()
+	if e, ok := err.(*exec.ExitError); ok && !e.Success() {
+		t.Fatalf("Process ran with err %v, want os.Exit(0)", err)
+	}
 }
 
 func TestMetrics_ZPages(t *testing.T) {
@@ -86,25 +100,6 @@ func TestMetrics_ZPages(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, http.StatusOK, code)
 	// fmt.Println("/debug/tracez => ", content)
-
-	assert.NoError(t, testm.Stop())
-}
-
-func TestMetrics_Badger(t *testing.T) {
-	t.Parallel()
-	ctx := inslogger.TestContext(t)
-
-	_, _, cleaner := storagetest.TmpDB(ctx, nil)
-	defer cleaner()
-
-	testm := testmetrics.Start(ctx, t)
-
-	code, content, err := testm.FetchURL("/metrics")
-	_ = content
-	require.NoError(t, err)
-	require.Equal(t, http.StatusOK, code)
-	// fmt.Println("/metrics => ", content)
-	assert.Contains(t, content, "insolar_badger_blocked_puts_total")
 
 	assert.NoError(t, testm.Stop())
 }

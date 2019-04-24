@@ -28,7 +28,7 @@ import (
 	"github.com/gorilla/rpc/v2"
 	jsonrpc "github.com/gorilla/rpc/v2/json2"
 	"github.com/insolar/insolar/application/extractor"
-	"github.com/insolar/insolar/ledger/storage/pulse"
+	"github.com/insolar/insolar/insolar/pulse"
 	"github.com/pkg/errors"
 
 	"github.com/insolar/insolar/api/seedmanager"
@@ -47,8 +47,8 @@ type Runner struct {
 	ContractRequester   insolar.ContractRequester   `inject:""`
 	NetworkCoordinator  insolar.NetworkCoordinator  `inject:""`
 	GenesisDataProvider insolar.GenesisDataProvider `inject:""`
-	NetworkSwitcher     insolar.NetworkSwitcher     `inject:""`
 	NodeNetwork         insolar.NodeNetwork         `inject:""`
+	ServiceNetwork      insolar.Network             `inject:""`
 	PulseAccessor       pulse.Accessor              `inject:""`
 	ArtifactManager     artifacts.Client            `inject:""`
 	server              *http.Server
@@ -142,6 +142,8 @@ func (ar *Runner) IsAPIRunner() bool {
 
 // Start runs api server
 func (ar *Runner) Start(ctx context.Context) error {
+	hc := NewHealthChecker(ar.CertificateManager, ar.NodeNetwork)
+	http.HandleFunc("/healthcheck", hc.CheckHandler)
 	ar.SeedManager = seedmanager.New()
 	http.HandleFunc(ar.cfg.Call, ar.callHandler())
 	http.Handle(ar.cfg.RPC, ar.rpcServer)

@@ -56,13 +56,14 @@ import (
 	"encoding/hex"
 	"testing"
 
+	"github.com/insolar/insolar/insolar/jet"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/insolar/insolar/component"
 	"github.com/insolar/insolar/insolar"
-	pulse2 "github.com/insolar/insolar/ledger/storage/pulse"
+	pulse2 "github.com/insolar/insolar/insolar/pulse"
 	"github.com/insolar/insolar/platformpolicy"
 	"github.com/insolar/insolar/pulsar/pulsartestutils"
 	"github.com/insolar/insolar/testutils"
@@ -181,15 +182,16 @@ func TestCalculatorError(t *testing.T) {
 
 	nk := nodekeeper.GetTestNodekeeper(service)
 	th := testutils.NewTerminationHandlerMock(t)
+	mblock := testutils.NewMessageBusLockerMock(t)
 
 	am := staterMock{
 		stateFunc: func() (bytes []byte, e error) {
 			return []byte{1, 2, 3}, nil
 		},
 	}
-	jc := testutils.NewJetCoordinatorMock(t)
+	jc := jet.NewCoordinatorMock(t)
 
-	cm.Inject(th, nk, jc, &am, calculator, service, scheme, ps)
+	cm.Inject(th, nk, jc, &am, calculator, service, scheme, ps, mblock)
 
 	require.NotNil(t, calculator.ArtifactManager)
 	require.NotNil(t, calculator.NodeNetwork)
@@ -248,7 +250,8 @@ func TestCalculatorLedgerError(t *testing.T) {
 	scheme := platformpolicy.NewPlatformCryptographyScheme()
 	nk := nodekeeper.GetTestNodekeeper(service)
 	th := testutils.NewTerminationHandlerMock(t)
-	cm.Inject(th, nk, &am, calculator, service, scheme)
+	mblock := testutils.NewMessageBusLockerMock(t)
+	cm.Inject(th, nk, &am, calculator, service, scheme, mblock)
 
 	require.NotNil(t, calculator.ArtifactManager)
 	require.NotNil(t, calculator.NodeNetwork)

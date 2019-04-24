@@ -84,8 +84,6 @@ func (gpr *RPC) GetCode(req rpctypes.UpGetCodeReq, reply *rpctypes.UpGetCodeResp
 	os := gpr.lr.MustObjectState(req.Callee)
 	es := os.MustModeState(req.Mode)
 	ctx := es.Current.Context
-	// we don't want to record GetCode messages because of cache
-	ctx = insolar.ContextWithMessageBus(ctx, gpr.lr.MessageBus)
 	inslogger.FromContext(ctx).Debug("In RPC.GetCode ....")
 
 	am := gpr.lr.ArtifactManager
@@ -127,6 +125,9 @@ func (gpr *RPC) RouteCall(req rpctypes.UpRouteReq, rep *rpctypes.UpRouteResp) (e
 
 	es := os.MustModeState(req.Mode)
 	ctx := es.Current.Context
+
+	// TODO: delegation token
+
 	bm := MakeBaseMessage(req.UpBaseReq, es)
 	res, err := gpr.lr.ContractRequester.CallMethod(ctx,
 		&bm,

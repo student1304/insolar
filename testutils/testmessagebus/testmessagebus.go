@@ -24,7 +24,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/insolar/insolar/ledger/storage/pulse"
+	"github.com/insolar/insolar/insolar/pulse"
 	"github.com/pkg/errors"
 
 	"github.com/insolar/insolar/component"
@@ -150,7 +150,7 @@ func (mb *TestMessageBus) Send(ctx context.Context, m insolar.Message, _ *insola
 	t := parcel.Message().Type()
 	handler, ok := mb.handlers[t]
 	if !ok {
-		return nil, errors.New(fmt.Sprint("no handler for message type:", t.String()))
+		return nil, errors.New(fmt.Sprint("[ TestMessageBus ] no handler for message type:", t.String()))
 	}
 
 	ctx = parcel.Context(context.Background())
@@ -169,4 +169,10 @@ func (mb *TestMessageBus) Send(ctx context.Context, m insolar.Message, _ *insola
 
 func (mb *TestMessageBus) OnPulse(context.Context, insolar.Pulse) error {
 	return nil
+}
+
+func (mb *TestMessageBus) Lock(context.Context) {
+}
+
+func (mb *TestMessageBus) Unlock(context.Context) {
 }

@@ -21,18 +21,17 @@ import (
 	"sync"
 
 	"github.com/insolar/insolar/insolar"
+	"github.com/insolar/insolar/insolar/node"
+	"github.com/insolar/insolar/insolar/pulse"
 	"github.com/insolar/insolar/instrumentation/inslogger"
 	"github.com/insolar/insolar/instrumentation/instracer"
-	"github.com/insolar/insolar/ledger/storage"
-	"github.com/insolar/insolar/ledger/storage/node"
-	"github.com/insolar/insolar/ledger/storage/pulse"
 	"github.com/pkg/errors"
 	"go.opencensus.io/trace"
 )
 
 // ActiveListSwapper is required by network to swap active list.
 type ActiveListSwapper interface {
-	MoveSyncToActive(ctx context.Context) error
+	MoveSyncToActive(ctx context.Context, number insolar.PulseNumber) error
 }
 
 // PulseManager implements insolar.PulseManager.
@@ -111,7 +110,7 @@ func (m *PulseManager) setUnderGilSection(ctx context.Context, newPulse insolar.
 	m.currentPulse = newPulse
 
 	// swap active nodes
-	err := m.ActiveListSwapper.MoveSyncToActive(ctx)
+	err := m.ActiveListSwapper.MoveSyncToActive(ctx, newPulse.PulseNumber)
 	if err != nil {
 		return errors.Wrap(err, "failed to apply new active node list")
 	}
@@ -137,7 +136,7 @@ func (m *PulseManager) setUnderGilSection(ctx context.Context, newPulse insolar.
 func (m *PulseManager) Start(ctx context.Context) error {
 	origin := m.NodeNet.GetOrigin()
 	err := m.NodeSetter.Set(insolar.FirstPulseNumber, []insolar.Node{{ID: origin.ID(), Role: origin.Role()}})
-	if err != nil && err != storage.ErrOverride {
+	if err != nil && err != node.ErrOverride {
 		return err
 	}
 

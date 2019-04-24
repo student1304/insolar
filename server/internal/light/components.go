@@ -29,24 +29,24 @@ import (
 	"github.com/insolar/insolar/insolar"
 	"github.com/insolar/insolar/insolar/delegationtoken"
 	"github.com/insolar/insolar/insolar/jet"
+	"github.com/insolar/insolar/insolar/jetcoordinator"
 	"github.com/insolar/insolar/insolar/message"
+	"github.com/insolar/insolar/insolar/node"
+	"github.com/insolar/insolar/insolar/pulse"
 	"github.com/insolar/insolar/keystore"
-	"github.com/insolar/insolar/ledger/artifactmanager"
-	"github.com/insolar/insolar/ledger/jetcoordinator"
-	"github.com/insolar/insolar/ledger/pulsemanager"
-	"github.com/insolar/insolar/ledger/recentstorage"
-	"github.com/insolar/insolar/ledger/storage"
-	"github.com/insolar/insolar/ledger/storage/blob"
-	"github.com/insolar/insolar/ledger/storage/drop"
-	"github.com/insolar/insolar/ledger/storage/node"
-	"github.com/insolar/insolar/ledger/storage/object"
-	"github.com/insolar/insolar/ledger/storage/pulse"
+	"github.com/insolar/insolar/ledger/blob"
+	"github.com/insolar/insolar/ledger/drop"
+	"github.com/insolar/insolar/ledger/light/artifactmanager"
+	"github.com/insolar/insolar/ledger/light/hot"
+	"github.com/insolar/insolar/ledger/light/pulsemanager"
+	"github.com/insolar/insolar/ledger/light/recentstorage"
+	"github.com/insolar/insolar/ledger/light/replication"
+	"github.com/insolar/insolar/ledger/object"
 	"github.com/insolar/insolar/logicrunner/artifacts"
 	"github.com/insolar/insolar/messagebus"
 	"github.com/insolar/insolar/metrics"
 	"github.com/insolar/insolar/network/nodenetwork"
 	"github.com/insolar/insolar/network/servicenetwork"
-	"github.com/insolar/insolar/network/state"
 	"github.com/insolar/insolar/network/termination"
 	"github.com/insolar/insolar/networkcoordinator"
 	"github.com/insolar/insolar/platformpolicy"
@@ -105,7 +105,6 @@ func newComponents(ctx context.Context, cfg configuration.Configuration) (*compo
 		NetworkService     insolar.Network
 		NetworkCoordinator insolar.NetworkCoordinator
 		NodeNetwork        insolar.NodeNetwork
-		NetworkSwitcher    insolar.NetworkSwitcher
 		Termination        insolar.TerminationHandler
 	)
 	{
@@ -119,14 +118,9 @@ func newComponents(ctx context.Context, cfg configuration.Configuration) (*compo
 		Termination = termination.NewHandler(NetworkService)
 
 		// Node info.
-		NodeNetwork, err = nodenetwork.NewNodeNetwork(cfg.Host, CertManager.GetCertificate())
+		NodeNetwork, err = nodenetwork.NewNodeNetwork(cfg.Host.Transport, CertManager.GetCertificate())
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to start NodeNetwork")
-		}
-
-		NetworkSwitcher, err = state.NewNetworkSwitcher()
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to start NetworkSwitcher")
 		}
 
 		NetworkCoordinator, err = networkcoordinator.New()
@@ -188,34 +182,27 @@ func newComponents(ctx context.Context, cfg configuration.Configuration) (*compo
 	// Light components.
 	var (
 		PulseManager insolar.PulseManager
-		Coordinator  insolar.JetCoordinator
+		Coordinator  jet.Coordinator
 		Pulses       pulse.Accessor
 		Jets         jet.Accessor
 		Handler      *artifactmanager.MessageHandler
 	)
 	{
 		conf := cfg.Ledger
-
-		legacyDB, err := storage.NewDB(conf, nil)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to initialize DB")
-		}
-
-		idLocker := storage.NewIDLocker()
+		idLocker := object.NewIDLocker()
 		pulses := pulse.NewStorageMem()
 		drops := drop.NewStorageMemory()
 		blobs := blob.NewStorageMemory()
 		records := object.NewRecordMemory()
-		indices := object.NewIndexMemory()
+		indexes := object.NewIndexMemory()
 		jets := jet.NewStore()
 		nodes := node.NewStorage()
 
-		replica := storage.NewReplicaStorage()
 		c := component.Manager{}
-		c.Inject(replica, legacyDB, CryptoScheme)
+		c.Inject(CryptoScheme)
 
-		hots := recentstorage.NewRecentStorageProvider(conf.RecentStorage.DefaultTTL)
-		waiter := artifactmanager.NewHotDataWaiterConcrete()
+		hots := recentstorage.NewRecentStorageProvider()
+		waiter := hot.NewChannelWaiter()
 		cord := jetcoordinator.NewJetCoordinator(conf.LightChainLimit)
 		cord.PulseCalculator = pulses
 		cord.PulseAccessor = pulses
@@ -223,8 +210,9 @@ func newComponents(ctx context.Context, cfg configuration.Configuration) (*compo
 		cord.NodeNet = NodeNetwork
 		cord.PlatformCryptographyScheme = CryptoScheme
 		cord.Nodes = nodes
+		Coordinator = cord
 
-		handler := artifactmanager.NewMessageHandler(&conf)
+		handler := artifactmanager.NewMessageHandler(indexes, indexes, &conf)
 		handler.RecentStorageProvider = hots
 		handler.Bus = Bus
 		handler.PlatformCryptographyScheme = CryptoScheme
@@ -240,14 +228,44 @@ func newComponents(ctx context.Context, cfg configuration.Configuration) (*compo
 		handler.RecordModifier = records
 		handler.RecordAccessor = records
 		handler.Nodes = nodes
-		handler.DBContext = legacyDB
 		handler.HotDataWaiter = waiter
-		handler.IndexAccessor = indices
-		handler.IndexModifier = indices
-		handler.IndexStorage = indices
+		handler.JetReleaser = waiter
+		handler.IndexStorage = indexes
+		handler.IndexStateModifier = indexes
+		handler.IndexStorage = indexes
+
+		jetCalculator := jet.NewCalculator(Coordinator, jets)
+		var lightCleaner = replication.NewCleaner(
+			jets,
+			nodes,
+			drops,
+			blobs,
+			records,
+			indexes,
+			pulses,
+			pulses,
+			conf.LightChainLimit,
+		)
+		dataGatherer := replication.NewDataGatherer(drops, blobs, records, indexes)
+		lthSyncer := replication.NewReplicatorDefault(
+			jetCalculator,
+			dataGatherer,
+			lightCleaner,
+			Bus,
+			pulses,
+		)
 
 		pm := pulsemanager.NewPulseManager(
-			conf, drops, blobs, blobs, pulses, records, records, indices, indices,
+			conf,
+			drops,
+			blobs,
+			blobs,
+			pulses,
+			records,
+			records,
+			indexes,
+			indexes,
+			lthSyncer,
 		)
 		pm.MessageHandler = handler
 		pm.Bus = Bus
@@ -256,17 +274,15 @@ func newComponents(ctx context.Context, cfg configuration.Configuration) (*compo
 		pm.CryptographyService = CryptoService
 		pm.PlatformCryptographyScheme = CryptoScheme
 		pm.RecentStorageProvider = hots
-		pm.HotDataWaiter = waiter
+		pm.JetReleaser = waiter
 		pm.JetAccessor = jets
 		pm.JetModifier = jets
-		pm.IndexAccessor = indices
-		pm.IndexModifier = indices
-		pm.CollectionIndexAccessor = indices
-		pm.IndexCleaner = indices
+		pm.IndexAccessor = indexes
+		pm.IndexModifier = indexes
+		pm.CollectionIndexAccessor = indexes
+		pm.IndexCleaner = indexes
 		pm.NodeSetter = nodes
 		pm.Nodes = nodes
-		pm.ReplicaStorage = replica
-		pm.DBContext = legacyDB
 		pm.DropModifier = drops
 		pm.DropAccessor = drops
 		pm.DropCleaner = drops
@@ -275,7 +291,6 @@ func newComponents(ctx context.Context, cfg configuration.Configuration) (*compo
 		pm.PulseAppender = pulses
 
 		PulseManager = pm
-		Coordinator = cord
 		Pulses = pulses
 		Jets = jets
 		Handler = handler
@@ -295,7 +310,6 @@ func newComponents(ctx context.Context, cfg configuration.Configuration) (*compo
 		artifacts.NewClient(),
 		Genesis,
 		API,
-		NetworkSwitcher,
 		NetworkCoordinator,
 		KeyProcessor,
 		Termination,

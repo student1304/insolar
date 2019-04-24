@@ -23,10 +23,15 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ThreeDotsLabs/watermill"
+	"github.com/ThreeDotsLabs/watermill/message/infrastructure/gochannel"
 	"github.com/pkg/errors"
 
 	"github.com/insolar/insolar/configuration"
 	"github.com/insolar/insolar/insolar"
+	"github.com/insolar/insolar/insolar/flow"
+	"github.com/insolar/insolar/insolar/flow/bus"
+	"github.com/insolar/insolar/insolar/flow/handler"
 	"github.com/insolar/insolar/insolar/message"
 	"github.com/insolar/insolar/insolar/reply"
 	"github.com/insolar/insolar/instrumentation/inslogger"
@@ -39,17 +44,35 @@ type ContractRequester struct {
 	ResultMutex sync.Mutex
 	ResultMap   map[uint64]chan *message.ReturnResults
 	Sequence    uint64
+	FlowHandler *handler.Handler
 }
 
 // New creates new ContractRequester
 func New() (*ContractRequester, error) {
-	return &ContractRequester{
+	res := &ContractRequester{
 		ResultMap: make(map[uint64]chan *message.ReturnResults),
-	}, nil
+	}
+
+	wmLogger := watermill.NewStdLogger(false, false)
+	pubSub := gochannel.NewGoChannel(gochannel.Config{}, wmLogger)
+
+	dep := &Dependencies{
+		Publisher: pubSub,
+		cr:        res,
+	}
+
+	res.FlowHandler = handler.NewHandler(func(msg bus.Message) flow.Handle {
+		return (&Init{
+			dep:     dep,
+			Message: msg,
+		}).Present
+	})
+
+	return res, nil
 }
 
 func (cr *ContractRequester) Start(ctx context.Context) error {
-	cr.MessageBus.MustRegister(insolar.TypeReturnResults, cr.ReceiveResult)
+	cr.MessageBus.MustRegister(insolar.TypeReturnResults, cr.FlowHandler.WrapBusHandle)
 	return nil
 }
 
@@ -92,13 +115,6 @@ func (cr *ContractRequester) CallMethod(ctx context.Context, base insolar.Messag
 	if !ok {
 		return nil, errors.New("Wrong type for BaseMessage")
 	}
-	log := inslogger.FromContext(ctx)
-
-	mb := insolar.MessageBusFromContext(ctx, cr.MessageBus)
-	if mb == nil {
-		log.Debug("Context doesn't provide MessageBus")
-		mb = cr.MessageBus
-	}
 
 	var mode message.MethodReturnMode
 	if async {
@@ -133,7 +149,7 @@ func (cr *ContractRequester) CallMethod(ctx context.Context, base insolar.Messag
 		cr.ResultMutex.Unlock()
 	}
 
-	res, err := mb.Send(ctx, msg, nil)
+	res, err := cr.MessageBus.Send(ctx, msg, nil)
 
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't dispatch event")
@@ -186,11 +202,6 @@ func (cr *ContractRequester) CallConstructor(ctx context.Context, base insolar.M
 		return nil, errors.New("Wrong type for BaseMessage")
 	}
 
-	mb := insolar.MessageBusFromContext(ctx, cr.MessageBus)
-	if mb == nil {
-		return nil, errors.New("No access to message bus")
-	}
-
 	msg := &message.CallConstructor{
 		BaseLogicMessage: *baseMessage,
 		PrototypeRef:     *prototype,
@@ -214,7 +225,7 @@ func (cr *ContractRequester) CallConstructor(ctx context.Context, base insolar.M
 		cr.ResultMutex.Unlock()
 	}
 
-	res, err := mb.Send(ctx, msg, nil)
+	res, err := cr.MessageBus.Send(ctx, msg, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't save new object as delegate")
 	}
@@ -247,30 +258,4 @@ func (cr *ContractRequester) CallConstructor(ctx context.Context, base insolar.M
 
 		return nil, errors.New("canceled")
 	}
-}
-
-func (cr *ContractRequester) ReceiveResult(ctx context.Context, parcel insolar.Parcel) (insolar.Reply, error) {
-	msg, ok := parcel.Message().(*message.ReturnResults)
-	if !ok {
-		return nil, errors.New("ReceiveResult() accepts only message.ReturnResults")
-	}
-
-	ctx, span := instracer.StartSpan(ctx, "ContractRequester.ReceiveResult")
-	defer span.End()
-
-	cr.ResultMutex.Lock()
-	defer cr.ResultMutex.Unlock()
-
-	logger := inslogger.FromContext(ctx)
-	c, ok := cr.ResultMap[msg.Sequence]
-	if !ok {
-		logger.Info("oops unwaited results seq=", msg.Sequence)
-		return &reply.OK{}, nil
-	}
-	logger.Debug("Got wanted results seq=", msg.Sequence)
-
-	c <- msg
-	delete(cr.ResultMap, msg.Sequence)
-
-	return &reply.OK{}, nil
 }

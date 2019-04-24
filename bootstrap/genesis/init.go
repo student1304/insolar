@@ -19,6 +19,7 @@ package genesis
 import (
 	"context"
 
+	"github.com/insolar/insolar/bootstrap/rootdomain"
 	"github.com/insolar/insolar/component"
 	"github.com/insolar/insolar/configuration"
 	"github.com/insolar/insolar/insolar"
@@ -82,7 +83,6 @@ func (s *Initializer) Run() {
 		sc.blobDB,
 		sc.dropDB,
 		sc.recordDB,
-		sc.storageDBContext,
 		sc.storeBadgerDB,
 		sc.pulseDB,
 	)
@@ -94,7 +94,6 @@ func (s *Initializer) Run() {
 	checkError(ctx, err, "failed to start components")
 
 	genesisBaseRecord := &genesis.BaseRecord{
-		PCS:            bc.PlatformCryptographyScheme,
 		DB:             sc.storeBadgerDB,
 		DropModifier:   sc.dropDB,
 		PulseAppender:  sc.pulseDB,
@@ -102,7 +101,7 @@ func (s *Initializer) Run() {
 		RecordModifier: sc.recordDB,
 		IndexModifier:  sc.indexDB,
 	}
-	genesisRef, isInit, err := genesisBaseRecord.CreateIfNeeded(ctx)
+	isInit, err := genesisBaseRecord.CreateIfNeeded(ctx)
 	checkError(ctx, err, "failed to start genesis init")
 	if isInit {
 		artifactManager := &artifact.Scope{
@@ -119,7 +118,9 @@ func (s *Initializer) Run() {
 		genesisGenerator := NewGenerator(
 			genesisConfig,
 			artifactManager,
-			*genesisRef,
+			&rootdomain.Record{
+				PCS: bc.PlatformCryptographyScheme,
+			},
 			s.genesisKeyOut,
 		)
 		err = genesisGenerator.Run(ctx)
@@ -132,14 +133,14 @@ func (s *Initializer) Run() {
 
 func initLogger(ctx context.Context, cfg configuration.Log) (context.Context, insolar.Logger) {
 	inslog, err := log.NewLog(cfg)
+
 	if err != nil {
 		panic(err)
 	}
 
-	if newInslog, err := inslog.WithLevel(cfg.Level); err != nil {
-		inslog.Error(err.Error())
-	} else {
-		inslog = newInslog
+	inslog, err = inslog.WithLevel(cfg.Level)
+	if err != nil {
+		panic(err.Error())
 	}
 
 	ctx = inslogger.SetLogger(ctx, inslog)

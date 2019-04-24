@@ -22,7 +22,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/insolar/insolar/ledger/storage/pulse"
+	"github.com/insolar/insolar/insolar/jet"
+	"github.com/insolar/insolar/insolar/pulse"
 	"github.com/stretchr/testify/require"
 
 	"github.com/insolar/insolar/component"
@@ -51,8 +52,8 @@ func prepare(t *testing.T, ctx context.Context, currentPulse int, msgPulse int) 
 	mb, err := NewMessageBus(configuration.Configuration{})
 	require.NoError(t, err)
 
-	net := network.GetTestNetwork()
-	jc := testutils.NewJetCoordinatorMock(t)
+	net := testutils.GetTestNetwork(t)
+	jc := jet.NewCoordinatorMock(t)
 	nn := network.NewNodeNetworkMock(t)
 	nn.GetOriginFunc = func() (r insolar.NetworkNode) {
 		n := network.NewNetworkNodeMock(t)

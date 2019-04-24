@@ -58,7 +58,7 @@ func NewID(pulse PulseNumber, hash []byte) *ID {
 }
 
 // Bytes returns byte slice of ID.
-func (id *ID) Bytes() []byte {
+func (id ID) Bytes() []byte {
 	return id[:]
 }
 
@@ -280,3 +280,7 @@ func (id *ID) DebugString() string {
 
 	return fmt.Sprintf("[%d | %s]", id.Pulse(), id.String())
 }
+
+var (
+	DomainID = *NewID(0, nil)
+)

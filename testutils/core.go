@@ -23,6 +23,8 @@ import (
 	"hash"
 	"math/big"
 
+	"github.com/gojuno/minimock"
+
 	"github.com/insolar/insolar/insolar"
 	uuid "github.com/satori/go.uuid"
 	"golang.org/x/crypto/sha3"
@@ -78,7 +80,7 @@ func RandomID() insolar.ID {
 }
 
 // RandomJet generates random jet with random depth.
-// DEPRECATED: use gem.JetID
+// DEPRECATED: use gen.JetID
 func RandomJet() insolar.ID {
 	// don't be too huge (i.e. 255)
 	n, err := rand.Int(rand.Reader, big.NewInt(128))
@@ -98,6 +100,12 @@ func RandomJetWithDepth(depth uint8) insolar.ID {
 		panic(err)
 	}
 	return insolar.ID(*insolar.NewJetID(depth, resetBits(jetbuf[1:], depth)))
+}
+
+func BrokenPK() [66]byte {
+	var result [66]byte
+	result[0] = 255
+	return result
 }
 
 // JetFromString converts string representation of Jet to insolar.ID.
@@ -179,4 +187,8 @@ func (m *cryptographySchemeMock) SignatureSIze() int {
 
 func NewPlatformCryptographyScheme() insolar.PlatformCryptographyScheme {
 	return &cryptographySchemeMock{}
+}
+
+func GetTestNetwork(t minimock.Tester) insolar.Network {
+	return NewNetworkMock(t)
 }
