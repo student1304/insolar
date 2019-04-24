@@ -42,11 +42,11 @@ import (
 )
 
 const (
-	nodeDomain        = "nodedomain"
-	nodeRecord        = "noderecord"
-	rootDomain        = rootdomain.Name
-	walletContract    = "wallet"
-	memberContract    = "member"
+	nodeDomain      = "nodedomain"
+	nodeRecord      = "noderecord"
+	rootDomain      = rootdomain.Name
+	walletContract  = "wallet"
+	memberContract  = "member"
 	depositContract = "deposit"
 )
 
@@ -62,12 +62,12 @@ type Generator struct {
 	artifactManager artifact.Manager
 	config          *Config
 
-	rootRecord       *rootdomain.Record
+	rootRecord            *rootdomain.Record
 	rootDomainContract    *insolar.Reference
 	nodeDomainContract    *insolar.Reference
 	rootMemberContract    *insolar.Reference
-	oracleMemberContracts    map[string]insolar.Reference
-	oracleConfirms   map[string]bool
+	oracleMemberContracts map[string]insolar.Reference
+	oracleConfirms        map[string]bool
 	mdAdminMemberContract *insolar.Reference
 	mdWalletContract      *insolar.Reference
 
@@ -309,7 +309,7 @@ func (g *Generator) activateMDAdminMember(
 
 	contractID, err := g.artifactManager.RegisterRequest(
 		ctx,
-		*g.rootDomainRef,
+		*g.rootDomainContract,
 		&message.Parcel{
 			Msg: &message.GenesisRequest{Name: "MDAdminMember"},
 		},
@@ -323,7 +323,7 @@ func (g *Generator) activateMDAdminMember(
 		ctx,
 		insolar.Reference{},
 		*contract,
-		*g.rootDomainRef,
+		*g.rootDomainContract,
 		memberContractProto,
 		false,
 		instanceData,
@@ -331,11 +331,11 @@ func (g *Generator) activateMDAdminMember(
 	if err != nil {
 		return errors.Wrap(err, "[ activateMDAdminMember ] couldn't create mdAdmin member instance")
 	}
-	_, err = g.artifactManager.RegisterResult(ctx, *g.rootDomainRef, *contract, nil)
+	_, err = g.artifactManager.RegisterResult(ctx, *g.rootDomainContract, *contract, nil)
 	if err != nil {
 		return errors.Wrap(err, "[ activateMDAdminMember ] couldn't create mdAdmin member instance")
 	}
-	g.mdAdminMemberRef = contract
+	g.mdAdminMemberContract = contract
 	return nil
 }
 
@@ -346,7 +346,7 @@ func (g *Generator) activateOracleMembers(
 	mdcenterContractProto insolar.Reference,
 ) error {
 
-	g.oracleMembers = map[string]insolar.Reference{}
+	g.oracleMemberContracts = map[string]insolar.Reference{}
 	g.oracleConfirms = map[string]bool{}
 	for name, _ := range oraclePubKeys {
 		g.oracleConfirms[name] = false
@@ -365,7 +365,7 @@ func (g *Generator) activateOracleMembers(
 
 		contractID, err := g.artifactManager.RegisterRequest(
 			ctx,
-			*g.rootDomainRef,
+			*g.rootDomainContract,
 			&message.Parcel{
 				Msg: &message.GenesisRequest{Name: name},
 			},
@@ -379,7 +379,7 @@ func (g *Generator) activateOracleMembers(
 			ctx,
 			insolar.Reference{},
 			*contract,
-			*g.rootDomainRef,
+			*g.rootDomainContract,
 			mdcenterContractProto,
 			false,
 			instanceData,
@@ -387,12 +387,12 @@ func (g *Generator) activateOracleMembers(
 		if err != nil {
 			return errors.Wrap(err, "[ activateOracleMembers ] couldn't create oracle member instance with name: "+name)
 		}
-		_, err = g.artifactManager.RegisterResult(ctx, *g.rootDomainRef, *contract, nil)
+		_, err = g.artifactManager.RegisterResult(ctx, *g.rootDomainContract, *contract, nil)
 		if err != nil {
 			return errors.Wrap(err, "[ activateOracleMembers ] couldn't create oracle member instance with name: "+name)
 		}
 
-		g.oracleMembers[name] = *contract
+		g.oracleMemberContracts[name] = *contract
 
 	}
 	return nil
@@ -404,10 +404,10 @@ func (g *Generator) updateRootDomain(
 ) error {
 	updateData, err := insolar.Serialize(&rootdomaincontract.RootDomain{
 		RootMember:    *g.rootMemberContract,
-		OracleMembers: g.oracleMembers,
-		MDAdminMember: *g.mdAdminMemberRef,
-		MDWallet:      *g.mdWalletRef,
-		NodeDomainRef: *g.nodeDomainContract,
+		OracleMembers: g.oracleMemberContracts,
+		MDAdminMember: *g.mdAdminMemberContract,
+		MDWallet:      *g.mdWalletContract,
+		NodeDomain:    *g.nodeDomainContract,
 	})
 	if err != nil {
 		return errors.Wrap(err, "[ updateRootDomain ]")
@@ -456,7 +456,7 @@ func (g *Generator) activateMDWallet(
 		ctx,
 		insolar.Reference{},
 		*contract,
-		*g.mdAdminMemberRef,
+		*g.mdAdminMemberContract,
 		walletContractProto,
 		true,
 		instanceData,
@@ -469,7 +469,7 @@ func (g *Generator) activateMDWallet(
 		return errors.Wrap(err, "[ activateMDWallet ] couldn't create md wallet")
 	}
 
-	g.mdWalletRef = contract
+	g.mdWalletContract = contract
 	return nil
 }
 

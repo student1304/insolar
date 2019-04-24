@@ -207,19 +207,19 @@ generate_member_keys()
     bin/insolar gen-key-pair > $ROOT_MEMBER_KEYS_FILE
 
     echo "generate admin member_keys: $MD_ADMIN_MEMBER_KEYS_FILE"
-    bin/insolar -c gen-key-pair > $MD_ADMIN_MEMBER_KEYS_FILE
+    bin/insolar gen-key-pair > $MD_ADMIN_MEMBER_KEYS_FILE
 
     echo "generate oracles member_keys"
-    bin/insolar -c gen-key-pair > $ORACLE0_MEMBER_KEYS_FILE
-    bin/insolar -c gen-key-pair > $ORACLE1_MEMBER_KEYS_FILE
-    bin/insolar -c gen-key-pair > $ORACLE2_MEMBER_KEYS_FILE
-    bin/insolar -c gen-key-pair > $ORACLE3_MEMBER_KEYS_FILE
-    bin/insolar -c gen-key-pair > $ORACLE4_MEMBER_KEYS_FILE
-    bin/insolar -c gen-key-pair > $ORACLE5_MEMBER_KEYS_FILE
-    bin/insolar -c gen-key-pair > $ORACLE6_MEMBER_KEYS_FILE
-    bin/insolar -c gen-key-pair > $ORACLE7_MEMBER_KEYS_FILE
-    bin/insolar -c gen-key-pair > $ORACLE8_MEMBER_KEYS_FILE
-    bin/insolar -c gen-key-pair > $ORACLE9_MEMBER_KEYS_FILE
+    bin/insolar gen-key-pair > $ORACLE0_MEMBER_KEYS_FILE
+    bin/insolar gen-key-pair > $ORACLE1_MEMBER_KEYS_FILE
+    bin/insolar gen-key-pair > $ORACLE2_MEMBER_KEYS_FILE
+    bin/insolar gen-key-pair > $ORACLE3_MEMBER_KEYS_FILE
+    bin/insolar gen-key-pair > $ORACLE4_MEMBER_KEYS_FILE
+    bin/insolar gen-key-pair > $ORACLE5_MEMBER_KEYS_FILE
+    bin/insolar gen-key-pair > $ORACLE6_MEMBER_KEYS_FILE
+    bin/insolar gen-key-pair > $ORACLE7_MEMBER_KEYS_FILE
+    bin/insolar gen-key-pair > $ORACLE8_MEMBER_KEYS_FILE
+    bin/insolar gen-key-pair > $ORACLE9_MEMBER_KEYS_FILE
 }
 
 check_working_dir()
