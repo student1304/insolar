@@ -1,0 +1,7 @@
+{"level":"debug","time":"2019-04-25T12:23:19+03:00","caller":"/Users/egor/go/src/github.com/insolar/insolar/log/log.go:89","message":"ginsider cache dir is /var/folders/_l/hk6nsgt14h3_bmf7p4vnhc880000gn/T/contractcache-651787955"}
+{"level":"info","time":"2019-04-25T12:23:19+03:00","caller":"/Users/egor/go/src/github.com/insolar/insolar/metrics/metrics.go:112","message":"Started metrics server[::]:28263"}
+{"level":"debug","time":"2019-04-25T12:23:19+03:00","caller":"/Users/egor/go/src/github.com/insolar/insolar/log/log.go:89","message":"ginsider launched, listens 127.0.0.1:33327"}
+{"level":"debug","time":"2019-04-25T12:23:19+03:00","caller":"/Users/egor/go/src/github.com/insolar/insolar/metrics/metrics.go:115","message":"metrics server starting on:28263"}
+{"level":"info","time":"2019-04-25T13:16:42+03:00","caller":"/Users/egor/go/src/github.com/insolar/insolar/log/log.go:99","message":"ginsider get signal: interrupt"}
+{"level":"debug","time":"2019-04-25T13:16:42+03:00","caller":"/Users/egor/go/src/github.com/insolar/insolar/log/log.go:89","message":"bye\n"}
+{"level":"info","time":"2019-04-25T13:16:42+03:00","caller":"/Users/egor/go/src/github.com/insolar/insolar/metrics/metrics.go:132","message":"Shutting down metrics server"}

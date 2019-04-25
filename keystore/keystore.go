@@ -24,7 +24,7 @@ import (
 	"github.com/insolar/insolar/component"
 	"github.com/insolar/insolar/insolar"
 	"github.com/insolar/insolar/keystore/internal/privatekey"
-	"github.com/pkg/errors"
+	"github.com/insolar/insolar/platformpolicy/keys"
 )
 
 type keyStore struct {

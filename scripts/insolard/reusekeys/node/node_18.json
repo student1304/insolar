@@ -1,0 +1,4 @@
+{
+    "private_key": "-----BEGIN PRIVATE KEY-----\nMHcCAQEEIKVLUgy+14MC+iXVDPsIO+ZKjJPggVA9Ir3eINqof0mToAoGCCqGSM49\nAwEHoUQDQgAEmxoJHb1oq+7Gg/JVGdJXAJwlrIrdIC9Bw2YCAY9ZZ+3lpX6X64yk\nh59o39nGBszUosqP74IDie8vxWRlbmPnmw==\n-----END PRIVATE KEY-----\n",
+    "public_key": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEmxoJHb1oq+7Gg/JVGdJXAJwlrIrd\nIC9Bw2YCAY9ZZ+3lpX6X64ykh59o39nGBszUosqP74IDie8vxWRlbmPnmw==\n-----END PUBLIC KEY-----\n"
+}

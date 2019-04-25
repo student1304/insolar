@@ -1,0 +1,5 @@
+INFO 2019/04/25 12:24:02 Trying to resolve absolute path to .
+INFO 2019/04/25 12:24:02 adding /Users/egor/go/src/github.com/insolar/insolar to paths to search
+INFO 2019/04/25 12:24:02 Attempting to read in config file
+DEBUG 2019/04/25 12:24:02 Reading file:  scripts/insolard/configs/generated_configs/nodes/insolar_1.yaml
+{"level":"error","time":"2019-04-25T12:24:02+03:00","caller":"/Users/egor/go/src/github.com/insolar/insolar/log/log.go:119","message":"[ ReadCertificate ] failed to read certificate from: scripts/insolard/nodes/1/cert.json: open scripts/insolard/nodes/1/cert.json: no such file or directory"}
