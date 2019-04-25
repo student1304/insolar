@@ -32,3 +32,7 @@ func NewPlatformCryptographyScheme() insolar.PlatformCryptographyScheme {
 		return crypto.NewPlatformCryptographyScheme()
 	}
 }
+
+func NewSecpPlatformCryptographyScheme() insolar.PlatformCryptographyScheme {
+	return xcrypto.NewPlatformCryptographyScheme()
+}

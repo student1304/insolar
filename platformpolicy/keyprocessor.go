@@ -30,3 +30,7 @@ func NewKeyProcessor() insolar.KeyProcessor {
 		return crypto.NewKeyProcessor()
 	}
 }
+
+func NewSecpKeyProcessor() insolar.KeyProcessor {
+	return xcrypto.NewKeyProcessor()
+}
