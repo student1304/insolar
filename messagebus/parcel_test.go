@@ -17,17 +17,16 @@
 package messagebus
 
 import (
-	"crypto"
 	"testing"
 
-	"github.com/insolar/insolar/insolar/message"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/insolar/insolar/component"
 	"github.com/insolar/insolar/insolar"
+	"github.com/insolar/insolar/insolar/message"
 	"github.com/insolar/insolar/instrumentation/inslogger"
+	"github.com/insolar/insolar/platformpolicy/keys"
 	"github.com/insolar/insolar/testutils"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func Test_parcelFactory_Create_CheckLogLevel(t *testing.T) {
@@ -39,7 +38,7 @@ func Test_parcelFactory_Create_CheckLogLevel(t *testing.T) {
 		signature := insolar.SignatureFromBytes(nil)
 		return &signature, nil
 	}
-	mock.GetPublicKeyFunc = func() (r crypto.PublicKey, r1 error) {
+	mock.GetPublicKeyFunc = func() (r keys.PublicKey, r1 error) {
 		return nil, nil
 	}
 

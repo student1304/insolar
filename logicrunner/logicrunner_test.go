@@ -18,7 +18,6 @@ package logicrunner
 
 import (
 	"context"
-	"crypto"
 	"crypto/rand"
 	"errors"
 	"fmt"
@@ -57,6 +56,7 @@ import (
 	"github.com/insolar/insolar/logicrunner/pulsemanager"
 	"github.com/insolar/insolar/messagebus"
 	"github.com/insolar/insolar/platformpolicy"
+	"github.com/insolar/insolar/platformpolicy/keys"
 	"github.com/insolar/insolar/testutils"
 	"github.com/insolar/insolar/testutils/nodekeeper"
 	"github.com/insolar/insolar/testutils/testmessagebus"
@@ -128,7 +128,7 @@ func (s *LogicRunnerFuncSuite) PrepareLrAmCbPm() (insolar.LogicRunner, artifacts
 		signature := insolar.SignatureFromBytes(nil)
 		return &signature, nil
 	}
-	mock.GetPublicKeyFunc = func() (crypto.PublicKey, error) {
+	mock.GetPublicKeyFunc = func() (keys.PublicKey, error) {
 		return nil, nil
 	}
 
@@ -212,7 +212,7 @@ func mockCryptographyService(t *testing.T) insolar.CryptographyService {
 		signature := insolar.SignatureFromBytes(nil)
 		return &signature, nil
 	}
-	mock.VerifyFunc = func(p crypto.PublicKey, p1 insolar.Signature, p2 []byte) (r bool) {
+	mock.VerifyFunc = func(p keys.PublicKey, p1 insolar.Signature, p2 []byte) (r bool) {
 		return true
 	}
 	return mock

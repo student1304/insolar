@@ -17,12 +17,12 @@
 package insolar
 
 import (
-	"crypto"
+	"github.com/insolar/insolar/platformpolicy/keys"
 )
 
 type NodeMeta interface {
 	GetNodeRef() *Reference
-	GetPublicKey() crypto.PublicKey
+	GetPublicKey() keys.PublicKey
 }
 
 //go:generate minimock -i github.com/insolar/insolar/insolar.Certificate -o ../testutils -s _mock.go

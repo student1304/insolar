@@ -52,10 +52,11 @@ package merkle
 
 import (
 	"context"
-	"crypto"
+
+	"github.com/pkg/errors"
 
 	"github.com/insolar/insolar/insolar"
-	"github.com/pkg/errors"
+	"github.com/insolar/insolar/platformpolicy/keys"
 )
 
 type stater interface {
@@ -152,6 +153,6 @@ func (c *calculator) GetCloudProof(entry *CloudEntry) (OriginHash, *CloudProof, 
 	}, nil
 }
 
-func (c *calculator) IsValid(proof Proof, hash OriginHash, publicKey crypto.PublicKey) bool {
+func (c *calculator) IsValid(proof Proof, hash OriginHash, publicKey keys.PublicKey) bool {
 	return c.CryptographyService.Verify(publicKey, proof.signature(), proof.hash(hash, c.merkleHelper))
 }

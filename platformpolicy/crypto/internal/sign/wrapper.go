@@ -20,9 +20,10 @@ import (
 	"crypto/ecdsa"
 	"crypto/rand"
 
+	"github.com/pkg/errors"
+
 	"github.com/insolar/insolar/insolar"
 	"github.com/insolar/insolar/log"
-	"github.com/pkg/errors"
 )
 
 type ecdsaSignerWrapper struct {

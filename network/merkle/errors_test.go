@@ -52,7 +52,6 @@ package merkle
 
 import (
 	"context"
-	"crypto"
 	"encoding/hex"
 	"testing"
 
@@ -65,6 +64,7 @@ import (
 	"github.com/insolar/insolar/insolar"
 	pulse2 "github.com/insolar/insolar/insolar/pulse"
 	"github.com/insolar/insolar/platformpolicy"
+	"github.com/insolar/insolar/platformpolicy/keys"
 	"github.com/insolar/insolar/pulsar/pulsartestutils"
 	"github.com/insolar/insolar/testutils"
 	"github.com/insolar/insolar/testutils/nodekeeper"
@@ -173,7 +173,7 @@ func TestCalculatorError(t *testing.T) {
 	service.SignFunc = func(p []byte) (r *insolar.Signature, r1 error) {
 		return nil, errors.New("Sign error")
 	}
-	service.GetPublicKeyFunc = func() (r crypto.PublicKey, r1 error) {
+	service.GetPublicKeyFunc = func() (r keys.PublicKey, r1 error) {
 		return "key", nil
 	}
 	scheme := platformpolicy.NewPlatformCryptographyScheme()
@@ -237,7 +237,7 @@ func TestCalculatorLedgerError(t *testing.T) {
 	service.SignFunc = func(p []byte) (r *insolar.Signature, r1 error) {
 		return nil, errors.New("Sign error")
 	}
-	service.GetPublicKeyFunc = func() (r crypto.PublicKey, r1 error) {
+	service.GetPublicKeyFunc = func() (r keys.PublicKey, r1 error) {
 		return "key", nil
 	}
 

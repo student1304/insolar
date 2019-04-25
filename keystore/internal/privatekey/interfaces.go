@@ -16,10 +16,8 @@
 
 package privatekey
 
-import (
-	"crypto"
-)
+import "github.com/insolar/insolar/platformpolicy/keys"
 
 type Loader interface {
-	Load(file string) (crypto.PrivateKey, error)
+	Load(file string) (keys.PrivateKey, error)
 }

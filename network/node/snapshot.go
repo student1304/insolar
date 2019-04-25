@@ -53,10 +53,11 @@ package node
 import (
 	"reflect"
 
+	"github.com/pkg/errors"
+
 	"github.com/insolar/insolar/insolar"
 	protonode "github.com/insolar/insolar/network/node/internal/node"
 	"github.com/insolar/insolar/platformpolicy"
-	"github.com/pkg/errors"
 )
 
 type ListType int

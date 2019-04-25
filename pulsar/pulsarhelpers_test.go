@@ -19,11 +19,12 @@ package pulsar
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/insolar/insolar/cryptography"
 	"github.com/insolar/insolar/insolar"
 	"github.com/insolar/insolar/platformpolicy"
 	"github.com/insolar/insolar/pulsar/entropygenerator"
-	"github.com/stretchr/testify/require"
 )
 
 func TestPreparePayloadAndCheckIt(t *testing.T) {

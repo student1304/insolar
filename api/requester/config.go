@@ -17,22 +17,22 @@
 package requester
 
 import (
-	"crypto"
 	"encoding/json"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
-	"github.com/insolar/insolar/platformpolicy"
-
 	"github.com/pkg/errors"
+
+	"github.com/insolar/insolar/platformpolicy"
+	"github.com/insolar/insolar/platformpolicy/keys"
 )
 
 // UserConfigJSON holds info about user
 type UserConfigJSON struct {
 	PrivateKey       string `json:"private_key"`
 	Caller           string `json:"caller"`
-	privateKeyObject crypto.PrivateKey
+	privateKeyObject keys.PrivateKey
 }
 
 // RequestConfigJSON holds info about request

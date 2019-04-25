@@ -29,6 +29,7 @@ import (
 	"github.com/insolar/insolar/instrumentation/inslogger"
 	"github.com/insolar/insolar/keystore"
 	"github.com/insolar/insolar/platformpolicy"
+	"github.com/spf13/pflag"
 )
 
 func (g *certGen) generateKeys() {
@@ -117,8 +118,8 @@ func (g *certGen) fetchCertificate(ref insolar.Reference) []byte {
 	return cert
 }
 
-func (g *certGen) writeKeys() {
-	privKeyStr, err := g.keyProcessor.ExportPrivateKeyPEM(g.privKey)
+func writeKeys(pubKey crypto.PublicKey, privKey crypto.PrivateKey) {
+	privKeyStr, err := ks.ExportPrivateKeyPEM(privKey)
 	checkError("Failed to deserialize private key:", err)
 
 	pubKeyStr, err := g.keyProcessor.ExportPublicKeyPEM(g.pubKey)

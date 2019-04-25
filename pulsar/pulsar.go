@@ -18,23 +18,22 @@ package pulsar
 
 import (
 	"context"
-	"crypto"
 	"encoding/gob"
 	"net"
 	"net/rpc"
 	"sync"
 
-	"github.com/insolar/insolar/certificate"
-	"github.com/insolar/insolar/instrumentation/inslogger"
-	"github.com/insolar/insolar/instrumentation/instracer"
-	"github.com/insolar/insolar/pulsar/entropygenerator"
 	"github.com/pkg/errors"
 
+	"github.com/insolar/insolar/certificate"
 	"github.com/insolar/insolar/configuration"
 	"github.com/insolar/insolar/insolar"
-
+	"github.com/insolar/insolar/instrumentation/inslogger"
+	"github.com/insolar/insolar/instrumentation/instracer"
 	"github.com/insolar/insolar/log"
-	pulsarstorage "github.com/insolar/insolar/pulsar/storage"
+	"github.com/insolar/insolar/platformpolicy/keys"
+	"github.com/insolar/insolar/pulsar/entropygenerator"
+	"github.com/insolar/insolar/pulsar/storage"
 )
 
 // Pulsar is a base struct for pulsar's node
@@ -48,7 +47,7 @@ type Pulsar struct {
 
 	Neighbours map[string]*Neighbour
 
-	PublicKey    crypto.PublicKey
+	PublicKey    keys.PublicKey
 	PublicKeyRaw string
 
 	Config configuration.Pulsar

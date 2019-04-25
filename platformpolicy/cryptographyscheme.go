@@ -17,52 +17,22 @@
 package platformpolicy
 
 import (
-	"crypto"
-
-	"github.com/insolar/insolar/component"
 	"github.com/insolar/insolar/insolar"
-	"github.com/insolar/insolar/platformpolicy/internal/hash"
-	"github.com/insolar/insolar/platformpolicy/internal/sign"
+	"github.com/insolar/insolar/platformpolicy/crypto"
+	"github.com/insolar/insolar/platformpolicy/xcrypto"
 )
 
-type platformCryptographyScheme struct {
-	HashProvider hash.AlgorithmProvider `inject:""`
-	SignProvider sign.AlgorithmProvider `inject:""`
-}
-
-func (pcs *platformCryptographyScheme) PublicKeySize() int {
-	return sign.TwoBigIntBytesLength
-}
-
-func (pcs *platformCryptographyScheme) SignatureSIze() int {
-	return sign.TwoBigIntBytesLength
-}
-
-func (pcs *platformCryptographyScheme) ReferenceHasher() insolar.Hasher {
-	return pcs.HashProvider.Hash224bits()
-}
-
-func (pcs *platformCryptographyScheme) IntegrityHasher() insolar.Hasher {
-	return pcs.HashProvider.Hash512bits()
-}
-
-func (pcs *platformCryptographyScheme) Signer(privateKey crypto.PrivateKey) insolar.Signer {
-	return pcs.SignProvider.Sign(privateKey)
-}
-
-func (pcs *platformCryptographyScheme) Verifier(publicKey crypto.PublicKey) insolar.Verifier {
-	return pcs.SignProvider.Verify(publicKey)
-}
-
 func NewPlatformCryptographyScheme() insolar.PlatformCryptographyScheme {
-	platformCryptographyScheme := &platformCryptographyScheme{}
 
-	manager := component.Manager{}
-	manager.Inject(
-		platformCryptographyScheme,
+	switch CurrentCrypto {
+	case Secp256k1:
+		return xcrypto.NewPlatformCryptographyScheme()
 
-		hash.NewSHA3Provider(),
-		sign.NewECDSAProvider(),
-	)
-	return platformCryptographyScheme
+	default:
+		return crypto.NewPlatformCryptographyScheme()
+	}
+}
+
+func NewSecpPlatformCryptographyScheme() insolar.PlatformCryptographyScheme {
+	return xcrypto.NewPlatformCryptographyScheme()
 }

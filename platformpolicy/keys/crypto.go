@@ -14,14 +14,10 @@
 // limitations under the License.
 //
 
-package hash
+package keys
 
-import (
-	"github.com/insolar/insolar/insolar"
-)
+// PublicKey represents a public key using an unspecified algorithm.
+type PublicKey interface{}
 
-type AlgorithmProvider interface {
-	Hash224bits() insolar.Hasher
-	Hash256bits() insolar.Hasher
-	Hash512bits() insolar.Hasher
-}
+// PrivateKey represents a private key using an unspecified algorithm.
+type PrivateKey interface{}

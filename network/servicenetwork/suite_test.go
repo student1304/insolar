@@ -54,7 +54,6 @@ package servicenetwork
 
 import (
 	"context"
-	"crypto"
 	"fmt"
 	"math/rand"
 	"strconv"
@@ -288,7 +287,7 @@ func (s *testSuite) StopNode(node *networkNode) {
 type networkNode struct {
 	id                  insolar.Reference
 	role                insolar.StaticRole
-	privateKey          crypto.PrivateKey
+	privateKey          platformpolicy.PrivateKey
 	cryptographyService insolar.CryptographyService
 	host                string
 	ctx                 context.Context

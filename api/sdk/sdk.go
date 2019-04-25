@@ -22,13 +22,13 @@ import (
 	"io/ioutil"
 	"sync"
 
+	"github.com/pkg/errors"
+
 	"github.com/insolar/insolar/api/requester"
 	"github.com/insolar/insolar/insolar"
 	"github.com/insolar/insolar/instrumentation/inslogger"
 	"github.com/insolar/insolar/platformpolicy"
 	"github.com/insolar/insolar/testutils"
-
-	"github.com/pkg/errors"
 )
 
 type response struct {

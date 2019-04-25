@@ -17,13 +17,15 @@
 package hash
 
 import (
-	"github.com/insolar/insolar/insolar"
 	"golang.org/x/crypto/sha3"
+
+	"github.com/insolar/insolar/insolar"
+	"github.com/insolar/insolar/platformpolicy/algorithmprovider"
 )
 
 type sha3Provider struct{}
 
-func NewSHA3Provider() AlgorithmProvider {
+func NewSHA3Provider() algorithmprovider.HashAlgorithmProvider {
 	return &sha3Provider{}
 }
 

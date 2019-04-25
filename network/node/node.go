@@ -51,16 +51,17 @@
 package node
 
 import (
-	"crypto"
 	"encoding/gob"
 	"sync"
 	"sync/atomic"
+
+	"github.com/pkg/errors"
 
 	"github.com/insolar/insolar/consensus/packets"
 	"github.com/insolar/insolar/insolar"
 	"github.com/insolar/insolar/network/utils"
 	"github.com/insolar/insolar/platformpolicy"
-	"github.com/pkg/errors"
+	"github.com/insolar/insolar/platformpolicy/keys"
 )
 
 type MutableNode interface {
@@ -77,7 +78,7 @@ type node struct {
 	NodeID        insolar.Reference
 	NodeShortID   uint32
 	NodeRole      insolar.StaticRole
-	NodePublicKey crypto.PublicKey
+	NodePublicKey keys.PublicKey
 
 	NodeAddress string
 
@@ -116,7 +117,7 @@ func (n *node) ChangeState() {
 func newMutableNode(
 	id insolar.Reference,
 	role insolar.StaticRole,
-	publicKey crypto.PublicKey,
+	publicKey keys.PublicKey,
 	state insolar.NodeState,
 	address, version string) MutableNode {
 
@@ -134,7 +135,7 @@ func newMutableNode(
 func NewNode(
 	id insolar.Reference,
 	role insolar.StaticRole,
-	publicKey crypto.PublicKey,
+	publicKey keys.PublicKey,
 	address, version string) insolar.NetworkNode {
 	return newMutableNode(id, role, publicKey, insolar.NodeReady, address, version)
 }
@@ -151,7 +152,7 @@ func (n *node) Role() insolar.StaticRole {
 	return n.NodeRole
 }
 
-func (n *node) PublicKey() crypto.PublicKey {
+func (n *node) PublicKey() keys.PublicKey {
 	return n.NodePublicKey
 }
 

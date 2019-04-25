@@ -17,11 +17,12 @@
 package certificate
 
 import (
-	"crypto"
 	"io"
 
-	"github.com/insolar/insolar/insolar"
 	"github.com/pkg/errors"
+
+	"github.com/insolar/insolar/insolar"
+	"github.com/insolar/insolar/platformpolicy/keys"
 )
 
 // CertificateManager is a component for working with current node certificate
@@ -82,7 +83,7 @@ func (m *CertificateManager) NewUnsignedCertificate(pKey string, role string, re
 }
 
 // NewManagerReadCertificate constructor creates new CertificateManager component
-func NewManagerReadCertificate(publicKey crypto.PublicKey, keyProcessor insolar.KeyProcessor, certPath string) (*CertificateManager, error) {
+func NewManagerReadCertificate(publicKey keys.PublicKey, keyProcessor insolar.KeyProcessor, certPath string) (*CertificateManager, error) {
 	cert, err := ReadCertificate(publicKey, keyProcessor, certPath)
 	if err != nil {
 		return nil, errors.Wrap(err, "[ NewManagerReadCertificate ] failed to read certificate:")
@@ -92,7 +93,7 @@ func NewManagerReadCertificate(publicKey crypto.PublicKey, keyProcessor insolar.
 }
 
 // NewManagerReadCertificateFromReader constructor creates new CertificateManager component
-func NewManagerReadCertificateFromReader(publicKey crypto.PublicKey, keyProcessor insolar.KeyProcessor, reader io.Reader) (*CertificateManager, error) {
+func NewManagerReadCertificateFromReader(publicKey keys.PublicKey, keyProcessor insolar.KeyProcessor, reader io.Reader) (*CertificateManager, error) {
 	cert, err := ReadCertificateFromReader(publicKey, keyProcessor, reader)
 	if err != nil {
 		return nil, errors.Wrap(err, "[ NewManagerReadCertificateFromReader ] failed to read certificate data:")
@@ -103,7 +104,7 @@ func NewManagerReadCertificateFromReader(publicKey crypto.PublicKey, keyProcesso
 
 // NewManagerCertificateWithKeys generate manager with certificate from given keys
 // DEPRECATED, this method generates invalid certificate, remove it after pulsar tests refactor
-func NewManagerCertificateWithKeys(publicKey crypto.PublicKey, keyProcessor insolar.KeyProcessor) (*CertificateManager, error) {
+func NewManagerCertificateWithKeys(publicKey keys.PublicKey, keyProcessor insolar.KeyProcessor) (*CertificateManager, error) {
 	cert, err := NewCertificatesWithKeys(publicKey, keyProcessor)
 	if err != nil {
 		return nil, errors.Wrap(err, "[ NewManagerCertificateWithKeys ] failed to create certificate:")

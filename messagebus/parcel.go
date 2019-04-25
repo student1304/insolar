@@ -18,13 +18,14 @@ package messagebus
 
 import (
 	"context"
-	"crypto"
+
+	"github.com/pkg/errors"
 
 	"github.com/insolar/insolar/insolar"
 	"github.com/insolar/insolar/insolar/message"
 	"github.com/insolar/insolar/instrumentation/inslogger"
 	"github.com/insolar/insolar/instrumentation/instracer"
-	"github.com/pkg/errors"
+	"github.com/insolar/insolar/platformpolicy/keys"
 )
 
 type parcelFactory struct {
@@ -63,7 +64,7 @@ func (pf *parcelFactory) Create(ctx context.Context, msg insolar.Message, sender
 	}, nil
 }
 
-func (pf *parcelFactory) Validate(publicKey crypto.PublicKey, parcel insolar.Parcel) error {
+func (pf *parcelFactory) Validate(publicKey keys.PublicKey, parcel insolar.Parcel) error {
 	ok := pf.Cryptography.Verify(publicKey, insolar.SignatureFromBytes(parcel.GetSign()), message.ToBytes(parcel.Message()))
 	if !ok {
 		return errors.New("parcel isn't valid")

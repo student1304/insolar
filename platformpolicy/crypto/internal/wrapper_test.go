@@ -17,21 +17,22 @@
 package internal
 
 import (
+	"github.com/insolar/insolar/platformpolicy/crypto"
 	"testing"
 
-	"github.com/insolar/insolar/component"
-	"github.com/insolar/insolar/platformpolicy"
-	"github.com/insolar/insolar/platformpolicy/internal/hash"
-	"github.com/insolar/insolar/platformpolicy/internal/sign"
-	"github.com/insolar/insolar/testutils"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/insolar/insolar/component"
+	"github.com/insolar/insolar/platformpolicy/crypto/internal/hash"
+	"github.com/insolar/insolar/platformpolicy/crypto/internal/sign"
+	"github.com/insolar/insolar/testutils"
 )
 
 func TestEcdsaMarshalUnmarshal(t *testing.T) {
 	count := 10000
 	data := testutils.RandomRef()
 
-	kp := platformpolicy.NewKeyProcessor()
+	kp := crypto.NewKeyProcessor()
 	provider := sign.NewECDSAProvider()
 
 	cm := component.Manager{}

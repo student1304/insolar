@@ -52,19 +52,19 @@ package phases
 
 import (
 	"context"
-	"crypto"
 	"testing"
 	"time"
 
-	"github.com/insolar/insolar/network/node"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/insolar/insolar/component"
 	"github.com/insolar/insolar/consensus/packets"
 	"github.com/insolar/insolar/insolar"
 	"github.com/insolar/insolar/network"
+	"github.com/insolar/insolar/network/node"
+	"github.com/insolar/insolar/platformpolicy/keys"
 	"github.com/insolar/insolar/testutils"
 	networkUtils "github.com/insolar/insolar/testutils/network"
-	"github.com/stretchr/testify/suite"
 )
 
 type communicatorSuite struct {
@@ -98,7 +98,7 @@ func (s *communicatorSuite) SetupTest() {
 		signature := insolar.SignatureFromBytes(nil)
 		return &signature, nil
 	}
-	cryptoServ.VerifyFunc = func(p crypto.PublicKey, p1 insolar.Signature, p2 []byte) (r bool) {
+	cryptoServ.VerifyFunc = func(p keys.PublicKey, p1 insolar.Signature, p2 []byte) (r bool) {
 		return true
 	}
 

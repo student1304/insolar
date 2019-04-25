@@ -18,8 +18,10 @@ package logicrunner
 
 import (
 	"context"
-	"crypto"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/insolar/insolar/component"
 	"github.com/insolar/insolar/configuration"
@@ -35,11 +37,10 @@ import (
 	"github.com/insolar/insolar/logicrunner/pulsemanager"
 	"github.com/insolar/insolar/messagebus"
 	"github.com/insolar/insolar/platformpolicy"
+	"github.com/insolar/insolar/platformpolicy/keys"
 	"github.com/insolar/insolar/testutils"
 	"github.com/insolar/insolar/testutils/nodekeeper"
 	"github.com/insolar/insolar/testutils/testmessagebus"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func byteRecorRef(b byte) insolar.Reference {
@@ -60,7 +61,7 @@ func TestBareHelloworld(t *testing.T) {
 		signature := insolar.SignatureFromBytes(nil)
 		return &signature, nil
 	}
-	mock.GetPublicKeyFunc = func() (r crypto.PublicKey, r1 error) {
+	mock.GetPublicKeyFunc = func() (r keys.PublicKey, r1 error) {
 		return nil, nil
 	}
 	delegationTokenFactory := delegationtoken.NewDelegationTokenFactory()

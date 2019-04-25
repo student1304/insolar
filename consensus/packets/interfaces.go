@@ -51,13 +51,13 @@
 package packets
 
 import (
-	"crypto"
 	"io"
 	"strconv"
 
 	"github.com/pkg/errors"
 
 	"github.com/insolar/insolar/insolar"
+	"github.com/insolar/insolar/platformpolicy/keys"
 )
 
 type PacketRoutable interface {
@@ -76,7 +76,7 @@ type HeaderSkipDeserializer interface {
 }
 
 type SignedPacket interface {
-	Verify(cryptographyService insolar.CryptographyService, key crypto.PublicKey) error
+	Verify(cryptographyService insolar.CryptographyService, key keys.PublicKey) error
 	Sign(insolar.CryptographyService) error
 }
 

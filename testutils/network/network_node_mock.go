@@ -6,12 +6,12 @@ This code was generated automatically using github.com/gojuno/minimock v1.9
 The original interface "NetworkNode" can be found in github.com/insolar/insolar/insolar
 */
 import (
-	crypto "crypto"
 	"sync/atomic"
 	"time"
 
 	"github.com/gojuno/minimock"
 	insolar "github.com/insolar/insolar/insolar"
+	keys "github.com/insolar/insolar/platformpolicy/keys"
 )
 
 //NetworkNodeMock implements github.com/insolar/insolar/insolar.NetworkNode
@@ -43,7 +43,7 @@ type NetworkNodeMock struct {
 	LeavingETAPreCounter uint64
 	LeavingETAMock       mNetworkNodeMockLeavingETA
 
-	PublicKeyFunc       func() (r crypto.PublicKey)
+	PublicKeyFunc       func() (r keys.PublicKey)
 	PublicKeyCounter    uint64
 	PublicKeyPreCounter uint64
 	PublicKeyMock       mNetworkNodeMockPublicKey
@@ -766,7 +766,7 @@ type NetworkNodeMockPublicKeyExpectation struct {
 }
 
 type NetworkNodeMockPublicKeyResult struct {
-	r crypto.PublicKey
+	r keys.PublicKey
 }
 
 //Expect specifies that invocation of NetworkNode.PublicKey is expected from 1 to Infinity times
@@ -782,7 +782,7 @@ func (m *mNetworkNodeMockPublicKey) Expect() *mNetworkNodeMockPublicKey {
 }
 
 //Return specifies results of invocation of NetworkNode.PublicKey
-func (m *mNetworkNodeMockPublicKey) Return(r crypto.PublicKey) *NetworkNodeMock {
+func (m *mNetworkNodeMockPublicKey) Return(r keys.PublicKey) *NetworkNodeMock {
 	m.mock.PublicKeyFunc = nil
 	m.expectationSeries = nil
 
@@ -804,12 +804,12 @@ func (m *mNetworkNodeMockPublicKey) ExpectOnce() *NetworkNodeMockPublicKeyExpect
 	return expectation
 }
 
-func (e *NetworkNodeMockPublicKeyExpectation) Return(r crypto.PublicKey) {
+func (e *NetworkNodeMockPublicKeyExpectation) Return(r keys.PublicKey) {
 	e.result = &NetworkNodeMockPublicKeyResult{r}
 }
 
 //Set uses given function f as a mock of NetworkNode.PublicKey method
-func (m *mNetworkNodeMockPublicKey) Set(f func() (r crypto.PublicKey)) *NetworkNodeMock {
+func (m *mNetworkNodeMockPublicKey) Set(f func() (r keys.PublicKey)) *NetworkNodeMock {
 	m.mainExpectation = nil
 	m.expectationSeries = nil
 
@@ -818,7 +818,7 @@ func (m *mNetworkNodeMockPublicKey) Set(f func() (r crypto.PublicKey)) *NetworkN
 }
 
 //PublicKey implements github.com/insolar/insolar/insolar.NetworkNode interface
-func (m *NetworkNodeMock) PublicKey() (r crypto.PublicKey) {
+func (m *NetworkNodeMock) PublicKey() (r keys.PublicKey) {
 	counter := atomic.AddUint64(&m.PublicKeyPreCounter, 1)
 	defer atomic.AddUint64(&m.PublicKeyCounter, 1)
 

@@ -51,11 +51,11 @@
 package packets
 
 import (
-	"crypto"
+	"github.com/pkg/errors"
 
 	"github.com/insolar/insolar/insolar"
 	"github.com/insolar/insolar/platformpolicy"
-	"github.com/pkg/errors"
+	"github.com/insolar/insolar/platformpolicy/keys"
 )
 
 //go:generate stringer -type=ClaimType
@@ -94,7 +94,7 @@ type ClaimSupplementary interface {
 
 type SignedClaim interface {
 	GetNodeID() insolar.Reference
-	GetPublicKey() (crypto.PublicKey, error)
+	GetPublicKey() (keys.PublicKey, error)
 	SerializeRaw() ([]byte, error)
 	GetSignature() []byte
 }
@@ -192,7 +192,7 @@ func (njc *NodeJoinClaim) GetNodeID() insolar.Reference {
 	return njc.NodeRef
 }
 
-func (njc *NodeJoinClaim) GetPublicKey() (crypto.PublicKey, error) {
+func (njc *NodeJoinClaim) GetPublicKey() (keys.PublicKey, error) {
 	keyProc := platformpolicy.NewKeyProcessor()
 	return keyProc.ImportPublicKeyBinary(njc.NodePK[:])
 }

@@ -18,13 +18,14 @@ package pulsar
 
 import (
 	"context"
-	"crypto"
 	"sync"
+
+	"github.com/pkg/errors"
 
 	"github.com/insolar/insolar/insolar"
 	"github.com/insolar/insolar/instrumentation/inslogger"
 	"github.com/insolar/insolar/instrumentation/instracer"
-	"github.com/pkg/errors"
+	"github.com/insolar/insolar/platformpolicy/keys"
 )
 
 // SetBftGridItem set item of the bftGrid in the thread-safe way
@@ -141,7 +142,7 @@ func (currentPulsar *Pulsar) verify(ctx context.Context) {
 
 	type bftMember struct {
 		PubPem string
-		PubKey crypto.PublicKey
+		PubKey keys.PublicKey
 	}
 
 	var finalEntropySet []insolar.Entropy

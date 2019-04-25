@@ -52,7 +52,6 @@ package merkle
 
 import (
 	"context"
-	"crypto"
 	"encoding/hex"
 	"fmt"
 	"testing"
@@ -63,6 +62,7 @@ import (
 	"github.com/insolar/insolar/component"
 	"github.com/insolar/insolar/insolar"
 	"github.com/insolar/insolar/platformpolicy"
+	"github.com/insolar/insolar/platformpolicy/keys"
 	"github.com/insolar/insolar/pulsar/pulsartestutils"
 	"github.com/insolar/insolar/testutils"
 	"github.com/insolar/insolar/testutils/nodekeeper"
@@ -165,7 +165,7 @@ func TestCalculatorHashes(t *testing.T) {
 		signature := insolar.SignatureFromBytes([]byte("signature"))
 		return &signature, nil
 	}
-	service.GetPublicKeyFunc = func() (r crypto.PublicKey, r1 error) {
+	service.GetPublicKeyFunc = func() (r keys.PublicKey, r1 error) {
 		return "key", nil
 	}
 

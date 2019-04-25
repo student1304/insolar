@@ -54,6 +54,12 @@ import (
 	"context"
 	"math"
 
+	"github.com/jbenet/go-base58"
+	"github.com/pkg/errors"
+	"go.opencensus.io/stats"
+	"go.opencensus.io/tag"
+	"go.opencensus.io/trace"
+
 	"github.com/insolar/insolar/consensus"
 	"github.com/insolar/insolar/consensus/claimhandler"
 	"github.com/insolar/insolar/consensus/packets"
@@ -64,11 +70,6 @@ import (
 	"github.com/insolar/insolar/network"
 	"github.com/insolar/insolar/network/merkle"
 	"github.com/insolar/insolar/platformpolicy"
-	"github.com/jbenet/go-base58"
-	"github.com/pkg/errors"
-	"go.opencensus.io/stats"
-	"go.opencensus.io/tag"
-	"go.opencensus.io/trace"
 )
 
 const BFTPercent = 2.0 / 3.0

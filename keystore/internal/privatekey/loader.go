@@ -17,18 +17,18 @@
 package privatekey
 
 import (
-	"crypto"
-	"crypto/x509"
 	"encoding/json"
-	"encoding/pem"
 	"io/ioutil"
 	"path/filepath"
 
 	"github.com/pkg/errors"
+
+	"github.com/insolar/insolar/platformpolicy"
+	"github.com/insolar/insolar/platformpolicy/keys"
 )
 
 type keyLoader struct {
-	parseFunc func(key []byte) (crypto.PrivateKey, error)
+	parseFunc func(key []byte) (keys.PrivateKey, error)
 }
 
 func NewLoader() Loader {
@@ -37,7 +37,7 @@ func NewLoader() Loader {
 	}
 }
 
-func (p *keyLoader) Load(file string) (crypto.PrivateKey, error) {
+func (p *keyLoader) Load(file string) (keys.PrivateKey, error) {
 	key, err := readJSON(file)
 	if err != nil {
 		return nil, errors.Wrap(err, "[ Load ] Could't read private key")
@@ -70,17 +70,8 @@ func readJSON(path string) ([]byte, error) {
 	return []byte(key), nil
 }
 
-func pemParse(key []byte) (crypto.PrivateKey, error) {
-	block, _ := pem.Decode(key)
-	if block == nil {
-		return nil, errors.Errorf("[ Parse ] Problems with decoding. Key - %v", key)
-	}
+func pemParse(key []byte) (keys.PrivateKey, error) {
+	kp := platformpolicy.NewKeyProcessor()
 
-	x509Encoded := block.Bytes
-	privateKey, err := x509.ParseECPrivateKey(x509Encoded)
-	if err != nil {
-		return nil, errors.Errorf("[ Parse ] Problems with parsing. Key - %v", key)
-	}
-
-	return privateKey, nil
+	return kp.ImportPrivateKeyPEM(key)
 }

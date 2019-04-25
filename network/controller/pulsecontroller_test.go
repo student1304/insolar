@@ -51,16 +51,17 @@
 package controller
 
 import (
-	"crypto"
 	"crypto/rand"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/insolar/insolar/cryptography"
 	"github.com/insolar/insolar/insolar"
 	"github.com/insolar/insolar/platformpolicy"
+	"github.com/insolar/insolar/platformpolicy/keys"
 	"github.com/insolar/insolar/pulsar"
 	"github.com/insolar/insolar/pulsar/entropygenerator"
-	"github.com/stretchr/testify/assert"
 )
 
 func getController(t *testing.T) pulseController {
@@ -74,7 +75,7 @@ func getController(t *testing.T) pulseController {
 	}
 }
 
-func getKeys(t *testing.T) (public string, private crypto.PrivateKey) {
+func getKeys(t *testing.T) (public string, private keys.PrivateKey) {
 	proc := platformpolicy.NewKeyProcessor()
 	privKey, err := proc.GeneratePrivateKey()
 	assert.NoError(t, err)
