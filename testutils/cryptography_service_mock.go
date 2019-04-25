@@ -408,7 +408,7 @@ func (m *mCryptographyServiceMockVerify) Set(f func(p keys.PublicKey, p1 insolar
 }
 
 //Verify implements github.com/insolar/insolar/insolar.CryptographyService interface
-func (m *CryptographyServiceMock) Verify(p keys.PublicKey, p1 insolar.Signature, p2 []byte) (r bool) {
+func (m *CryptographyServiceMock) Verify(p keys.PublicKey, p1 insolar.Signature, p2 []byte) (r bool, err error) {
 	counter := atomic.AddUint64(&m.VerifyPreCounter, 1)
 	defer atomic.AddUint64(&m.VerifyCounter, 1)
 
@@ -454,7 +454,7 @@ func (m *CryptographyServiceMock) Verify(p keys.PublicKey, p1 insolar.Signature,
 		return
 	}
 
-	return m.VerifyFunc(p, p1, p2)
+	return m.VerifyFunc(p, p1, p2), nil
 }
 
 //VerifyMinimockCounter returns a count of CryptographyServiceMock.VerifyFunc invocations

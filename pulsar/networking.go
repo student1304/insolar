@@ -184,7 +184,7 @@ func (handler *Handler) ReceiveEntropy(request *Payload, response *Payload) erro
 			return err
 		}
 
-		isVerified := handler.Pulsar.CryptographyService.Verify(publicKey, insolar.SignatureFromBytes(btfCell.GetSign()), requestBody.Entropy[:])
+		isVerified, _ := handler.Pulsar.CryptographyService.Verify(publicKey, insolar.SignatureFromBytes(btfCell.GetSign()), requestBody.Entropy[:])
 		if err != nil || !isVerified {
 			handler.Pulsar.AddItemToVector(request.PublicKey, nil)
 			inslog.Errorf("signature and Entropy aren't matched")
@@ -269,7 +269,7 @@ func (handler *Handler) ReceiveChosenSignature(request *Payload, response *Paylo
 		return err
 	}
 
-	isVerified := handler.Pulsar.CryptographyService.Verify(publicKey, insolar.SignatureFromBytes(requestBody.Signature), hash)
+	isVerified, _ := handler.Pulsar.CryptographyService.Verify(publicKey, insolar.SignatureFromBytes(requestBody.Signature), hash)
 
 	if !isVerified {
 		inslog.Errorf("signature and chosen publicKey aren't matched")

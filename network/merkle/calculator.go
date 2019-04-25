@@ -154,5 +154,6 @@ func (c *calculator) GetCloudProof(entry *CloudEntry) (OriginHash, *CloudProof, 
 }
 
 func (c *calculator) IsValid(proof Proof, hash OriginHash, publicKey keys.PublicKey) bool {
-	return c.CryptographyService.Verify(publicKey, proof.signature(), proof.hash(hash, c.merkleHelper))
+	b, _ := c.CryptographyService.Verify(publicKey, proof.signature(), proof.hash(hash, c.merkleHelper))
+	return b
 }

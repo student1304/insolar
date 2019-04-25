@@ -65,7 +65,7 @@ func (pf *parcelFactory) Create(ctx context.Context, msg insolar.Message, sender
 }
 
 func (pf *parcelFactory) Validate(publicKey keys.PublicKey, parcel insolar.Parcel) error {
-	ok := pf.Cryptography.Verify(publicKey, insolar.SignatureFromBytes(parcel.GetSign()), message.ToBytes(parcel.Message()))
+	ok, _ := pf.Cryptography.Verify(publicKey, insolar.SignatureFromBytes(parcel.GetSign()), message.ToBytes(parcel.Message()))
 	if !ok {
 		return errors.New("parcel isn't valid")
 	}

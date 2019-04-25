@@ -37,8 +37,8 @@ func Sign(data []byte, key keys.PrivateKey) ([]byte, error) {
 }
 
 // Verify verifies signature.
-func Verify(data []byte, signatureRaw []byte, publicKey keys.PublicKey) bool {
-	return platformCryptographyScheme.Verifier(publicKey).Verify(insolar.SignatureFromBytes(signatureRaw), data)
+func Verify(data []byte, signatureRaw []byte, publicKey keys.PublicKey) (bool, error) {
+	return platformCryptographyScheme.Verifier(publicKey).Verify("DER", insolar.SignatureFromBytes(signatureRaw), data)
 }
 
 func GeneratePrivateKey() (keys.PrivateKey, error) {

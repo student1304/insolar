@@ -130,7 +130,7 @@ func (pc *pulseController) verifyPulseSign(pulse insolar.Pulse) (bool, error) {
 			return false, errors.Wrap(err, "[ verifyPulseSign ] error to import a public key")
 		}
 
-		verified := pc.CryptographyService.Verify(key, insolar.SignatureFromBytes(psc.Signature), hash)
+		verified, _ := pc.CryptographyService.Verify(key, insolar.SignatureFromBytes(psc.Signature), hash)
 
 		if !verified {
 			return false, errors.New("[ verifyPulseSign ] error to verify a pulse")

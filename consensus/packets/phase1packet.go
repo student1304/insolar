@@ -106,7 +106,10 @@ func (p1p *Phase1Packet) Verify(crypto insolar.CryptographyService, key keys.Pub
 	if err != nil {
 		return errors.Wrap(err, "Failed to get raw part of phase 1 packet")
 	}
-	valid := crypto.Verify(key, insolar.SignatureFromBytes(p1p.Signature[:]), raw)
+	valid, err := crypto.Verify(key, insolar.SignatureFromBytes(p1p.Signature[:]), raw)
+	if err != nil {
+		return errors.New("Cant verify")
+	}
 	if !valid {
 		return errors.New("bad signature")
 	}

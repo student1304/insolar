@@ -108,7 +108,7 @@ func (p2p *Phase2Packet) Verify(crypto insolar.CryptographyService, key keys.Pub
 	if err != nil {
 		return errors.Wrap(err, "Failed to get raw first part of phase 2 packet")
 	}
-	valid := crypto.Verify(key, insolar.SignatureFromBytes(p2p.SignatureHeaderSection1[:]), raw)
+	valid, _ := crypto.Verify(key, insolar.SignatureFromBytes(p2p.SignatureHeaderSection1[:]), raw)
 	if !valid {
 		return errors.New("first part bad signature")
 	}
@@ -121,7 +121,7 @@ func (p2p *Phase2Packet) Verify(crypto insolar.CryptographyService, key keys.Pub
 	if err != nil {
 		return errors.Wrap(err, "Failed to get raw second part of phase 2 packet")
 	}
-	valid = crypto.Verify(key, insolar.SignatureFromBytes(p2p.SignatureHeaderSection2[:]), raw)
+	valid, _ = crypto.Verify(key, insolar.SignatureFromBytes(p2p.SignatureHeaderSection2[:]), raw)
 	if !valid {
 		return errors.New("second part bad signature")
 	}

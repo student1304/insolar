@@ -197,7 +197,7 @@ func (cr *challengeResponseController) processChallenge2(ctx context.Context, re
 		return cr.buildChallenge2ErrorResponse(ctx, request, err.Error()), nil
 	}
 	sign := insolar.SignatureFromBytes(data.SignedDiscoveryNonce)
-	success := cr.Cryptography.Verify(cert.GetPublicKey(), sign, Xor(data.XorNonce, discoveryNonce))
+	success, _ := cr.Cryptography.Verify(cert.GetPublicKey(), sign, Xor(data.XorNonce, discoveryNonce))
 	if !success {
 		return cr.buildChallenge2ErrorResponse(ctx, request, "node %s signature check failed"), nil
 	}
@@ -296,7 +296,7 @@ func (cr *challengeResponseController) Execute(ctx context.Context, discoveryNod
 	inslogger.FromContext(ctx).Debugf("Discovery XorDiscoveryNonce: %s", base58.Encode(data.XorDiscoveryNonce))
 
 	sign := insolar.SignatureFromBytes(data.SignedNonce)
-	success := cr.Cryptography.Verify(discoveryNode.Node.GetPublicKey(), sign, Xor(nonce, data.XorDiscoveryNonce))
+	success, _ := cr.Cryptography.Verify(discoveryNode.Node.GetPublicKey(), sign, Xor(nonce, data.XorDiscoveryNonce))
 	if !success {
 		return nil, errors.New("Error checking signed nonce from discovery node")
 	}

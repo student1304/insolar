@@ -33,7 +33,7 @@ type Signer interface {
 }
 
 type Verifier interface {
-	Verify(Signature, []byte) bool
+	Verify(string, Signature, []byte) (bool, error)
 }
 
 type PlatformCryptographyScheme interface {

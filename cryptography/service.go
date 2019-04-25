@@ -56,8 +56,8 @@ func (cs *nodeCryptographyService) Sign(payload []byte) (*insolar.Signature, err
 	return signature, nil
 }
 
-func (cs *nodeCryptographyService) Verify(publicKey keys.PublicKey, signature insolar.Signature, payload []byte) bool {
-	return cs.PlatformCryptographyScheme.Verifier(publicKey).Verify(signature, payload)
+func (cs *nodeCryptographyService) Verify(publicKey keys.PublicKey, signature insolar.Signature, payload []byte) (bool, error) {
+	return cs.PlatformCryptographyScheme.Verifier(publicKey).Verify("", signature, payload)
 }
 
 func NewCryptographyService() insolar.CryptographyService {

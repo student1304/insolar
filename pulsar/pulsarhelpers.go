@@ -125,7 +125,7 @@ func (currentPulsar *Pulsar) checkPayloadSignature(request *Payload) (bool, erro
 		return false, err
 	}
 
-	return currentPulsar.CryptographyService.Verify(publicKey, insolar.SignatureFromBytes(request.Signature), hash), nil
+	return currentPulsar.CryptographyService.Verify(publicKey, insolar.SignatureFromBytes(request.Signature), hash)
 }
 
 // copied from jetcoordinator

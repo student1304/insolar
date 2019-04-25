@@ -53,16 +53,16 @@ type ecdsaVerifyWrapper struct {
 	hasher    insolar.Hasher
 }
 
-func (sw *ecdsaVerifyWrapper) Verify(signature insolar.Signature, data []byte) bool {
+func (sw *ecdsaVerifyWrapper) Verify(signType string, signature insolar.Signature, data []byte) (bool, error) {
 	if signature.Bytes() == nil {
-		return false
+		return false, errors.Errorf("[ Verify ] signature bytes = nil")
 	}
 	r, s, err := DeserializeTwoBigInt(signature.Bytes())
 	if err != nil {
 		log.Error(err)
-		return false
+		return false, err
 	}
 
 	hash := sw.hasher.Hash(data)
-	return ecdsa.Verify(sw.publicKey, hash, r, s)
+	return ecdsa.Verify(sw.publicKey, hash, r, s), nil
 }

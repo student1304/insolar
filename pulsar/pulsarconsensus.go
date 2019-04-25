@@ -173,7 +173,7 @@ func (currentPulsar *Pulsar) verify(ctx context.Context) {
 			}
 
 			entropy := bftCell.GetEntropy()
-			ok := currentPulsar.CryptographyService.Verify(publicKey, insolar.SignatureFromBytes(bftCell.GetSign()), entropy[:])
+			ok, _ := currentPulsar.CryptographyService.Verify(publicKey, insolar.SignatureFromBytes(bftCell.GetSign()), entropy[:])
 			if !ok {
 				currentColumnStat["nil"]++
 				continue

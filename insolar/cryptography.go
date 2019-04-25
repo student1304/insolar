@@ -36,5 +36,5 @@ func (s *Signature) Bytes() []byte {
 type CryptographyService interface {
 	GetPublicKey() (keys.PublicKey, error)
 	Sign([]byte) (*Signature, error)
-	Verify(keys.PublicKey, Signature, []byte) bool
+	Verify(keys.PublicKey, Signature, []byte) (bool, error)
 }

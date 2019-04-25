@@ -350,7 +350,7 @@ func (fp *FirstPhaseImpl) checkClaimSignature(claim packets.SignedClaim) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to serialize a claim")
 	}
-	success := fp.Cryptography.Verify(key, insolar.SignatureFromBytes(claim.GetSignature()), rawClaim)
+	success, _ := fp.Cryptography.Verify(key, insolar.SignatureFromBytes(claim.GetSignature()), rawClaim)
 	if !success {
 		return errors.New("signature verification failed")
 	}

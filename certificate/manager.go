@@ -50,7 +50,7 @@ func (m *CertificateManager) VerifyAuthorizationCertificate(authCert insolar.Aut
 	data := authCert.SerializeNodePart()
 	for _, node := range discoveryNodes {
 		sign := authCert.GetDiscoverySigns()[*node.GetNodeRef()]
-		ok := m.CS.Verify(node.GetPublicKey(), insolar.SignatureFromBytes(sign), data)
+		ok, _ := m.CS.Verify(node.GetPublicKey(), insolar.SignatureFromBytes(sign), data)
 		if !ok {
 			return false, nil
 		}

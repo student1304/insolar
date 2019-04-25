@@ -83,9 +83,12 @@ func (m *Member) verifySig(method string, params []byte, seed []byte, sign []byt
 		return fmt.Errorf("[ verifySig ] Invalid public key")
 	}
 
-	verified := foundation.Verify(args, sign, publicKey)
+	verified, err := foundation.Verify(args, sign, publicKey)
+	if err != nil {
+		return fmt.Errorf("[ verifySig ] Cant verify: %s", err.Error())
+	}
 	if !verified {
-		return fmt.Errorf("[ verifySig ] Incorrect signature")
+		return fmt.Errorf("[ verifySig ] Incorrect signature1")
 	}
 	return nil
 }

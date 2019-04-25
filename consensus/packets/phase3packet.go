@@ -95,7 +95,7 @@ func (p3p *Phase3Packet) Verify(crypto insolar.CryptographyService, key keys.Pub
 	if err != nil {
 		return errors.Wrap(err, "Failed to get raw part of phase 3 packet")
 	}
-	valid := crypto.Verify(key, insolar.SignatureFromBytes(p3p.SignatureHeaderSection1[:]), raw)
+	valid, _ := crypto.Verify(key, insolar.SignatureFromBytes(p3p.SignatureHeaderSection1[:]), raw)
 	if !valid {
 		return errors.New("bad signature")
 	}
