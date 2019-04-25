@@ -117,10 +117,9 @@ func (g *certGen) fetchCertificate(ref insolar.Reference) []byte {
 	return cert
 }
 
-func writeKeys(pubKey crypto.PublicKey, privKey crypto.PrivateKey) {
-	ks := platformpolicy.NewKeyProcessor()
+func (g *certGen) writeKeys() {
 
-	privKeyStr, err := ks.ExportPrivateKeyPEM(privKey)
+	privKeyStr, err := g.keyProcessor.ExportPrivateKeyPEM(g.privKey)
 	checkError("Failed to deserialize private key:", err)
 
 	pubKeyStr, err := g.keyProcessor.ExportPublicKeyPEM(g.pubKey)
