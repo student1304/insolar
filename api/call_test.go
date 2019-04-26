@@ -97,7 +97,7 @@ func TestTimeoutSuite(t *testing.T) {
 	timeoutSuite := new(TimeoutSuite)
 	timeoutSuite.ctx, _ = inslogger.WithTraceField(context.Background(), "APItests")
 
-	ks := platformpolicy.NewKeyProcessor()
+	ks := platformpolicy.NewSecpKeyProcessor()
 	sKey, err := ks.GeneratePrivateKey()
 	require.NoError(t, err)
 	sKeyString, err := ks.ExportPrivateKeyPEM(sKey)

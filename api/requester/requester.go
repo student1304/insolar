@@ -62,7 +62,7 @@ func createHTTPClient() *http.Client {
 
 // verbose switches on verbose mode
 var verbose = false
-var scheme = platformpolicy.NewPlatformCryptographyScheme()
+var scheme = platformpolicy.NewSecpPlatformCryptographyScheme()
 
 func verboseInfo(ctx context.Context, msg string) {
 	if verbose {

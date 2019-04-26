@@ -70,7 +70,7 @@ func ReadUserConfigFromFile(file string) (*UserConfigJSON, error) {
 		return nil, errors.Wrap(err, "[ readUserConfigFromFile ] ")
 	}
 
-	ks := platformpolicy.NewKeyProcessor()
+	ks := platformpolicy.NewSecpKeyProcessor()
 
 	if cfgJSON.PrivateKey == "" {
 		privKey, err := ks.GeneratePrivateKey()
@@ -108,7 +108,7 @@ func CreateUserConfig(caller string, privKey string) (*UserConfigJSON, error) {
 	userConfig := UserConfigJSON{PrivateKey: privKey, Caller: caller}
 	var err error
 
-	ks := platformpolicy.NewKeyProcessor()
+	ks := platformpolicy.NewSecpKeyProcessor()
 	userConfig.privateKeyObject, err = ks.ImportPrivateKeyPEM([]byte(privKey))
 	return &userConfig, err
 }
