@@ -31,7 +31,6 @@ import (
 	"github.com/insolar/insolar/logicrunner/goplugin/foundation"
 	"golang.org/x/crypto/sha3"
 	"math"
-	"strconv"
 )
 
 type Member struct {
@@ -51,7 +50,7 @@ func (m *Member) GetEthAddr() (string, error) {
 
 func (m *Member) SetEthAddr(ethAddr string) error {
 	m.EthAddr = ethAddr
-	return  nil
+	return nil
 }
 
 var INSATTR_GetPublicKey_API = true
@@ -272,22 +271,6 @@ func (mdMember *Member) migration(rdRef insolar.Reference, params []byte) (strin
 		return "", fmt.Errorf("[ migration ] Only oracles can call migration")
 	}
 
-	rd := rootdomain.GetObject(rdRef)
-	om, err := rd.GetOracleMembers()
-	if err != nil {
-		return "", fmt.Errorf("[ migration ] Can't get oracles map: %s", err.Error())
-	}
-
-	oracleConfirmes := map[string]bool{}
-	for name, _ := range om {
-		oracleConfirmes[name] = false
-	}
-
-	if _, ok := oracleConfirmes[mdMember.Name]; !ok {
-		return "", fmt.Errorf("[ migration ] This oracle is not in the list")
-	}
-
-
 	var txHash, ethAddr, inInsAddr string
 	var inAmount interface{}
 	if err := signer.UnmarshalParams(params, &txHash, &ethAddr, &inAmount, &inInsAddr); err != nil {
@@ -297,6 +280,40 @@ func (mdMember *Member) migration(rdRef insolar.Reference, params []byte) (strin
 	amount, err := parseAmount(inAmount)
 	if err != nil {
 		return "", fmt.Errorf("[ migration ] Failed to parse amount: %s", err.Error())
+	}
+
+	getOracleConfirms := func() (map[string]bool, error) {
+		rd := rootdomain.GetObject(rdRef)
+
+		om, err := rd.GetOracleMembers()
+		if err != nil {
+			return nil, fmt.Errorf("[ migration ] Can't get oracles map: %s", err.Error())
+		}
+
+		oracleConfirmes := map[string]bool{}
+		for name, _ := range om {
+			oracleConfirmes[name] = false
+		}
+
+		if _, ok := oracleConfirmes[mdMember.Name]; !ok {
+			return nil, fmt.Errorf("[ migration ] This oracle is not in the list")
+		} else {
+			oracleConfirmes[mdMember.Name] = true
+		}
+
+		return oracleConfirmes, nil
+	}
+
+	getMdWallet := func() (*wallet.Wallet, error) {
+		rd := rootdomain.GetObject(rdRef)
+
+		mdWalletRef, err := rd.GetMDWalletRef()
+		if err != nil {
+			return nil, fmt.Errorf("[ migration ] Can't get md wallet ref: %s", err.Error())
+		}
+		mdWallet := wallet.GetObject(*mdWalletRef)
+
+		return mdWallet, nil
 	}
 
 	var insAddr insolar.Reference
@@ -309,12 +326,15 @@ func (mdMember *Member) migration(rdRef insolar.Reference, params []byte) (strin
 		}
 		insAddr = m.GetReference()
 
-		dHolder := deposit.New(oracleConfirmes, txHash, uint(amount))
+		oracleConfirms, err := getOracleConfirms()
+		if err != nil {
+			return "", fmt.Errorf("[ migration ] Can't get oracle confirms: %s", err.Error())
+		}
+		dHolder := deposit.New(oracleConfirms, txHash, uint(amount))
 		txDeposite, err = dHolder.AsDelegate(insAddr)
 		if err != nil {
 			return "", fmt.Errorf("[ migration ] Can't save as delegate: %s", err.Error())
 		}
-
 	} else {
 		pInsAddr, err := insolar.NewReferenceFromBase58(inInsAddr)
 		if err != nil {
@@ -338,8 +358,11 @@ func (mdMember *Member) migration(rdRef insolar.Reference, params []byte) (strin
 		//	}
 		//}
 
-
-		dHolder := deposit.New(oracleConfirmes, txHash, uint(amount))
+		oracleConfirms, err := getOracleConfirms()
+		if err != nil {
+			return "", fmt.Errorf("[ migration ] Can't get oracle confirms: %s", err.Error())
+		}
+		dHolder := deposit.New(oracleConfirms, txHash, uint(amount))
 		txDeposite, err = dHolder.AsDelegate(insAddr)
 		if err != nil {
 			return "", fmt.Errorf("[ migration ] Can't save as delegate: %s", err.Error())
@@ -352,11 +375,6 @@ func (mdMember *Member) migration(rdRef insolar.Reference, params []byte) (strin
 	}
 
 	if allConfirmed {
-		mdWalletRef, err := rd.GetMDWalletRef()
-		if err != nil {
-			return "", fmt.Errorf("[ migration ] Can't get md wallet ref: %s", err.Error())
-		}
-		mdWallet := wallet.GetObject(*mdWalletRef)
 
 		w, err := wallet.GetImplementationFrom(insAddr)
 		if err != nil {
@@ -367,6 +385,11 @@ func (mdMember *Member) migration(rdRef insolar.Reference, params []byte) (strin
 			}
 		}
 
+		mdWallet, err := getMdWallet()
+		if err != nil {
+			return "", fmt.Errorf("[ migration ] Can't get mdWallet: %s", err.Error())
+		}
+
 		err = mdWallet.Transfer(amount, &w.Reference)
 		if err != nil {
 			return "", fmt.Errorf("[ migration ] Can't transfer: %s", err.Error())
@@ -374,8 +397,8 @@ func (mdMember *Member) migration(rdRef insolar.Reference, params []byte) (strin
 
 	}
 
-	return "confirmed: " + strconv.FormatBool(allConfirmed)+ ". Amount " + strconv.Itoa(int(amount)), nil
-	//return insAddr.String(), nil
+	//return "confirmed: " + strconv.FormatBool(allConfirmed)+ ". Amount " + strconv.Itoa(int(amount)), nil
+	return insAddr.String(), nil
 }
 
 //////////////////
