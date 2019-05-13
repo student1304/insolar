@@ -26,8 +26,16 @@ type Deposit struct {
 	OracleConfirms map[string]bool
 	Confirms       uint
 	TxHash         string
-	UnholdDate     string
+	UnHoldDate     string
 	Amount         uint
+}
+
+func (d *Deposit) GetTxHash() (string, error) {
+	return d.TxHash, nil
+}
+
+func (d *Deposit) GetAmount() (uint, error) {
+	return d.Amount, nil
 }
 
 func New(oracleConfirms map[string]bool, txHash string, amount uint) (*Deposit, error) {
