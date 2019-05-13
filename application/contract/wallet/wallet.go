@@ -34,10 +34,7 @@ type Wallet struct {
 // Transfer transfers money to given wallet
 func (w *Wallet) Transfer(amount uint, to *insolar.Reference) error {
 
-	toWallet, err := wallet.GetImplementationFrom(*to)
-	if err != nil {
-		return fmt.Errorf("[ Transfer ] Can't get implementation: %s", err.Error())
-	}
+	toWallet := wallet.GetObject(*to)
 
 	newBalance, err := safemath.Sub(w.Balance, amount)
 	if err != nil {

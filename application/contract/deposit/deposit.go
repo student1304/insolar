@@ -50,11 +50,11 @@ func (d *Deposit) Confirm(oracleName string, txHash string, amount uint) (bool, 
 
 	if confirm, ok := d.OracleConfirms[oracleName]; ok {
 		if confirm {
-			return false, fmt.Errorf("[ Confirm ] Confirm from the oracle" + oracleName + " already exists")
+			return false, fmt.Errorf("[ Confirm ] Confirm from the oracle " + oracleName + " already exists")
 		} else {
 			d.OracleConfirms[oracleName] = true
 			d.Confirms++
-			if d.Confirms == 3 {
+			if d.Confirms == 1 {
 				return true, nil
 			} else {
 				return false, nil

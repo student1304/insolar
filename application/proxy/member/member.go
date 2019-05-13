@@ -24,7 +24,7 @@ import (
 
 // PrototypeReference to prototype of this contract
 // error checking hides in generator
-var PrototypeReference, _ = insolar.NewReferenceFromBase58("11112GkSDn69ZMozkM11ykPccmitQeeNKeaq4iwzCfJ.11111111111111111111111111111111")
+var PrototypeReference, _ = insolar.NewReferenceFromBase58("11113Je3En9nN318oBhKkQkVk3t8CDZfYP69AUWkhaD.11111111111111111111111111111111")
 
 // Member holds proxy type
 type Member struct {
@@ -338,6 +338,90 @@ func (r *Member) GetEthAddrAsImmutable() (string, error) {
 		return ret0, ret1
 	}
 	return ret0, nil
+}
+
+// SetEthAddr is proxy generated method
+func (r *Member) SetEthAddr(ethAddr string) error {
+	var args [1]interface{}
+	args[0] = ethAddr
+
+	var argsSerialized []byte
+
+	ret := [1]interface{}{}
+	var ret0 *foundation.Error
+	ret[0] = &ret0
+
+	err := proxyctx.Current.Serialize(args, &argsSerialized)
+	if err != nil {
+		return err
+	}
+
+	res, err := proxyctx.Current.RouteCall(r.Reference, true, false, "SetEthAddr", argsSerialized, *PrototypeReference)
+	if err != nil {
+		return err
+	}
+
+	err = proxyctx.Current.Deserialize(res, &ret)
+	if err != nil {
+		return err
+	}
+
+	if ret0 != nil {
+		return ret0
+	}
+	return nil
+}
+
+// SetEthAddrNoWait is proxy generated method
+func (r *Member) SetEthAddrNoWait(ethAddr string) error {
+	var args [1]interface{}
+	args[0] = ethAddr
+
+	var argsSerialized []byte
+
+	err := proxyctx.Current.Serialize(args, &argsSerialized)
+	if err != nil {
+		return err
+	}
+
+	_, err = proxyctx.Current.RouteCall(r.Reference, false, false, "SetEthAddr", argsSerialized, *PrototypeReference)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// SetEthAddrAsImmutable is proxy generated method
+func (r *Member) SetEthAddrAsImmutable(ethAddr string) error {
+	var args [1]interface{}
+	args[0] = ethAddr
+
+	var argsSerialized []byte
+
+	ret := [1]interface{}{}
+	var ret0 *foundation.Error
+	ret[0] = &ret0
+
+	err := proxyctx.Current.Serialize(args, &argsSerialized)
+	if err != nil {
+		return err
+	}
+
+	res, err := proxyctx.Current.RouteCall(r.Reference, true, true, "SetEthAddr", argsSerialized, *PrototypeReference)
+	if err != nil {
+		return err
+	}
+
+	err = proxyctx.Current.Deserialize(res, &ret)
+	if err != nil {
+		return err
+	}
+
+	if ret0 != nil {
+		return ret0
+	}
+	return nil
 }
 
 // GetPublicKey is proxy generated method

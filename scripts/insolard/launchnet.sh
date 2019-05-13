@@ -347,7 +347,7 @@ genesis()
         echo "SKIP: build binaries (SKIP_BUILD=$SKIP_BUILD)"
     fi
     generate_bootstrap_keys
-    generate_member_keys
+#    generate_member_keys
     generate_insolard_configs
 
     echo "start genesis ..."

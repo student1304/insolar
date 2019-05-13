@@ -31,6 +31,7 @@ import (
 	"github.com/insolar/insolar/logicrunner/goplugin/foundation"
 	"golang.org/x/crypto/sha3"
 	"math"
+	"strconv"
 )
 
 type Member struct {
@@ -46,6 +47,11 @@ func (m *Member) GetName() (string, error) {
 
 func (m *Member) GetEthAddr() (string, error) {
 	return m.EthAddr, nil
+}
+
+func (m *Member) SetEthAddr(ethAddr string) error {
+	m.EthAddr = ethAddr
+	return  nil
 }
 
 var INSATTR_GetPublicKey_API = true
@@ -103,9 +109,9 @@ func (m *Member) Call(rootDomain insolar.Reference, method string, params []byte
 		return m.createMemberCall(rootDomain, params)
 	}
 
-	if err := m.verifySig(method, params, seed, sign); err != nil {
-		return nil, fmt.Errorf("[ Call ]: %s", err.Error())
-	}
+	//if err := m.verifySig(method, params, seed, sign); err != nil {
+	//	return nil, fmt.Errorf("[ Call ]: %s", err.Error())
+	//}
 
 	switch method {
 	case "GetMyBalance":
@@ -122,7 +128,6 @@ func (m *Member) Call(rootDomain insolar.Reference, method string, params []byte
 		return m.registerNodeCall(rootDomain, params)
 	case "GetNodeRef":
 		return m.getNodeRefCall(rootDomain, params)
-
 	case "Migration":
 		return m.migration(rootDomain, params)
 	}
@@ -282,6 +287,7 @@ func (mdMember *Member) migration(rdRef insolar.Reference, params []byte) (strin
 		return "", fmt.Errorf("[ migration ] This oracle is not in the list")
 	}
 
+
 	var txHash, ethAddr, inInsAddr string
 	var inAmount interface{}
 	if err := signer.UnmarshalParams(params, &txHash, &ethAddr, &inAmount, &inInsAddr); err != nil {
@@ -316,9 +322,27 @@ func (mdMember *Member) migration(rdRef insolar.Reference, params []byte) (strin
 		}
 		insAddr = *pInsAddr
 
-		txDeposite, err = deposit.GetImplementationFrom(insAddr)
+		//insMember := member.GetObject(insAddr)
+		//insEthAddr, err := insMember.GetEthAddr()
+		//if err != nil {
+		//	return "", fmt.Errorf("[ migration ] Failed to get ethAddr")
+		//}
+		//if insEthAddr != "" {
+		//	if ethAddr != insEthAddr {
+		//		return "", fmt.Errorf("[ migration ] Not equal ethAddr ")
+		//	}
+		//} else {
+		//	err := insMember.SetEthAddr(ethAddr)
+		//	if err != nil {
+		//		return "", fmt.Errorf("[ migration ] Failed to set ethAddr")
+		//	}
+		//}
+
+
+		dHolder := deposit.New(oracleConfirmes, txHash, uint(amount))
+		txDeposite, err = dHolder.AsDelegate(insAddr)
 		if err != nil {
-			return "", fmt.Errorf("[ migration ] Can't get implementation: %s", err.Error())
+			return "", fmt.Errorf("[ migration ] Can't save as delegate: %s", err.Error())
 		}
 	}
 
@@ -328,7 +352,6 @@ func (mdMember *Member) migration(rdRef insolar.Reference, params []byte) (strin
 	}
 
 	if allConfirmed {
-
 		mdWalletRef, err := rd.GetMDWalletRef()
 		if err != nil {
 			return "", fmt.Errorf("[ migration ] Can't get md wallet ref: %s", err.Error())
@@ -344,11 +367,15 @@ func (mdMember *Member) migration(rdRef insolar.Reference, params []byte) (strin
 			}
 		}
 
-		mdWallet.Transfer(amount, &w.Reference)
+		err = mdWallet.Transfer(amount, &w.Reference)
+		if err != nil {
+			return "", fmt.Errorf("[ migration ] Can't transfer: %s", err.Error())
+		}
 
 	}
 
-	return insAddr.String(), nil
+	return "confirmed: " + strconv.FormatBool(allConfirmed)+ ". Amount " + strconv.Itoa(int(amount)), nil
+	//return insAddr.String(), nil
 }
 
 //////////////////

@@ -24,7 +24,7 @@ import (
 
 // PrototypeReference to prototype of this contract
 // error checking hides in generator
-var PrototypeReference, _ = insolar.NewReferenceFromBase58("1111dsLozkLCr81ugvP5q1SK8mKKcooyiSDYCbRpuq.11111111111111111111111111111111")
+var PrototypeReference, _ = insolar.NewReferenceFromBase58("111127TrKp8ToZH7WgL5JbZ76zSnZhMUQfR2P8TqXVa.11111111111111111111111111111111")
 
 // Deposit holds proxy type
 type Deposit struct {
