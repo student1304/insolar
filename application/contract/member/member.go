@@ -74,9 +74,24 @@ func NewOracleMember(name string, key string) (*Member, error) {
 }
 
 func (m *Member) verifySig(method string, params []byte, seed []byte, sign []byte) error {
-	args, err := insolar.MarshalArgs(m.GetReference(), method, params, seed)
+	//args, err := insolar.MarshalArgs(m.GetReference(), method, params, seed)
+	//if err != nil {
+	//	return fmt.Errorf("[ verifySig ] Can't MarshalArgs: %s", err.Error())
+	//}
+
+	args, err := json.Marshal(struct {
+		Reference string `json:"reference"`
+		Method    string `json:"method"`
+		Params    string `json:"params"`
+		Seed      string `json:"seed"`
+	}{
+		Reference: m.GetReference().String(),
+		Method:    method,
+		Params:    string(params),
+		Seed:      string(seed),
+	})
 	if err != nil {
-		return fmt.Errorf("[ verifySig ] Can't MarshalArgs: %s", err.Error())
+		return fmt.Errorf("[ verifySig ] Can't json Marshal: %s", err.Error())
 	}
 	key, err := m.GetPublicKey()
 	if err != nil {
@@ -108,9 +123,9 @@ func (m *Member) Call(rootDomain insolar.Reference, method string, params []byte
 		return m.createMemberCall(rootDomain, params)
 	}
 
-	//if err := m.verifySig(method, params, seed, sign); err != nil {
-	//	return nil, fmt.Errorf("[ Call ]: %s", err.Error())
-	//}
+	if err := m.verifySig(method, params, seed, sign); err != nil {
+		return nil, fmt.Errorf("[ Call ]: %s", err.Error())
+	}
 
 	switch method {
 	case "GetMyBalance":
