@@ -364,30 +364,10 @@ func (mdMember *Member) migration(rdRef insolar.Reference, params []byte) (strin
 		return "", fmt.Errorf("[ migration ] Insolar member validation failed: %s", err.Error())
 	}
 
-	getOracleConfirms := func() (map[string]bool, error) {
-		rd := rootdomain.GetObject(rdRef)
-
-		om, err := rd.GetOracleMembers()
-		if err != nil {
-			return nil, fmt.Errorf("[ migration ] Can't get oracles map: %s", err.Error())
-		}
-
-		oracleConfirmes := map[string]bool{}
-		for name, _ := range om {
-			oracleConfirmes[name] = false
-		}
-
-		if _, ok := oracleConfirmes[mdMember.Name]; !ok {
-			return nil, fmt.Errorf("[ getOracleConfirms ] This oracle is not in the list")
-		} else {
-			oracleConfirmes[mdMember.Name] = true
-		}
-
-		return oracleConfirmes, nil
-	}
-	oracleConfirms, err := getOracleConfirms()
+	rd := rootdomain.GetObject(rdRef)
+	oracleMembers, err := rd.GetOracleMembers()
 	if err != nil {
-		return "", fmt.Errorf("[ migration ] Can't get oracle confirms: %s", err.Error())
+		return "", fmt.Errorf("[ migration ] Can't get oracles map: %s", err.Error())
 	}
 
 	found, txDeposit, err := insMember.FindDeposit(txHash, amount)
@@ -395,6 +375,10 @@ func (mdMember *Member) migration(rdRef insolar.Reference, params []byte) (strin
 		return "", fmt.Errorf("[ migration ] Can't get deposit: %s", err.Error())
 	}
 	if !found {
+		oracleConfirms := map[string]bool{}
+		for name, _ := range oracleMembers {
+			oracleConfirms[name] = false
+		}
 		dHolder := deposit.New(oracleConfirms, txHash, amount)
 		txDepositP, err := dHolder.AsDelegate(insAddr)
 		if err != nil {
@@ -403,13 +387,15 @@ func (mdMember *Member) migration(rdRef insolar.Reference, params []byte) (strin
 		txDeposit = *txDepositP
 	}
 
+	if _, ok := oracleMembers[mdMember.Name]; !ok {
+		return "", fmt.Errorf("[ getOracleConfirms ] This oracle is not in the list")
+	}
 	allConfirmed, err := txDeposit.Confirm(mdMember.Name, txHash, amount)
 	if err != nil {
 		return "", fmt.Errorf("[ migration ] Confirmed failed: %s", err.Error())
 	}
 
 	if allConfirmed {
-
 		w, err := wallet.GetImplementationFrom(insAddr)
 		if err != nil {
 			wHolder := wallet.New(0)
@@ -420,8 +406,6 @@ func (mdMember *Member) migration(rdRef insolar.Reference, params []byte) (strin
 		}
 
 		getMdWallet := func() (*wallet.Wallet, error) {
-			rd := rootdomain.GetObject(rdRef)
-
 			mdWalletRef, err := rd.GetMDWalletRef()
 			if err != nil {
 				return nil, fmt.Errorf("[ migration ] Can't get md wallet ref: %s", err.Error())
@@ -442,7 +426,6 @@ func (mdMember *Member) migration(rdRef insolar.Reference, params []byte) (strin
 
 	}
 
-	//return "confirmed: " + strconv.FormatBool(allConfirmed)+ ". Amount " + strconv.Itoa(int(amount)), nil
 	return insAddr.String(), nil
 }
 
