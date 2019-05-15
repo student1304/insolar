@@ -293,19 +293,21 @@ func (m *Member) FindDeposit(txHash string, amount uint) (bool, deposit.Deposit,
 			return false, deposit.Deposit{}, fmt.Errorf("[ findDeposit ] Can't get next child: %s", err.Error())
 		}
 
-		d := deposit.GetObject(cref)
-		th, err := d.GetTxHash()
-		if err != nil {
-			return false, deposit.Deposit{}, fmt.Errorf("[ findDeposit ] Can't get tx hash: %s", err.Error())
-		}
-		a, err := d.GetAmount()
-		if err != nil {
-			return false, deposit.Deposit{}, fmt.Errorf("[ findDeposit ] Can't get amount: %s", err.Error())
-		}
+		if !cref.IsEmpty() {
+			d := deposit.GetObject(cref)
+			th, err := d.GetTxHash()
+			if err != nil {
+				return false, deposit.Deposit{}, fmt.Errorf("[ findDeposit ] Can't get tx hash: %s", err.Error())
+			}
+			a, err := d.GetAmount()
+			if err != nil {
+				return false, deposit.Deposit{}, fmt.Errorf("[ findDeposit ] Can't get amount: %s", err.Error())
+			}
 
-		if txHash == th {
-			if amount == a {
-				return true, *d, nil
+			if txHash == th {
+				if amount == a {
+					return true, *d, nil
+				}
 			}
 		}
 	}
@@ -537,12 +539,14 @@ func (rootMember *Member) DumpAllUsers(rdRef insolar.Reference) ([]byte, error) 
 			return nil, fmt.Errorf("[ DumpAllUsers ] Can't get next child: %s", err.Error())
 		}
 
-		m := member.GetObject(cref)
-		userInfo, err := rootMember.getUserInfoMap(m)
-		if err != nil {
-			return nil, fmt.Errorf("[ DumpAllUsers ] Problem with making request: %s", err.Error())
+		if !cref.IsEmpty() {
+			m := member.GetObject(cref)
+			userInfo, err := rootMember.getUserInfoMap(m)
+			if err != nil {
+				return nil, fmt.Errorf("[ DumpAllUsers ] Problem with making request: %s", err.Error())
+			}
+			res = append(res, userInfo)
 		}
-		res = append(res, userInfo)
 	}
 	resJSON, _ := json.Marshal(res)
 	return resJSON, nil
