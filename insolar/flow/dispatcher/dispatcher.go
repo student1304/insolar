@@ -118,7 +118,7 @@ func (d *Dispatcher) getHandleByPulse(msgPulseNumber insolar.PulseNumber) flow.M
 }
 
 func (d *Dispatcher) WrapBusHandle(ctx context.Context, parcel insolar.Parcel) (insolar.Reply, error) {
-	log.Debug("WrapBusHandle-BEGIN")
+	log.Debugf("WrapBusHandle-BEGIN, type = %v, pulse = %v", parcel.Type(), parcel.Pulse())
 	msg := bus.Message{
 		ReplyTo: make(chan bus.Reply, 1),
 		Parcel:  parcel,

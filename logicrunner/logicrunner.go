@@ -27,6 +27,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/insolar/insolar/log"
+
 	"github.com/ThreeDotsLabs/watermill"
 	watermillMsg "github.com/ThreeDotsLabs/watermill/message"
 	"github.com/ThreeDotsLabs/watermill/message/infrastructure/gochannel"
@@ -202,6 +204,7 @@ func initHandlers(lr *LogicRunner) error {
 			Message: msg,
 		}
 	}
+	log.Debug(">>>> Creating FLOW dispatchers")
 	lr.FlowDispatcher = dispatcher.NewDispatcher(func(msg bus.Message) flow.Handle {
 		return initHandle(msg).Present
 	}, func(msg bus.Message) flow.Handle {
@@ -216,6 +219,7 @@ func initHandlers(lr *LogicRunner) error {
 		}
 	}
 
+	log.Debug(">>> Creating INNER dispathcer")
 	innerDispatcher := dispatcher.NewDispatcher(func(msg bus.Message) flow.Handle {
 		return innerInitHandle(msg).Present
 	}, func(msg bus.Message) flow.Handle {
