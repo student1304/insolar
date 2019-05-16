@@ -106,6 +106,7 @@ func (s *LogicRunnerFuncSuite) PrepareLrAmCbPm() (insolar.LogicRunner, artifacts
 	lrSock := os.TempDir() + "/" + testutils.RandomString() + ".sock"
 	rundSock := os.TempDir() + "/" + testutils.RandomString() + ".sock"
 
+	log.Debug("XXXXXXXXX")
 	rundCleaner, err := goplugintestutils.StartInsgorund(s.runnerBin, "unix", rundSock, "unix", lrSock)
 	s.NoError(err)
 
@@ -152,6 +153,7 @@ func (s *LogicRunnerFuncSuite) PrepareLrAmCbPm() (insolar.LogicRunner, artifacts
 	cm := &component.Manager{}
 	cm.Register(platformpolicy.NewPlatformCryptographyScheme())
 	am := l.GetArtifactManager()
+
 	cm.Register(am, l.GetPulseManager(), l.GetJetCoordinator())
 	cr, err := contractrequester.New()
 	pulseAccessor := l.PulseManager.(*pulsemanager.PulseManager).PulseAccessor
@@ -163,11 +165,18 @@ func (s *LogicRunnerFuncSuite) PrepareLrAmCbPm() (insolar.LogicRunner, artifacts
 	err = cm.Start(ctx)
 	s.NoError(err)
 
+	log.Debug("YYYYYYYYY")
+
 	MessageBusTrivialBehavior(mb, lr)
+
+	log.Debug("WWWWWWWWWWW")
 	pm := l.GetPulseManager()
 
-	s.incrementPulseHelper(ctx, lr, pm)
+	log.Debug("RRRRRRRRRRR")
 
+	s.incrementPulseHelper(ctx, lr, pm) // TODO: the test heangs here!
+
+	log.Debug("ZZZZZZZZ")
 	cb := goplugintestutils.NewContractBuilder(am, s.icc)
 
 	return lr, am, cb, pm, messageHandler, func() {
@@ -190,7 +199,8 @@ func (s *LogicRunnerFuncSuite) incrementPulseHelper(ctx context.Context, lr inso
 	s.Require().NoError(err)
 
 	rootJetId := *insolar.NewJetID(0, nil)
-	_, err = lr.(*LogicRunner).MessageBus.Send(
+	log.Debug(">>>>> Before MessageBus Send")
+	_, err = lr.(*LogicRunner).MessageBus.Send( // TODO: the test hangs here!
 		ctx,
 		&message.HotData{
 			Jet:             *insolar.NewReference(insolar.DomainID, insolar.ID(rootJetId)),
@@ -199,6 +209,7 @@ func (s *LogicRunnerFuncSuite) incrementPulseHelper(ctx context.Context, lr inso
 			PulseNumber:     newPulseNumber,
 		}, nil,
 	)
+	log.Debug(">>>>> After MessageBus Send")
 	s.Require().NoError(err)
 }
 
@@ -633,19 +644,28 @@ func (r *Two) Value() (int, error) {
 	return r.X, nil
 }
 `
+	log.Debug("AAAAAAA")
 	ctx := context.TODO()
 	// TODO: use am := testutil.NewTestArtifactManager() here
 	lr, am, cb, pm, msgHandler, cleaner := s.PrepareLrAmCbPm()
 	defer cleaner()
 
+	log.Debug("BBBBBBB")
+
 	changePulse(ctx, lr, msgHandler)
 	err := cb.Build(map[string]string{"one": contractOneCode, "two": contractTwoCode})
 	s.NoError(err)
 
+	log.Debug("CCCCCCC")
+
 	obj, prototype := s.getObjectInstance(ctx, am, cb, "one")
+
+	log.Debug("DDDDDDDD")
 
 	_, err = executeMethod(ctx, lr, pm, *obj, *prototype, 0, "Hello")
 	s.NoError(err, "contract call")
+
+	log.Debug("EEEEEEEEE")
 
 	resp, err := executeMethod(ctx, lr, pm, *obj, *prototype, 0, "Value")
 	s.NoError(err, "contract call")

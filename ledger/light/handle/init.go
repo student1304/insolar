@@ -20,6 +20,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/insolar/insolar/log"
+
 	"github.com/insolar/insolar/insolar"
 	"github.com/insolar/insolar/insolar/flow"
 	"github.com/insolar/insolar/insolar/flow/bus"
@@ -78,6 +80,7 @@ func (s *Init) Present(ctx context.Context, f flow.Flow) error {
 		h := NewGetJet(s.Dep, s.Message.ReplyTo, msg)
 		return f.Handle(ctx, h.Present)
 	case insolar.TypeHotRecords:
+		log.Debug(">>>> Processing TypeHotRecords")
 		msg := s.Message.Parcel.Message().(*message.HotData)
 		h := NewHotData(s.Dep, s.Message.ReplyTo, msg)
 		return f.Handle(ctx, h.Present)

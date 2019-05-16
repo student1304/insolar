@@ -19,6 +19,8 @@ package proc
 import (
 	"context"
 
+	"github.com/insolar/insolar/log"
+
 	"github.com/pkg/errors"
 
 	"github.com/insolar/insolar/insolar"
@@ -66,6 +68,8 @@ func (p *HotData) Proceed(ctx context.Context) error {
 func (p *HotData) process(ctx context.Context) error {
 	logger := inslogger.FromContext(ctx)
 	jetID := insolar.JetID(*p.msg.Jet.Record())
+
+	log.Debug(">>>> inside Process!")
 
 	logger.WithFields(map[string]interface{}{
 		"jet": jetID.DebugString(),
