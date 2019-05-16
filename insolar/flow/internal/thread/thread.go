@@ -19,6 +19,8 @@ package thread
 import (
 	"context"
 
+	"github.com/insolar/insolar/log"
+
 	"github.com/pkg/errors"
 
 	"github.com/insolar/insolar/insolar/flow"
@@ -80,6 +82,7 @@ func (f *Thread) Procedure(ctx context.Context, proc flow.Procedure, cancel bool
 }
 
 func (f *Thread) Migrate(ctx context.Context, to flow.Handle) error {
+	log.Debug("FLOW MIGRATE CALLED")
 	if f.migrated {
 		return errors.New("migrate called on migrated flow")
 	}

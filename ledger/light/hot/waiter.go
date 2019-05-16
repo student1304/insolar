@@ -46,6 +46,7 @@ type ChannelWaiter struct {
 type waiter chan struct{}
 
 func (w waiter) isClosed() bool {
+	panic("tut")
 	select {
 	case <-w:
 		return true
@@ -73,6 +74,7 @@ func (w *ChannelWaiter) waiterForJet(jetID insolar.ID) waiter {
 // If hotDataChannel or timeoutChannel was raised, the method returns error
 // Either nil or ErrHotDataTimeout
 func (w *ChannelWaiter) Wait(ctx context.Context, jetID insolar.ID) error {
+	panic("tut")
 	w.lock.Lock()
 	waiter := w.waiterForJet(jetID)
 	timeout := w.timeout

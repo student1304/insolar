@@ -19,6 +19,8 @@ package handle
 import (
 	"context"
 
+	"github.com/insolar/insolar/log"
+
 	"github.com/insolar/insolar/insolar/flow"
 	"github.com/insolar/insolar/insolar/flow/bus"
 	"github.com/insolar/insolar/insolar/message"
@@ -40,7 +42,10 @@ func NewHotData(dep *proc.Dependencies, rep chan<- bus.Reply, msg *message.HotDa
 }
 
 func (s *HotData) Present(ctx context.Context, f flow.Flow) error {
+	log.Debug("HotData handler, PRESENT BEGIN")
 	proc := proc.NewHotData(s.message, s.replyTo)
 	s.dep.HotData(proc)
-	return f.Procedure(ctx, proc, false)
+	res := f.Procedure(ctx, proc, false)
+	log.Debug("HotData handler, PRESENT END")
+	return res
 }

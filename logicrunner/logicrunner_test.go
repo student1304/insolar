@@ -665,8 +665,6 @@ func (r *Two) Value() (int, error) {
 	_, err = executeMethod(ctx, lr, pm, *obj, *prototype, 0, "Hello")
 	s.NoError(err, "contract call")
 
-	log.Debug("EEEEEEEEE")
-
 	resp, err := executeMethod(ctx, lr, pm, *obj, *prototype, 0, "Value")
 	s.NoError(err, "contract call")
 	s.Equal(uint64(644), firstMethodRes(s.T(), resp))

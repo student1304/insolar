@@ -21,6 +21,8 @@ import (
 	"errors"
 	"sync/atomic"
 
+	"github.com/insolar/insolar/log"
+
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/insolar/insolar/instrumentation/inslogger"
 
@@ -43,6 +45,7 @@ type Dispatcher struct {
 }
 
 func NewDispatcher(present flow.MakeHandle, future flow.MakeHandle) *Dispatcher {
+	log.Debug("NEW DISPATCHER CREATED")
 	d := &Dispatcher{
 		controller: thread.NewController(),
 	}
@@ -54,11 +57,13 @@ func NewDispatcher(present flow.MakeHandle, future flow.MakeHandle) *Dispatcher 
 
 // ChangePulse is a handle for pulse change vent.
 func (d *Dispatcher) ChangePulse(ctx context.Context, pulse insolar.Pulse) {
+	log.Debug("WrapBusHandle-CHANGE PULSE ", uint32(pulse.PulseNumber))
 	d.controller.Pulse()
-	atomic.StoreUint32(&d.currentPulseNumber, uint32(pulse.PulseNumber))
+	atomic.StoreUint32(&d.currentPulseNumber, uint32(pulse.PulseNumber)) // TODO FIXME WTF???
 }
 
 func (d *Dispatcher) getHandleByPulse(msgPulseNumber insolar.PulseNumber) flow.MakeHandle {
+	log.Debug("WrapBusHandle-getHandleByPulse msgPulseNumber = ", msgPulseNumber, "current = ", atomic.LoadUint32(&d.currentPulseNumber))
 	if uint32(msgPulseNumber) > atomic.LoadUint32(&d.currentPulseNumber) {
 		return d.handles.future
 	}
@@ -66,6 +71,7 @@ func (d *Dispatcher) getHandleByPulse(msgPulseNumber insolar.PulseNumber) flow.M
 }
 
 func (d *Dispatcher) WrapBusHandle(ctx context.Context, parcel insolar.Parcel) (insolar.Reply, error) {
+	log.Debug("WrapBusHandle-BEGIN")
 	msg := bus.Message{
 		ReplyTo: make(chan bus.Reply, 1),
 		Parcel:  parcel,
@@ -76,7 +82,10 @@ func (d *Dispatcher) WrapBusHandle(ctx context.Context, parcel insolar.Parcel) (
 	f := thread.NewThread(msg, d.controller)
 	handle := d.getHandleByPulse(parcel.Pulse())
 
+	log.Debugf("WrapBusHandle-BEFORE-RUN, handle = %v", handle)
+
 	err := f.Run(ctx, handle(msg))
+	log.Debug("WrapBusHandle-BEFORE-SELECT")
 	var rep bus.Reply
 	select {
 	case rep = <-msg.ReplyTo:
@@ -84,10 +93,13 @@ func (d *Dispatcher) WrapBusHandle(ctx context.Context, parcel insolar.Parcel) (
 	default:
 	}
 
+	log.Debug("WrapBusHandle-AFTER-SELECT")
+
 	if err != nil {
 		return nil, err
 	}
 
+	log.Debug("WrapBusHandle-END")
 	return nil, errors.New("no reply from handler")
 }
 

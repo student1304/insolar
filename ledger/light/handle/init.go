@@ -37,10 +37,14 @@ type Init struct {
 }
 
 func (s *Init) Future(ctx context.Context, f flow.Flow) error {
-	return f.Migrate(ctx, s.Present)
+	log.Debug("INIT, FUTURE BEGIN, pulse = ", flow.Pulse(ctx)) // TODO FIXME WE ARE HERE pulse = 65538!!!!
+	res := f.Migrate(ctx, s.Present)
+	log.Debug("INIT, FUTURE END")
+	return res
 }
 
 func (s *Init) Present(ctx context.Context, f flow.Flow) error {
+	log.Debug("INIT, PRESENT CALLED")
 	switch s.Message.Parcel.Message().Type() {
 	case insolar.TypeGetObject:
 		h := &GetObject{
@@ -80,16 +84,18 @@ func (s *Init) Present(ctx context.Context, f flow.Flow) error {
 		h := NewGetJet(s.Dep, s.Message.ReplyTo, msg)
 		return f.Handle(ctx, h.Present)
 	case insolar.TypeHotRecords:
-		log.Debug(">>>> Processing TypeHotRecords")
+		fmt.Print(">>>> Processing TypeHotRecords")
 		msg := s.Message.Parcel.Message().(*message.HotData)
 		h := NewHotData(s.Dep, s.Message.ReplyTo, msg)
 		return f.Handle(ctx, h.Present)
 	default:
 		return fmt.Errorf("no handler for message type %s", s.Message.Parcel.Message().Type().String())
 	}
+	//log.Debug("INIT, PRESET END")
 }
 
 func (s *Init) Past(ctx context.Context, f flow.Flow) error {
+	log.Debug("INIT, PAST CALLED")
 	return f.Procedure(ctx, &proc.ReturnReply{
 		ReplyTo: s.Message.ReplyTo,
 		Err:     errors.New("no past handler"),

@@ -24,6 +24,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/insolar/insolar/log"
+
 	"github.com/insolar/insolar/insolar/pulse"
 	"github.com/pkg/errors"
 
@@ -123,6 +125,7 @@ func (mb *TestMessageBus) MustRegister(p insolar.MessageType, handler insolar.Me
 }
 
 func (mb *TestMessageBus) Send(ctx context.Context, m insolar.Message, _ *insolar.MessageSendOptions) (insolar.Reply, error) {
+	log.Debug("SEND1111")
 	if mb.ReadingTape != nil {
 		if len(mb.ReadingTape) == 0 {
 			return nil, errors.Errorf("No expected messages, got %+v", m)
@@ -143,6 +146,8 @@ func (mb *TestMessageBus) Send(ctx context.Context, m insolar.Message, _ *insola
 		return nil, err
 	}
 
+	log.Debug("SEND-MIDDLE-111")
+
 	parcel, err := mb.pf.Create(ctx, m, testutils.RandomRef(), nil, insolar.Pulse{PulseNumber: currentPulse.PulseNumber, Entropy: insolar.Entropy{}})
 	if err != nil {
 		return nil, err
@@ -153,9 +158,13 @@ func (mb *TestMessageBus) Send(ctx context.Context, m insolar.Message, _ *insola
 		return nil, errors.New(fmt.Sprint("[ TestMessageBus ] no handler for message type:", t.String()))
 	}
 
+	log.Debug("SEND-MIDDLE-222")
+
 	ctx = parcel.Context(context.Background())
 
+	log.Debug("SEND-BEFORE-HANDLER")
 	reply, err := handler(ctx, parcel)
+	log.Debug("SEND-AFTER-HANDLER")
 	if mb.WritingTape != nil {
 		// WARNING! The following commented line of code is cursed.
 		// It makes some test (e.g. TestNilResults) hang under the debugger, and we have no idea why.
@@ -164,6 +173,7 @@ func (mb *TestMessageBus) Send(ctx context.Context, m insolar.Message, _ *insola
 		mb.WritingTape = append(mb.WritingTape, TapeRecord{Message: m, Reply: reply, Error: err})
 	}
 
+	log.Debug("SEND-END")
 	return reply, err
 }
 

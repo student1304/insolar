@@ -66,6 +66,7 @@ func (p *HotData) Proceed(ctx context.Context) error {
 }
 
 func (p *HotData) process(ctx context.Context) error {
+	panic("tut")
 	logger := inslogger.FromContext(ctx)
 	jetID := insolar.JetID(*p.msg.Jet.Record())
 
