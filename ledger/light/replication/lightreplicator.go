@@ -25,7 +25,10 @@ import (
 	"github.com/insolar/insolar/insolar/jet"
 	"github.com/insolar/insolar/insolar/pulse"
 	"github.com/insolar/insolar/insolar/reply"
+	"github.com/insolar/insolar/insolar/utils"
 	"github.com/insolar/insolar/instrumentation/inslogger"
+	"github.com/insolar/insolar/instrumentation/instracer"
+
 	"go.opencensus.io/stats"
 )
 
@@ -73,9 +76,7 @@ func NewReplicatorDefault(
 // it attempts to send it to the heavy. After sending a heavy payload to a heavy, data is deleted
 // with help of Cleaner
 func (t *LightReplicatorDefault) NotifyAboutPulse(ctx context.Context, pn insolar.PulseNumber) {
-	t.once.Do(func() {
-		go t.sync(ctx)
-	})
+	t.once.Do(func() { go t.sync() })
 
 	logger := inslogger.FromContext(ctx)
 	logger.Debugf("[Replicator][NotifyAboutPulse] received pulse - %v", pn)
@@ -90,9 +91,14 @@ func (t *LightReplicatorDefault) NotifyAboutPulse(ctx context.Context, pn insola
 	t.syncWaitingPulses <- prevPN.PulseNumber
 }
 
-func (t *LightReplicatorDefault) sync(ctx context.Context) {
-	logger := inslogger.FromContext(ctx)
+func (t *LightReplicatorDefault) sync() {
+	traceID := utils.RandTraceID()
+	ctx, logger := inslogger.WithTraceField(context.Background(), traceID)
+	ctx, span := instracer.StartSpan(ctx, "LightReplicatorDefault.sync")
+	defer span.End()
+
 	for pn := range t.syncWaitingPulses {
+
 		logger.Debugf("[Replicator][sync] pn received - %v", pn)
 
 		jets := t.jetCalculator.MineForPulse(ctx, pn)
