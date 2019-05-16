@@ -1150,7 +1150,7 @@ func (suite *LogicRunnerTestSuite) TestGracefulStop() {
 */
 
 func TestLogicRunner(t *testing.T) {
-	t.Parallel()
+	//t.Parallel()
 	suite.Run(t, new(LogicRunnerTestSuite))
 }
 
@@ -1432,7 +1432,7 @@ func TestLogicRunnerOnPulse(t *testing.T) {
 }
 
 func TestLRUnsafeGetLedgerPendingRequest(t *testing.T) {
-	t.Parallel()
+	//t.Parallel()
 	suite.Run(t, new(LRUnsafeGetLedgerPendingRequestTestSuite))
 }
 
