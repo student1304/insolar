@@ -17,8 +17,11 @@
 package dispatcher
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"runtime"
+	"strconv"
 	"sync/atomic"
 
 	"github.com/insolar/insolar/log"
@@ -55,15 +58,24 @@ func NewDispatcher(present flow.MakeHandle, future flow.MakeHandle) *Dispatcher 
 	return d
 }
 
+func getGID() uint64 {
+	b := make([]byte, 64)
+	b = b[:runtime.Stack(b, false)]
+	b = bytes.TrimPrefix(b, []byte("goroutine "))
+	b = b[:bytes.IndexByte(b, ' ')]
+	n, _ := strconv.ParseUint(string(b), 10, 64)
+	return n
+}
+
 // ChangePulse is a handle for pulse change vent.
 func (d *Dispatcher) ChangePulse(ctx context.Context, pulse insolar.Pulse) {
-	log.Debug("WrapBusHandle-CHANGE PULSE ", uint32(pulse.PulseNumber))
+	log.Debug("[GID ", getGID(), "] WrapBusHandle-CHANGE PULSE ", uint32(pulse.PulseNumber))
 	d.controller.Pulse()
 	atomic.StoreUint32(&d.currentPulseNumber, uint32(pulse.PulseNumber)) // TODO FIXME WTF???
 }
 
 func (d *Dispatcher) getHandleByPulse(msgPulseNumber insolar.PulseNumber) flow.MakeHandle {
-	log.Debug("WrapBusHandle-getHandleByPulse msgPulseNumber = ", msgPulseNumber, "current = ", atomic.LoadUint32(&d.currentPulseNumber))
+	log.Debug("[GID ", getGID(), "]WrapBusHandle-getHandleByPulse msgPulseNumber = ", msgPulseNumber, "current = ", atomic.LoadUint32(&d.currentPulseNumber))
 	if uint32(msgPulseNumber) > atomic.LoadUint32(&d.currentPulseNumber) {
 		return d.handles.future
 	}

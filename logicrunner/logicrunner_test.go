@@ -647,7 +647,7 @@ func (r *Two) Value() (int, error) {
 	log.Debug("AAAAAAA")
 	ctx := context.TODO()
 	// TODO: use am := testutil.NewTestArtifactManager() here
-	lr, am, cb, pm, msgHandler, cleaner := s.PrepareLrAmCbPm()
+	lr, am, cb, pm, msgHandler, cleaner := s.PrepareLrAmgCbPm() // TODO FIXME THE CODE HANGS HERE
 	defer cleaner()
 
 	log.Debug("BBBBBBB")
