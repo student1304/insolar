@@ -110,7 +110,7 @@ func (m *PulseManager) setUnderGilSection(ctx context.Context, newPulse insolar.
 	if err == pulse.ErrNotFound {
 		storagePulse = *insolar.GenesisPulse
 	} else if err != nil {
-		return errors.Wrap(err, "call of GetLatestPulseNumber failed")
+		return errors.Wrap(err, "cÅall of GetLatestPulseNumber failed")
 	}
 
 	defer span.End()

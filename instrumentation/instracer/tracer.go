@@ -19,6 +19,7 @@ package instracer
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"go.opencensus.io/exporter/jaeger"
 	"go.opencensus.io/trace"
@@ -150,7 +151,13 @@ func RegisterJaeger(
 		return nil, err
 	}
 	trace.RegisterExporter(exporter)
-	if probabilityRate > 0 {
+
+	fmt.Println("Jaeger Probability Rate is:", probabilityRate)
+	if probabilityRate == 1 {
+		trace.ApplyConfig(trace.Config{
+			DefaultSampler: trace.AlwaysSample(),
+		})
+	} else if probabilityRate > 0 {
 		trace.ApplyConfig(trace.Config{
 			DefaultSampler: trace.ProbabilitySampler(1 / probabilityRate),
 		})

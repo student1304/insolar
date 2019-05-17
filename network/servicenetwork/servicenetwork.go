@@ -330,6 +330,12 @@ func (n *ServiceNetwork) shoudIgnorePulse(newPulse insolar.Pulse) bool {
 
 func (n *ServiceNetwork) phaseManagerOnPulse(ctx context.Context, newPulse insolar.Pulse, pulseStartTime time.Time) {
 	logger := inslogger.FromContext(ctx)
+	/*
+		traceID := insolarUtils.RandTraceID()
+		ctx, logger := inslogger.WithTraceField(context.Background(), traceID)
+		ctx, span := instracer.StartSpan(ctx, "ServiceNetwork.phaseManagerOnPulse")
+		defer span.End()
+	*/
 
 	if !n.cfg.Service.ConsensusEnabled {
 		logger.Warn("Consensus is disabled")
