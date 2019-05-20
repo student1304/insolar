@@ -25,7 +25,7 @@ import (
 
 // PrototypeReference to prototype of this contract
 // error checking hides in generator
-var PrototypeReference, _ = insolar.NewReferenceFromBase58("1111Z11RPQeSDFhGNVUwd7nci7QbM57rJqHa53SkKh.11111111111111111111111111111111")
+var PrototypeReference, _ = insolar.NewReferenceFromBase58("1111QcKFR3VvDq9oh8gNNzFTFx2Z9mX3x9aWPdAeJL.11111111111111111111111111111111")
 
 // Member holds proxy type
 type Member struct {
@@ -511,9 +511,9 @@ func (r *Member) GetPublicKeyAsImmutable() (string, error) {
 }
 
 // Call is proxy generated method
-func (r *Member) Call(rootDomain insolar.Reference, method string, params []byte, seed []byte, sign []byte) (interface{}, error) {
+func (r *Member) Call(rootDomainRef insolar.Reference, method string, params []byte, seed []byte, sign []byte) (interface{}, error) {
 	var args [5]interface{}
-	args[0] = rootDomain
+	args[0] = rootDomainRef
 	args[1] = method
 	args[2] = params
 	args[3] = seed
@@ -549,9 +549,9 @@ func (r *Member) Call(rootDomain insolar.Reference, method string, params []byte
 }
 
 // CallNoWait is proxy generated method
-func (r *Member) CallNoWait(rootDomain insolar.Reference, method string, params []byte, seed []byte, sign []byte) error {
+func (r *Member) CallNoWait(rootDomainRef insolar.Reference, method string, params []byte, seed []byte, sign []byte) error {
 	var args [5]interface{}
-	args[0] = rootDomain
+	args[0] = rootDomainRef
 	args[1] = method
 	args[2] = params
 	args[3] = seed
@@ -573,9 +573,9 @@ func (r *Member) CallNoWait(rootDomain insolar.Reference, method string, params 
 }
 
 // CallAsImmutable is proxy generated method
-func (r *Member) CallAsImmutable(rootDomain insolar.Reference, method string, params []byte, seed []byte, sign []byte) (interface{}, error) {
+func (r *Member) CallAsImmutable(rootDomainRef insolar.Reference, method string, params []byte, seed []byte, sign []byte) (interface{}, error) {
 	var args [5]interface{}
-	args[0] = rootDomain
+	args[0] = rootDomainRef
 	args[1] = method
 	args[2] = params
 	args[3] = seed

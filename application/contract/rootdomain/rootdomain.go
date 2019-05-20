@@ -81,9 +81,10 @@ func (rd *RootDomain) Info() (interface{}, error) {
 	}
 
 	res := map[string]interface{}{
-		"root_member":    rd.RootMember.String(),
-		"oracle_members": oracleMembersOut,
-		"node_domain":    rd.NodeDomain.String(),
+		"root_member":     rd.RootMember.String(),
+		"oracle_members":  oracleMembersOut,
+		"md_admin_member": rd.MDAdminMember.String(),
+		"node_domain":     rd.NodeDomain.String(),
 	}
 	resJSON, err := json.Marshal(res)
 	if err != nil {

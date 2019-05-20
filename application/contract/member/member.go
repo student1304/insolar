@@ -59,7 +59,22 @@ func (m *Member) GetPublicKey() (string, error) {
 	return m.PublicKey, nil
 }
 
+func verifyKey(key string) (bool, error) {
+	if key == "" {
+		return false, nil
+	} else {
+		return true, nil
+	}
+}
+
 func New(ethAddr string, key string) (*Member, error) {
+	valid, err := verifyKey(key)
+	if err != nil {
+		return &Member{}, fmt.Errorf("[ New ] Can't verify key: %s", err.Error())
+	}
+	if !valid {
+		return &Member{}, fmt.Errorf("[ New ] Key is not valid: %s", err.Error())
+	}
 	return &Member{
 		EthAddr:   ethAddr,
 		PublicKey: key,
@@ -67,6 +82,13 @@ func New(ethAddr string, key string) (*Member, error) {
 }
 
 func NewOracleMember(name string, key string) (*Member, error) {
+	valid, err := verifyKey(key)
+	if err != nil {
+		return &Member{}, fmt.Errorf("[ New ] Can't verify key: %s", err.Error())
+	}
+	if !valid {
+		return &Member{}, fmt.Errorf("[ New ] Key is not valid: %s", err.Error())
+	}
 	return &Member{
 		Name:      name,
 		PublicKey: key,
@@ -116,11 +138,13 @@ func (m *Member) verifySig(method string, params []byte, seed []byte, sign []byt
 var INSATTR_Call_API = true
 
 // Call method for authorized calls
-func (m *Member) Call(rootDomain insolar.Reference, method string, params []byte, seed []byte, sign []byte) (interface{}, error) {
+func (m *Member) Call(rootDomainRef insolar.Reference, method string, params []byte, seed []byte, sign []byte) (interface{}, error) {
 
 	switch method {
 	case "CreateMember":
-		return m.createMemberCall(rootDomain, params)
+		return m.createMemberCall(rootDomainRef, params)
+	case "CreateOracleMember":
+		return m.createOracleMemberCall(rootDomainRef, params)
 	}
 
 	if err := m.verifySig(method, params, seed, sign); err != nil {
@@ -135,27 +159,49 @@ func (m *Member) Call(rootDomain insolar.Reference, method string, params []byte
 	case "Transfer":
 		return m.transferCall(params)
 	case "DumpUserInfo":
-		return m.dumpUserInfoCall(rootDomain, params)
+		return m.dumpUserInfoCall(rootDomainRef, params)
 	case "DumpAllUsers":
-		return m.dumpAllUsersCall(rootDomain)
+		return m.dumpAllUsersCall(rootDomainRef)
 	case "RegisterNode":
-		return m.registerNodeCall(rootDomain, params)
+		return m.registerNodeCall(rootDomainRef, params)
 	case "GetNodeRef":
-		return m.getNodeRefCall(rootDomain, params)
+		return m.getNodeRefCall(rootDomainRef, params)
 	case "Migration":
-		return m.migration(rootDomain, params)
+		return m.migration(rootDomainRef, params)
 	}
 	return nil, &foundation.Error{S: "Unknown method"}
 }
 
-func (m *Member) createMemberCall(ref insolar.Reference, params []byte) (interface{}, error) {
-	rootDomain := rootdomain.GetObject(ref)
+func (m *Member) createMemberCall(rdRef insolar.Reference, params []byte) (interface{}, error) {
+	rootDomain := rootdomain.GetObject(rdRef)
 	var name string
 	var key string
 	if err := signer.UnmarshalParams(params, &name, &key); err != nil {
 		return nil, fmt.Errorf("[ createMemberCall ]: %s", err.Error())
 	}
 	return rootDomain.CreateMember(name, key)
+}
+
+func (m *Member) createOracleMemberCall(rdRef insolar.Reference, params []byte) (interface{}, error) {
+	var ethAddr string
+	var key string
+	if err := signer.UnmarshalParams(params, &ethAddr, &key); err != nil {
+		return nil, fmt.Errorf("[ createOracleMemberCall ]: %s", err.Error())
+	}
+
+	memberHolder := member.New(ethAddr, key)
+	new, err := memberHolder.AsChild(rdRef)
+	if err != nil {
+		return "", fmt.Errorf("[ createOracleMemberCall ] Can't save as child: %s", err.Error())
+	}
+
+	wHolder := wallet.New(1000 * 1000 * 1000)
+	_, err = wHolder.AsDelegate(new.GetReference())
+	if err != nil {
+		return "", fmt.Errorf("[ createOracleMemberCall ] Can't save as delegate: %s", err.Error())
+	}
+
+	return m.GetReference().String(), nil
 }
 
 func (m *Member) getMyBalanceCall() (interface{}, error) {
