@@ -17,7 +17,7 @@
 package platformpolicy
 
 const (
-	CurrentCrypto cryptoStruct = P256
+	CurrentCrypto cryptoStruct = Secp256k1
 
 	P256 cryptoStruct = iota + 1
 	Secp256k1

@@ -25,7 +25,7 @@ import (
 // TODO: this file should be removed
 
 var platformCryptographyScheme = platformpolicy.NewSecpPlatformCryptographyScheme()
-var keyProcessor = platformpolicy.NewSecpKeyProcessor()
+var keyProcessor = platformpolicy.NewKeyProcessor()
 
 // Sign signs given seed.
 func Sign(data []byte, key keys.PrivateKey) ([]byte, error) {

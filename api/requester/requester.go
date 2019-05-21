@@ -136,7 +136,8 @@ func GetSeed(url string) ([]byte, error) {
 }
 
 func constructParams(params []interface{}) ([]byte, error) {
-	args, err := insolar.MarshalArgs(params...)
+	//args, err := insolar.MarshalArgs(params...)
+	args, err := insolar.MarshalArgsToJSON(params...)
 	if err != nil {
 		return nil, errors.Wrap(err, "[ constructParams ]")
 	}

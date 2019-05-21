@@ -16,12 +16,10 @@
 
 package signer
 
-import (
-	"encoding/json"
-)
+import "github.com/insolar/insolar/insolar"
 
 // UnmarshalParams unmarshalls params
 func UnmarshalParams(data []byte, to ...interface{}) error {
 	//return insolar.Deserialize(data, to)
-	return json.Unmarshal(data, to)
+	return insolar.DeserializeJSON(data, to)
 }

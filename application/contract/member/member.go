@@ -59,22 +59,7 @@ func (m *Member) GetPublicKey() (string, error) {
 	return m.PublicKey, nil
 }
 
-func verifyKey(key string) (bool, error) {
-	if key == "" {
-		return false, nil
-	} else {
-		return true, nil
-	}
-}
-
 func New(ethAddr string, key string) (*Member, error) {
-	valid, err := verifyKey(key)
-	if err != nil {
-		return &Member{}, fmt.Errorf("[ New ] Can't verify key: %s", err.Error())
-	}
-	if !valid {
-		return &Member{}, fmt.Errorf("[ New ] Key is not valid: %s", err.Error())
-	}
 	return &Member{
 		EthAddr:   ethAddr,
 		PublicKey: key,
@@ -82,13 +67,6 @@ func New(ethAddr string, key string) (*Member, error) {
 }
 
 func NewOracleMember(name string, key string) (*Member, error) {
-	valid, err := verifyKey(key)
-	if err != nil {
-		return &Member{}, fmt.Errorf("[ New ] Can't verify key: %s", err.Error())
-	}
-	if !valid {
-		return &Member{}, fmt.Errorf("[ New ] Key is not valid: %s", err.Error())
-	}
 	return &Member{
 		Name:      name,
 		PublicKey: key,
@@ -172,6 +150,14 @@ func (m *Member) Call(rootDomainRef insolar.Reference, method string, params []b
 	return nil, &foundation.Error{S: "Unknown method"}
 }
 
+func verifyKey(key string) (bool, error) {
+	if key == "" {
+		return false, nil
+	} else {
+		return true, nil
+	}
+}
+
 func (m *Member) createMemberCall(rdRef insolar.Reference, params []byte) (interface{}, error) {
 	rootDomain := rootdomain.GetObject(rdRef)
 	var name string
@@ -179,6 +165,15 @@ func (m *Member) createMemberCall(rdRef insolar.Reference, params []byte) (inter
 	if err := signer.UnmarshalParams(params, &name, &key); err != nil {
 		return nil, fmt.Errorf("[ createMemberCall ]: %s", err.Error())
 	}
+
+	//valid, err := verifyKey(key)
+	//if err != nil {
+	//	return nil, fmt.Errorf("[ createMemberCall ] Can't verify key: %s", err.Error())
+	//}
+	//if !valid {
+	//	return nil, fmt.Errorf("[ createMemberCall ] Key is not valid: %s", err.Error())
+	//}
+
 	return rootDomain.CreateMember(name, key)
 }
 
@@ -189,16 +184,24 @@ func (m *Member) createOracleMemberCall(rdRef insolar.Reference, params []byte) 
 		return nil, fmt.Errorf("[ createOracleMemberCall ]: %s", err.Error())
 	}
 
+	valid, err := verifyKey(key)
+	if err != nil {
+		return nil, fmt.Errorf("[ createOracleMemberCall ] Can't verify key: %s", err.Error())
+	}
+	if !valid {
+		return nil, fmt.Errorf("[ createOracleMemberCall ] Key is not valid: %s", err.Error())
+	}
+
 	memberHolder := member.New(ethAddr, key)
 	new, err := memberHolder.AsChild(rdRef)
 	if err != nil {
-		return "", fmt.Errorf("[ createOracleMemberCall ] Can't save as child: %s", err.Error())
+		return nil, fmt.Errorf("[ createOracleMemberCall ] Can't save as child: %s", err.Error())
 	}
 
 	wHolder := wallet.New(1000 * 1000 * 1000)
 	_, err = wHolder.AsDelegate(new.GetReference())
 	if err != nil {
-		return "", fmt.Errorf("[ createOracleMemberCall ] Can't save as delegate: %s", err.Error())
+		return nil, fmt.Errorf("[ createOracleMemberCall ] Can't save as delegate: %s", err.Error())
 	}
 
 	return m.GetReference().String(), nil

@@ -17,6 +17,7 @@
 package insolar
 
 import (
+	"encoding/json"
 	"github.com/pkg/errors"
 	"github.com/ugorji/go/codec"
 )
@@ -36,6 +37,14 @@ func Deserialize(data []byte, to interface{}) error {
 	return errors.Wrap(err, "[ Deserialize ]")
 }
 
+// Deserialize deserializes data from JSON to specific interface
+func DeserializeJSON(data []byte, to interface{}) error {
+	to = &struct {
+		Args []interface{}
+	}{}
+	return json.Unmarshal(data, to)
+}
+
 // MarshalArgs marshals arguments by cbor
 func MarshalArgs(args ...interface{}) (Arguments, error) {
 	var argsSerialized []byte
@@ -48,6 +57,13 @@ func MarshalArgs(args ...interface{}) (Arguments, error) {
 	result := Arguments(argsSerialized)
 
 	return result, nil
+}
+
+// MarshalArgsToJSON marshals arguments by json
+func MarshalArgsToJSON(args ...interface{}) (Arguments, error) {
+	return json.Marshal(struct {
+		Args []interface{}
+	}{Args: args})
 }
 
 // UnMarshalResponse unmarshals return values by cbor
