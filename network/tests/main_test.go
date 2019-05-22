@@ -57,6 +57,7 @@ import (
 	"fmt"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -321,6 +322,14 @@ func TestServiceNetworkManyNodes(t *testing.T) {
 
 	s := NewTestSuite(5, 10)
 	suite.Run(t, s)
+}
+
+// Full timeout test
+type FullTimeoutPhaseManager struct {
+}
+
+func (ftpm *FullTimeoutPhaseManager) OnPulse(ctx context.Context, pulse *insolar.Pulse, pulseStartTime time.Time, connectToNetwork func(context.Context, string)) error {
+	return nil
 }
 
 func (s *testSuite) TestFullTimeOut() {

@@ -60,11 +60,14 @@ import (
 	"github.com/insolar/insolar/cryptography"
 	"github.com/insolar/insolar/insolar"
 	"github.com/insolar/insolar/network"
+	"github.com/insolar/insolar/network/consensus/packets"
 	"github.com/insolar/insolar/network/controller/common"
 	"github.com/insolar/insolar/network/hostnetwork/host"
+	"github.com/insolar/insolar/network/hostnetwork/packet/types"
 	"github.com/insolar/insolar/network/node"
 	"github.com/insolar/insolar/network/nodenetwork"
 	"github.com/insolar/insolar/platformpolicy"
+	"github.com/insolar/insolar/testutils"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -73,6 +76,34 @@ import (
 const TestCert = "../../../certificate/testdata/cert.json"
 const TestKeys = "../../../certificate/testdata/keys.json"
 const activeNodesCount = 5
+
+type requestMock struct {
+	perm Permission
+}
+
+func (rm *requestMock) GetSender() insolar.Reference {
+	return testutils.RandomRef()
+}
+
+func (rm *requestMock) GetSenderHost() *host.Host {
+	return nil
+}
+
+func (rm *requestMock) GetType() types.PacketType {
+	return types.Bootstrap
+}
+
+func (rm *requestMock) GetData() interface{} {
+	return &NodeBootstrapRequest{
+		JoinClaim:     packets.NodeJoinClaim{},
+		LastNodePulse: 123,
+		Permission:    rm.perm,
+	}
+}
+
+func (rm *requestMock) GetRequestID() network.RequestID {
+	return 1
+}
 
 func getBootstrapResults(t *testing.T, ips []string) []*network.BootstrapResult {
 	results := make([]*network.BootstrapResult, activeNodesCount)
@@ -92,13 +123,14 @@ func getBootstrapResults(t *testing.T, ips []string) []*network.BootstrapResult 
 
 func getOptions(infinity bool) *common.Options {
 	return &common.Options{
-		TimeoutMult:       2 * time.Millisecond,
-		InfinityBootstrap: infinity,
-		MinTimeout:        100 * time.Millisecond,
-		MaxTimeout:        200 * time.Millisecond,
-		PingTimeout:       1 * time.Second,
-		PacketTimeout:     10 * time.Second,
-		BootstrapTimeout:  10 * time.Second,
+		TimeoutMult:            2 * time.Millisecond,
+		InfinityBootstrap:      infinity,
+		MinTimeout:             100 * time.Millisecond,
+		MaxTimeout:             200 * time.Millisecond,
+		PingTimeout:            1 * time.Second,
+		PacketTimeout:          10 * time.Second,
+		BootstrapTimeout:       10 * time.Second,
+		CyclicBootstrapEnabled: false,
 	}
 }
 
@@ -106,11 +138,11 @@ var BootstrapError = errors.New("bootstrap without repeat")
 var InfinityBootstrapError = errors.New("infinity bootstrap")
 var bootstrapRetries = 0
 
-func mockBootstrap(context.Context, string) (*network.BootstrapResult, error) {
+func mockBootstrap(context.Context, string, *Permission) (*network.BootstrapResult, error) {
 	return nil, BootstrapError
 }
 
-func mockInfinityBootstrap(context.Context, string) (*network.BootstrapResult, error) {
+func mockInfinityBootstrap(context.Context, string, *Permission) (*network.BootstrapResult, error) {
 	bootstrapRetries++
 	if bootstrapRetries >= 5 {
 		return nil, nil
@@ -121,12 +153,12 @@ func mockInfinityBootstrap(context.Context, string) (*network.BootstrapResult, e
 func TestBootstrap(t *testing.T) {
 	t.Skip("flaky test")
 	ctx := context.Background()
-	_, err := bootstrap(ctx, "192.180.0.1:1234", getOptions(false), mockBootstrap)
+	_, err := bootstrap(ctx, "192.180.0.1:1234", getOptions(false), mockBootstrap, nil)
 	assert.Error(t, err, BootstrapError)
 
 	startTime := time.Now()
 	expectedTime := startTime.Add(time.Millisecond * 700) // 100ms, 200ms, 200ms, 200ms, return nil error
-	_, err = bootstrap(ctx, "192.180.0.1:1234", getOptions(true), mockInfinityBootstrap)
+	_, err = bootstrap(ctx, "192.180.0.1:1234", getOptions(true), mockInfinityBootstrap, nil)
 	endTime := time.Now()
 	assert.NoError(t, err)
 	assert.WithinDuration(t, expectedTime.Round(time.Millisecond), endTime.Round(time.Millisecond), time.Millisecond*100)
