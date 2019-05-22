@@ -83,8 +83,8 @@ import (
 	"github.com/insolar/insolar/platformpolicy"
 )
 
-const bootstrapTimeout time.Duration = 2 // seconds
-// const updateScheduleETA time.Duration = 60 // seconds
+const bootstrapTimeout time.Duration = 2   // seconds
+const updateScheduleETA = 60 * time.Second // seconds
 
 var (
 	ErrReconnectRequired = errors.New("NetworkNode should connect via consensus bootstrap")
@@ -605,12 +605,12 @@ func (bc *bootstrapper) startBootstrap(ctx context.Context, address string, perm
 	request := bc.Network.NewRequestBuilder().Type(types.Bootstrap).Data(bootstrapReq).Build()
 	future, err := bc.Network.SendRequestToHost(ctx, request, bootstrapHost)
 	if err != nil {
-		return nil, errors.Wrapf(err, "Failed to send bootstrap request to address %s", address)
+		return nil, errors.Wrapf(err, "Failed to send bootstrap request to address %s", bootstrapHost.Address)
 	}
 
 	response, err := future.WaitResponse(bc.options.BootstrapTimeout)
 	if err != nil {
-		return nil, errors.Wrapf(err, "Failed to get response to bootstrap request from address %s", address)
+		return nil, errors.Wrapf(err, "Failed to get response to bootstrap request from address %s", bootstrapHost.Address)
 	}
 
 	data := response.GetData().(*NodeBootstrapResponse)
@@ -623,7 +623,7 @@ func (bc *bootstrapper) startBootstrap(ctx context.Context, address string, perm
 		logger.Infof("bootstrap redirected from %s to %s", bc.NodeKeeper.GetOrigin().Address(), data.Permission.ReconnectTo)
 		return bootstrap(ctx, data.Permission.ReconnectTo, bc.options, bc.startBootstrap, &data.Permission)
 	case UpdateSchedule:
-		// TODO: INS-1960
+		return bootstrap(ctx, data.Permission.ReconnectTo, bc.options, bc.startBootstrap, &data.Permission)
 	}
 
 	return &network.BootstrapResult{
@@ -703,6 +703,13 @@ func (bc *bootstrapper) processBootstrap(ctx context.Context, request network.Re
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to get a code from permission")
 		}
+		if code == UpdateSchedule {
+			updatePermission, err := bc.permissionUpdateSchedule(&bootstrapRequest.Permission)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to update a permission schedule")
+			}
+			bootstrapRequest.Permission = *updatePermission
+		}
 	}
 
 	if bc.Gatewayer.Gateway().GetState() == insolar.CompleteNetworkState {
@@ -730,31 +737,47 @@ func (bc *bootstrapper) getCodeFromPermission(permission Permission) (Code, erro
 		return Rejected, errors.New("failed to verify a permission sign")
 	}
 
-	// TODO: INS-1960
-	// etaDiff := time.Since(permission.UTC)
-	// if etaDiff > updateScheduleETA {
-	// 	return UpdateSchedule, nil
-	// }
+	var t time.Time
+	err = t.GobDecode(permission.UTC)
+	if err != nil {
+		return Rejected, errors.Wrap(err, "failed to decode a permission time")
+	}
+
+	etaDiff := time.Since(t)
+	if etaDiff > updateScheduleETA {
+		return UpdateSchedule, nil
+	}
 
 	return Accepted, nil
 }
 
 func (bc *bootstrapper) updatePermissionsOnRequest(request *NodeBootstrapRequest) error {
-	request.Permission.DiscoveryRef = bc.NodeKeeper.GetOrigin().ID()
-	t, err := time.Now().GobEncode()
+	var err error
+	request.Permission.UTC, err = getUTCBytes()
 	if err != nil {
-		return errors.Wrap(err, "failed to encode a time")
+		return errors.Wrap(err, "failed to get a UTC bytes")
 	}
-	request.Permission.UTC = t
+	request.Permission.DiscoveryRef = bc.NodeKeeper.GetOrigin().ID()
 	request.Permission.ReconnectTo = bc.getRandActiveDiscoveryAddress()
 
-	sign, err := bc.getPermissionSign(request.Permission)
+	sign, err := bc.getPermissionSign(&request.Permission)
 	if err != nil {
 		return errors.Wrap(err, "failed to get a permission sign")
 	}
 
 	request.Permission.Signature = sign
 	return nil
+}
+
+func (bc *bootstrapper) permissionUpdateSchedule(perm *Permission) (*Permission, error) {
+	var err error
+	perm.UTC, err = getUTCBytes()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get UTC bytes")
+	}
+	perm.DiscoveryRef = bc.NodeKeeper.GetOrigin().ID()
+	perm.Signature, err = bc.getPermissionSign(perm)
+	return perm, nil
 }
 
 func (bc *bootstrapper) processGenesis(ctx context.Context, request network.Request) (network.Response, error) {
@@ -831,12 +854,20 @@ func (bc *bootstrapper) getRandActiveDiscoveryAddress() string {
 	return bc.NodeKeeper.GetOrigin().Address()
 }
 
-func (bc *bootstrapper) getPermissionSign(perm Permission) ([]byte, error) {
+func (bc *bootstrapper) getPermissionSign(perm *Permission) ([]byte, error) {
 	sign, err := bc.Cryptography.Sign(perm.RawBytes())
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to sign a permission")
 	}
 	return sign.Bytes(), nil
+}
+
+func getUTCBytes() ([]byte, error) {
+	t, err := time.Now().GobEncode()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to encode a time")
+	}
+	return t, nil
 }
 
 func permissionIsEmpty(perm Permission) bool {
