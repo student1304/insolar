@@ -77,6 +77,29 @@ const TestCert = "../../../certificate/testdata/cert.json"
 const TestKeys = "../../../certificate/testdata/keys.json"
 const activeNodesCount = 5
 
+func getBootstrapper(nodekeeper network.NodeKeeper, cert insolar.Certificate) bootstrapper {
+	origin := bootstrapper{
+		options:                 getOptions(false),
+		bootstrapLock:           make(chan struct{}),
+		genesisRequestsReceived: make(map[insolar.Reference]*GenesisRequest),
+		Certificate:             cert,
+		NodeKeeper:              nodekeeper,
+	}
+
+	return origin
+}
+
+func getCert(t *testing.T) insolar.Certificate {
+	cs, _ := cryptography.NewStorageBoundCryptographyService(TestKeys)
+	kp := platformpolicy.NewKeyProcessor()
+	pk, _ := cs.GetPublicKey()
+	cert, err := certificate.ReadCertificate(pk, kp, TestCert)
+	require.NoError(t, err)
+	require.NotEmpty(t, cert.PublicKey)
+
+	return cert
+}
+
 type requestMock struct {
 	perm Permission
 }
@@ -167,13 +190,6 @@ func TestBootstrap(t *testing.T) {
 func TestCyclicBootstrap(t *testing.T) {
 	ctx := context.Background()
 
-	cs, _ := cryptography.NewStorageBoundCryptographyService(TestKeys)
-	kp := platformpolicy.NewKeyProcessor()
-	pk, _ := cs.GetPublicKey()
-	cert, err := certificate.ReadCertificate(pk, kp, TestCert)
-	require.NoError(t, err)
-	require.NotEmpty(t, cert.PublicKey)
-
 	activeNodes := make([]insolar.NetworkNode, activeNodesCount)
 	ips := make([]string, activeNodesCount)
 	for i := 0; i < activeNodesCount; i++ {
@@ -186,18 +202,16 @@ func TestCyclicBootstrap(t *testing.T) {
 	nodekeeper := nodenetwork.NewNodeKeeper(node)
 	nodekeeper.SetInitialSnapshot(activeNodes)
 
-	origin := bootstrapper{
-		options:                 getOptions(false),
-		bootstrapLock:           make(chan struct{}),
-		genesisRequestsReceived: make(map[insolar.Reference]*GenesisRequest),
-		Certificate:             cert,
-		NodeKeeper:              nodekeeper,
-	}
+	origin := getBootstrapper(nodekeeper, getCert(t))
 
-	index := origin.getLagerNetorkIndex(ctx, getBootstrapResults(t, ips))
+	index := origin.getLagerNetworkIndex(ctx, getBootstrapResults(t, ips))
 	reconnectRequired := false
 	if index >= 0 {
 		reconnectRequired = true
 	}
 	assert.True(t, reconnectRequired)
+}
+
+func TestGetCodeFromPermission(t *testing.T) {
+	origin := getBootstrapper()
 }

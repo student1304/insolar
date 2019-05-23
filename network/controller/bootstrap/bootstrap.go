@@ -647,7 +647,7 @@ func (bc *bootstrapper) startCyclicBootstrap(ctx context.Context) {
 			results = append(results, res)
 		}
 		if len(results) != 0 {
-			index := bc.getLagerNetorkIndex(ctx, results)
+			index := bc.getLagerNetworkIndex(ctx, results)
 			if index >= 0 {
 				bc.reconnectToNewNetwork(ctx, nodes[index].GetHost())
 			}
@@ -656,7 +656,7 @@ func (bc *bootstrapper) startCyclicBootstrap(ctx context.Context) {
 	}
 }
 
-func (bc *bootstrapper) getLagerNetorkIndex(ctx context.Context, results []*network.BootstrapResult) int {
+func (bc *bootstrapper) getLagerNetworkIndex(ctx context.Context, results []*network.BootstrapResult) int {
 	networkSize := results[0].NetworkSize
 	index := 0
 	for i := 1; i < len(results); i++ {
