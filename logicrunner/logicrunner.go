@@ -33,7 +33,6 @@ import (
 	"github.com/ThreeDotsLabs/watermill"
 	watermillMsg "github.com/ThreeDotsLabs/watermill/message"
 	"github.com/ThreeDotsLabs/watermill/message/infrastructure/gochannel"
-	"github.com/insolar/insolar/log"
 
 	wmBus "github.com/insolar/insolar/insolar/bus"
 	"github.com/insolar/insolar/insolar/flow"
@@ -321,7 +320,6 @@ func (lr *LogicRunner) Start(ctx context.Context) error {
 		log.Error("Initializing builtin done")
 	}
 
-	lr.rpc = lrCommon.NewRPC(ctx, lr, lr.Cfg)
 	if lr.Cfg.GoPlugin != nil {
 		if err := lr.initializeGoPlugin(ctx); err != nil {
 			return err
@@ -1191,7 +1189,7 @@ func (lr *LogicRunner) GetObjChildrenIterator(
 		}
 		rep.Iterator.CanFetch = iter.HasNext()
 
-		o, err := am.GetObject(ctx, *r, nil, false)
+		o, err := am.GetObject(ctx, *r)
 
 		if err != nil {
 			if err == insolar.ErrDeactivated {
