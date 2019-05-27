@@ -42,6 +42,7 @@ import (
 	"github.com/insolar/insolar/insolar/pulse"
 	"github.com/insolar/insolar/insolar/record"
 	"github.com/insolar/insolar/insolar/reply"
+	"github.com/insolar/insolar/log"
 	"github.com/insolar/insolar/logicrunner/artifacts"
 	"github.com/insolar/insolar/pulsar"
 	"github.com/insolar/insolar/pulsar/entropygenerator"
@@ -788,8 +789,12 @@ func (suite *LogicRunnerTestSuite) TestStartStop() {
 
 	suite.mb.MustRegisterMock.Return()
 	lr.MessageBus = suite.mb
+	suite.am.InjectCodeDescriptorMock.Return()
+	suite.am.InjectObjectDescriptorMock.Return()
+	lr.ArtifactManager = suite.am
 
 	err = lr.Start(suite.ctx)
+	log.Error(err)
 	suite.Require().NoError(err)
 
 	executor, err := lr.GetExecutor(insolar.MachineTypeBuiltin)
